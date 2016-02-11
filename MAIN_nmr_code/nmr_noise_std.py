@@ -13,36 +13,46 @@ the standard samples is 1 million and it'll take sometime.
 import os
 import time
 
-from nmr_std_function.data_parser import parse_simple_info
-from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.nmr_functions import compute_stats
+from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col
+from nmr_std_function.nmr_functions import compute_stats, compute_in_bw_noise
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
-from nmr_std_function.data_parser import parse_csv_float2col
 import matplotlib.pyplot as plt
 from scipy import signal
 import shutil
 import pydevd
 from datetime import datetime
 import numpy as np
+from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+
+# select the coil configuration
+from nmr_std_function.sys_configs import WMP_old_coil as conf
 
 # variables
-data_folder = "/root/NMR_DATA"
+server_data_folder = "/root/NMR_DATA"
+client_data_folder = "D:\\TEMP"
 en_fig = 1
 en_remote_dbg = 0
+en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
+
+if en_remote_computing:
+    data_folder = client_data_folder
+    en_remote_dbg = 0  # force remote debugging to be disabled
+else:
+    data_folder = server_data_folder
 
 # nmr object declaration
-nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg )
+nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
 
 # general measurement settings
 samp_freq = 25  # sampling frequency
-samples = 10000  # number of points
-min_freq = 0.200
-max_freq = 12.5
+samples = 500000  # number of points
+min_freq = 1.5  # 0.200
+max_freq = 2.0  # 12.5
 
 # get current time
 now = datetime.now()
-datename = now.strftime( "%y_%m_%d_%H_%M_%S" )
-swfolder = data_folder + '/' + datename + '_noise_with_RXGain_sw'
+datename = now.strftime( "%Y_%m_%d_%H_%M_%S" )
+swfolder = data_folder + '/' + datename + '_noise_std'
 
 fignum = 0
 
@@ -58,8 +68,15 @@ def perform_noise_test ( plotname , fignum ):
     nmrObj.noise( samp_freq, samples )
 
     # process the data
+    if  en_remote_computing:  # copy remote files to local directory
+        cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
     meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
-    nstd, nmean = compute_stats( min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )  # real scan
+
+    if  en_remote_computing:  # copy remote folder to local directory
+        cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
+    # nstd, nmean = compute_stats( min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )  # real scan
+    nstd, nmean = compute_in_bw_noise( conf.meas_bw_kHz, conf.Df_MHz, min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )
     f.write( "std: %08.3f\tmean: %08.3f \t-> %s\n" % ( nstd, nmean, info ) )
 
     shutil.move ( data_folder + '/' + meas_folder[0], swfolder + '/' + info )  # move the data folder
@@ -72,13 +89,16 @@ def perform_noise_test ( plotname , fignum ):
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
 
 # get current time
-now = datetime.now()
-datename = now.strftime( "%y%m%d_%H%M%S_" )
+# now = datetime.now()
+# datename = now.strftime( "%y%m%d_%H%M%S_" )
 
 # turn off everything at the beginning
 nmrObj.deassertAll()
 
-f = open( datename + 'noise_std.txt', "w" )  # open text file
+if en_remote_computing:
+    f = open( data_folder + '\\' + datename + '_noise_std.txt', "w" )  # open text file
+else:
+    f = open( swfolder + '/' + 'noise_std.txt', "w" )  # open text file
 fignum = 0  # variable to store figure number
 
 # enable the minimum power supply necessary for the ADC
@@ -103,17 +123,17 @@ fignum = perform_noise_test ( info, fignum )
 
 # enable the 2nd rx path
 info = 'en_2nd_rx_path'
-nmrObj.assertControlSignal ( nmrObj.RX2_H_msk )
+nmrObj.assertControlSignal ( nmrObj.RX2_H_msk | nmrObj.RX2_L_msk )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the 1st rx path
 info = 'en_1st_rx_path'
-nmrObj.assertControlSignal ( nmrObj.RX1_1H_msk )
+nmrObj.assertControlSignal ( nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the pamp tuning
 info = 'en_pamp_tuning'
-nmrObj.setPreampTuning( -2.7, -0.4 )  # enable the preamp tuning
+nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # enable the preamp tuning
 fignum = perform_noise_test ( info, fignum )
 
 # enable the pamp input
@@ -123,8 +143,8 @@ fignum = perform_noise_test ( info, fignum )
 
 # enable the matching network
 info = 'en_mtch_ntwrk'
-nmrObj.setMatchingNetwork( 2381, 440 )  # 4.25 MHz AFE
-nmrObj.setMatchingNetwork( 2381, 440 )  # 4.25 MHz AFE
+nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
+nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the tx power

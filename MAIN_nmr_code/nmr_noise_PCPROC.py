@@ -24,8 +24,10 @@ import matplotlib.pyplot as plt
 
 from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col
 from nmr_std_function.nmr_functions import compute_iterate, compute_stats, compute_in_bw_noise
-from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
+from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+
+# select the coil configuration
 from nmr_std_function.sys_configs import WMP_old_coil as conf
 
 # variables
@@ -59,8 +61,8 @@ nmrObj.deassertControlSignal(
     nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk )
 
 nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
-# nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
-nmrObj.setMatchingNetwork( 0, 0 )
+nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
+# nmrObj.setMatchingNetwork( 0, 0 )
 
 nmrObj.assertControlSignal( 
     nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )
