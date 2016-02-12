@@ -85,8 +85,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 282  # the parallel capacitance
-        cser_init = 199  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 272  # the parallel capacitance
+        cser_init = 263  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin

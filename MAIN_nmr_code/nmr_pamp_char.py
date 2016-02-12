@@ -87,7 +87,7 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-
+'''
 # comment the lines below when using nmr_pamp_char as a function in outside script
 # measurement properties
 client_data_folder = "D:\\TEMP"
@@ -100,7 +100,7 @@ freqSamp = 25  # not being used for synchronized sampling. It's value will be th
 fftpts = 1024
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
-continuous = True
+continuous = False
 
 nmrObj = init( client_data_folder )
 
@@ -109,3 +109,4 @@ Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq,
 
 analyze ( nmrObj, Vbias, Vvarac, freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
+'''

@@ -43,6 +43,8 @@ def init ( client_data_folder ):
     nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk | nmrObj.RX_FH_msk )
     # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
 
+    nmrObj.setMatchingNetwork( 0, 0 )
+
     return nmrObj
 
 
@@ -56,7 +58,7 @@ def analyze( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftp
         Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
         nmrObj.setPreampTuning( Vbias, Vvarac )
         Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
-        nmrObj.setMatchingNetwork( Cpar, Cser )
+        # nmrObj.setMatchingNetwork( Cpar, Cser )
 
         timeObj.setTimeSta()
         # nmrObj.pamp_char_async ( sta_freq, sto_freq, spac_freq, samp_freq )
@@ -92,14 +94,14 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 client_data_folder = "D:\\TEMP"
-en_fig = 1
-continuous = 1
+en_fig = True
+continuous = True
 # measurement properties
-tuning_freq = 1.9  # tune the matching network and preamp to this frequency
-sta_freq = 1.8  # low bound frequency to be shown in the figure
-sto_freq = 2.2  # up bound frequency to be shown in the figure
+tuning_freq = 1.7  # tune the matching network and preamp to this frequency
+sta_freq = 1.4  # low bound frequency to be shown in the figure
+sto_freq = 2.0  # up bound frequency to be shown in the figure
 spac_freq = 0.001  # frequency resolution
 samp_freq = 25  # only useful when the async method is used
 fftpts = 512
@@ -108,4 +110,3 @@ fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to re
 nmrObj = init( client_data_folder )
 analyze ( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
-'''

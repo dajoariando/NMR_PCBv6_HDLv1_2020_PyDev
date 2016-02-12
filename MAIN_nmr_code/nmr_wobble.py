@@ -97,12 +97,12 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-
+'''
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-freqSta = 1.5
-freqSto = 3.0
+freqSta = 1.2
+freqSto = 2.5
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 256
@@ -116,7 +116,7 @@ nmrObj = init ( client_data_folder )
 print( 'Generate reference.' )
 S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
-tuning_freq = 1.7
+tuning_freq = 2.0
 Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
 # Cpar = 152
 # Cser = 167
@@ -126,4 +126,4 @@ while True:
     # break;
 
 exit( nmrObj )
-
+'''
