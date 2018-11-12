@@ -19,7 +19,7 @@ en_fig = 1
 
 # system setup
 nmrObj = tunable_nmr_system_2018(data_folder)
-nmrObj.turnOnRemoteDebug()
+# nmrObj.turnOnRemoteDebug()
 nmrObj.initNmrSystem()
 nmrObj.turnOnPower()
 nmrObj.setPreampTuning()

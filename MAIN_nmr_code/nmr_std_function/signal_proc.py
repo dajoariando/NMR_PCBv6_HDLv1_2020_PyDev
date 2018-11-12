@@ -33,6 +33,14 @@ def butter_lowpass_filter(data, cutoff, fs, order, en_figure):
         pass
 
     y = lfilter(b, a, data)
+
+    if en_figure:
+        plt.figure(11)
+        plt.plot(data, label='raw data')
+        plt.plot(y, label='filt data')
+        plt.legend()
+        plt.show()
+
     return y
 
 
@@ -41,13 +49,15 @@ def down_conv(s, k, tE, Df, Sf):
     T = 1 / Sf
     t = np.linspace(k * tE, k * tE + T * (len(s) - 1), len(s))
 
-    # compute the signal frequency
-    Ds = abs(Df - Sf)
+    # compute the signal frequency: only for ADC freq below Nyquist rate
+    # Ds = abs(Df - Sf)
 
-    sReal = s * np.cos(2 * math.pi * Ds * t)
-    sImag = s * np.sin(2 * math.pi * Ds * t)
+    #sReal = s * np.cos(2 * math.pi * Ds * t)
+    sReal = s * np.cos(2 * math.pi * Df * t)
+    #sImag = s * np.sin(2 * math.pi * Ds * t)
+    sImag = s * np.sin(2 * math.pi * Df * t)
 
-    r = butter_lowpass_filter(sReal + 1j * sImag, 1e5, Sf, 5, False)
+    r = butter_lowpass_filter(sReal + 1j * sImag, 3e5, Sf, 2, False)
 
     return r
 
