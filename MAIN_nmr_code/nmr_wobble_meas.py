@@ -20,8 +20,8 @@ fig_num = 1
 if enable_remotedebug:
     import pydevd
     from pydevd_file_utils import setup_client_server_paths
-    server_path = '/root/Eclipse_Python_2018/nmr_pcb20_hdl10_2018/'
-    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\Eclipse_Python_2018\\nmr_pcb20_hdl10_2018\\'
+    server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
+    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
     PATH_TRANSLATION = [(client_path, server_path)]
     setup_client_server_paths(PATH_TRANSLATION)
     pydevd.settrace("dajo-compaqsff")
@@ -83,8 +83,8 @@ os.system(
 )
 
 # Turn on matching network
-cshunt = 110
-cseries = 185
+cshunt = 19
+cseries = 66
 os.system(
     work_dir + "/c_exec/i2c_mtch_ntwrk" + " " +
     str(cshunt) + " " +
@@ -98,9 +98,9 @@ while True:
         str(gnrl_cnt)
     )
 
-    startfreq = 1
-    stopfreq = 3
-    spacfreq = 0.1
+    startfreq = 4
+    stopfreq = 4.5
+    spacfreq = 0.05
     sampfreq = 25
     os.system(
         work_dir + "/c_exec/wobble" + " " +

@@ -8,6 +8,15 @@ Created on Nov 06, 2018
 
 import os
 import pydevd
+import numpy as np
+import matplotlib.pyplot as plt
+from nmr_std_function.data_parser import parse_simple_info
+from nmr_std_function.nmr_functions import compute_iterate
+from nmr_std_function.data_parser import parse_csv_float2col
+from scipy import signal
+from datetime import datetime
+import shutil
+from nmr_std_function.data_parser import write_text_append
 
 
 class tunable_nmr_system_2018:
@@ -56,7 +65,8 @@ class tunable_nmr_system_2018:
         os.chdir(self.data_folder)
 
     def turnOnRemoteDebug(self):
-        # remote debugger setup
+        # CANNOT RUN FROM HERE, YOU HAVE TO COPY THE CONTENT OF THIS FOLDER TO THE EXECUTABLE WHERE YOU RUN THE CODE AND RUN IT FROM THERE
+        # THIS IS KEPT FOR CLEAN DOCUMENTATION PURPOSES
         from pydevd_file_utils import setup_client_server_paths
         server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
         client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
@@ -85,14 +95,14 @@ class tunable_nmr_system_2018:
             str(self.vvarac)
         )
 
-    def setMatchingNetwork(self):
+    def setMatchingNetwork(self, cpar, cser):
         # Turn on matching network
-        self.cshunt = 110
-        self.cseries = 175
+        # self.cshunt = cpar
+        # self.cseries = cser
         os.system(
             self.work_dir + self.exec_folder + "i2c_mtch_ntwrk" + " " +
-            str(self.cshunt) + " " +
-            str(self.cseries)
+            str(cpar) + " " +
+            str(cser)
         )
 
     def setSignalPath(self):
@@ -116,6 +126,14 @@ class tunable_nmr_system_2018:
             str(0)
         )
 
+    def doLaplaceInversion(self, filename, outpath):
+        # laplace inversion computatation
+        os.system(
+            self.work_dir + self.exec_folder + "nmr_sig_proc" + " " +
+            filename + " " +
+            outpath
+        )
+
     def cpmgSequence(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int):
         # execute cpmg sequence
         command = (self.work_dir + self.exec_folder + "cpmg_iterate" + " " +
@@ -135,3 +153,154 @@ class tunable_nmr_system_2018:
                    str(delay180_t1_int)
                    )
         os.system(command)  # execute command & ignore its console
+
+    def cpmgT1(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_us, logsw, delay180_sta, delay180_sto, delay180_ste, ref_number_of_iteration, ref_twait_mult, data_folder, en_scan_fig, en_fig):
+
+        # create t1 measurement folder
+        t1_meas_folder = datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '_t1_meas'
+        os.mkdir(t1_meas_folder)
+
+        t1_meas_hist = 't1_meas_hist.txt'  # the history file name for t1 measurement
+
+        self.fig_num = 1
+        self.fcpmg_to_fsys_mult = 16  # system_frequency/cpmg_frequency,set by fpga
+        self.t1_opt_mult = 1.6
+
+        # compute period for the system clock (which is multiplication of the cpmg
+        # freq)
+        t_sys = (1 / cpmg_freq) / self.fcpmg_to_fsys_mult
+
+        # compute pulse180_t1 in integer values and round it to
+        # fcpmg_to_fsys_mult multiplication
+        pulse180_t1_int = np.round(
+            (pulse180_t1_us / t_sys) / self.fcpmg_to_fsys_mult) * self.fcpmg_to_fsys_mult
+
+        # process delay
+        if logsw:
+            delay180_t1_sw = np.logspace(
+                np.log10(delay180_sta), np.log10(delay180_sto), delay180_ste)
+        else:
+            delay180_t1_sw = np.linspace(
+                delay180_sta, delay180_sto, delay180_ste)
+        # make delay to be multiplication of fcpmg_to_fsys_mult
+        delay180_t1_sw_int = np.round((delay180_t1_sw / t_sys) /
+                                      self.fcpmg_to_fsys_mult) * self.fcpmg_to_fsys_mult
+
+        # compute the reference and do cpmg
+        ref_twait = ref_twait_mult * delay180_t1_sw_int[delay180_ste - 1]
+        ref_twait_int = np.round(
+            (ref_twait) / self.fcpmg_to_fsys_mult) * self.fcpmg_to_fsys_mult
+        self.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
+                          echoes_per_scan, init_adc_delay_compensation, ref_number_of_iteration, ph_cycl_en, pulse180_t1_int, ref_twait_int)
+        # process the data
+        meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
+        (a_ref, a0_ref, snr_ref, T2_ref, noise_ref, res_ref, theta_ref, data_filt_ref, echo_avg_ref, Df, _) = compute_iterate(
+            data_folder, meas_folder[0], 0, 0, 0, en_scan_fig)
+
+        # move the folder to t1 measurement folder and write history
+        shutil.move(meas_folder[0], t1_meas_folder)
+        write_text_append(t1_meas_folder, t1_meas_hist, meas_folder[0])
+
+        # make the loop
+        a0_table = np.zeros(delay180_ste)  # normal format
+        a0_table_decay = np.zeros(delay180_ste)  # decay format
+        asum_table = np.zeros(delay180_ste)  # normal format
+        asum_table_decay = np.zeros(delay180_ste)  # decay format
+        for i in range(0, delay180_ste):
+            delay180_t1_int = delay180_t1_sw_int[i]
+
+            # do cpmg scan
+            self.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
+                              echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int)
+            # process the data (note that a0 and T2 is based on single
+            # exponential fit)
+            meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
+            (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, _) = compute_iterate(
+                data_folder, meas_folder[0], 1, theta_ref, echo_avg_ref, en_scan_fig)
+
+            # move the folder to t1 measurement folder and write history
+            shutil.move(meas_folder[0], t1_meas_folder)
+            write_text_append(t1_meas_folder, t1_meas_hist, meas_folder[0])
+
+            # interscan data store
+            a0_table[i] = a0
+            a0_table_decay[i] = a0_ref - a0
+            asum_table[i] = np.mean(np.real(a))
+            asum_table_decay[i] = np.mean(np.real(a_ref)) - np.mean(np.real(a))
+
+            if en_fig:
+                plt.ion()
+                fig = plt.figure(self.fig_num)
+                fig.clf()
+
+                ax = fig.add_subplot(3, 1, 1)
+                if logsw:
+                    line1, = ax.semilogx(
+                        delay180_t1_sw[0:i + 1] / 1000, asum_table[0:i + 1], 'r-')
+                else:
+                    line1, = ax.plot(
+                        delay180_t1_sw[0:i + 1] / 1000, asum_table[0:i + 1], 'r-')
+
+                # ax.set_xlim(-50, 0)
+                # ax.set_ylim(-50, 0)
+                ax.set_ylabel('Initial amplitude [a.u.]')
+                ax.set_title("T1 inversion recovery")
+                ax.grid()
+
+                ax = fig.add_subplot(3, 1, 2)
+                if logsw:
+                    line1, = ax.semilogx(
+                        delay180_t1_sw[0:i + 1] / 1000, asum_table_decay[0:i + 1], 'r-')
+                else:
+                    line1, = ax.plot(
+                        delay180_t1_sw[0:i + 1] / 1000, asum_table_decay[0:i + 1], 'r-')
+                # ax.set_xlim(-50, 0)
+                # ax.set_ylim(-50, 0)
+                # ax.set_xlabel('Wait time [ms]')
+                ax.set_ylabel('Initial amplitude [a.u.]')
+                ax.grid()
+
+                ax = fig.add_subplot(3, 1, 3)
+                ax.set_ylabel('Amplitude [a.u.]')
+                ax.set_xlabel('Wait time [ms]')
+                ax.grid()
+
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+
+        # save t1 data to csv file to be processed
+        f = open(t1_meas_folder + '/' + 't1heel_in.csv', "w+")
+        for i in range(0, delay180_ste):
+            f.write("%f," % (delay180_t1_sw[i] / 1000))  # in milisecond
+            f.write("%f\n" % (a0_table_decay[i]))
+        f.close()
+
+        # process t1 data
+        self.doLaplaceInversion(t1_meas_folder + '/' + 't1heel_in.csv',
+                                t1_meas_folder)
+        tvect, data = parse_csv_float2col(
+            t1_meas_folder, 't1heel_out.csv')
+        i_peaks = signal.find_peaks_cwt(data, np.arange(1, 2))
+
+        a_peaks = np.zeros(len(i_peaks))
+        for i in range(0, len(i_peaks)):
+            a_peaks[i] = data[i_peaks[i]]
+
+        # find tvect in which the largest peak is found
+        t1_opt = tvect[i_peaks[np.where(max(a_peaks))[0][0]]]  # in second
+
+        if en_fig:
+            ax = fig.add_subplot(3, 1, 3)
+            if logsw:
+                line1, = ax.semilogx(np.multiply(tvect, 1000), data, 'r-')
+            else:
+                line1, = ax.plot(np.multiply(tvect, 1000), data, 'r-')
+            ax.set_ylabel('Amplitude [a.u.]')
+            ax.set_xlabel('Wait time [ms]')
+            ax.grid()
+            fig.canvas.draw()
+
+        # copy the measurement history script
+        shutil.copy('measurement_history_matlab_script.txt', t1_meas_folder)
+
+        return delay180_t1_sw, a0_table, a0_ref, asum_table

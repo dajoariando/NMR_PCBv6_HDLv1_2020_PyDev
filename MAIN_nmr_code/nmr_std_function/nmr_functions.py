@@ -140,14 +140,14 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                 data = data + one_scan
         else:
             data = data + one_scan
-
+    '''
     if en_fig:  # plot the averaged scan
         echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
         plt.figure(1)
         for i in range(1, NoE + 1):
             plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3,
                      data[(i - 1) * SpE:i * SpE], linewidth=0.4)
-
+    '''
     # filter the data
     data_filt = np.zeros((NoE, SpE), dtype=complex)
     for i in range(0, NoE):
@@ -163,7 +163,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                            np.sum(np.real(data_filt)))
         if perform_rotation:
             data_filt = data_filt * np.exp(-1j * theta)
-
+    '''
     if en_fig:  # plot filtered data
         echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
         plt.figure(2)
@@ -172,11 +172,12 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                      np.real(data_filt[i, :]), 'b', linewidth=0.4)
             plt.plot((i * tE * 1e-6 + echo_space) * 1e3,
                      np.imag(data_filt[i, :]), 'r', linewidth=0.4)
-
+    '''
     # find echo average, echo magnitude
     echo_avg = np.zeros(SpE, dtype=complex)
     for i in range(0, NoE):
         echo_avg += (data_filt[i, :] / NoE)
+    '''
     if en_fig:  # plot echo shape
         plt.figure(3)
         tacq = (1 / Sf) * 1e6 * np.linspace(1, SpE, SpE)  # in uS
@@ -195,7 +196,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -206,7 +207,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         plt.xlabel('offset frequency(MHz)')
         plt.ylabel('Echo amplitude (a.u.)')
         plt.legend()
-
+    '''
     # matched filtering
     a = np.zeros(NoE, dtype=complex)
     for i in range(0, NoE):
@@ -217,7 +218,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
             a[i] = np.mean(np.multiply(data_filt[i, mtch_fltr_sta_idx:SpE], np.conj(
                 echo_avg[mtch_fltr_sta_idx:SpE])))  # find amplitude with matched filtering
 
-    xspace = tE / 1e6 * np.linspace(1, NoE, NoE)
+    t_echospace = tE / 1e6 * np.linspace(1, NoE, NoE)
 
     # def exp_func(x, a, b, c, d):
     #    return a * np.exp(-b * x) + c * np.exp(-d * x)
@@ -239,11 +240,11 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     guess = np.array([a_guess, b_guess])
 
     try:
-        popt, pocv = curve_fit(exp_func, xspace, np.real(a), guess)
+        popt, pocv = curve_fit(exp_func, t_echospace, np.real(a), guess)
         a0 = popt[0]
         T2 = 1 / popt[1]
         # Estimate SNR/echo/scan
-        f = exp_func(xspace, *popt)  # curve fit
+        f = exp_func(t_echospace, *popt)  # curve fit
         noise = np.std(np.imag(a))
         res = np.std(np.real(a) - f)
         snr = a0 / (noise * math.sqrt(total_scan))
@@ -253,14 +254,14 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
             plt.figure(5)
             plt.cla()
             # plot in milisecond
-            plt.plot(xspace * 1e3, np.real(a), label="real")
+            plt.plot(t_echospace * 1e3, np.real(a), label="real")
             # plot in milisecond
-            plt.plot(xspace * 1e3, np.imag(a), label="imag")
+            plt.plot(t_echospace * 1e3, np.imag(a), label="imag")
 
             # plot fitted line
             plt.figure(5)
-            plt.plot(xspace * 1e3, f, label="fit")  # plot in milisecond
-            plt.plot(xspace * 1e3, np.real(a) - f, label="residue")
+            plt.plot(t_echospace * 1e3, f, label="fit")  # plot in milisecond
+            plt.plot(t_echospace * 1e3, np.real(a) - f, label="residue")
             #plt.set(gca, 'FontSize', 12)
             plt.legend()
             plt.title('Filtered data')
@@ -281,10 +282,10 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     print('SNR/echo/scan = ' + '{0:.2f}'.format(snr))
     print('T2 = ' + '{0:.4f}'.format(T2 * 1e3) + ' msec')
 
-    return (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg)
+    return (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace)
 
 
-def compute_iterate(data_parent_folder, meas_folder, en_fig):
+def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, en_fig):
 
     data_folder = (data_parent_folder + '/' + meas_folder + '/')
     # variables from NMR settings
@@ -304,14 +305,14 @@ def compute_iterate(data_parent_folder, meas_folder, en_fig):
     total_scan = int(data_parser.find_value(
         'nrIterations', param_list, value_list))
     file_name_prefix = 'dat_'
-    en_ext_param = 0
-    thetaref = 0
-    echoref_avg = 0
-    (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg) = compute_multiple(data_parent_folder, meas_folder, file_name_prefix,
-                                                                                Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg)
+    # en_ext_param = 0
+    # thetaref = 0
+    # echoref_avg = 0
+    (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace) = compute_multiple(data_parent_folder, meas_folder, file_name_prefix,
+                                                                                             Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg)
 
     # print(snr, T2)
-    return a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df
+    return a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace
 
 
 def compute_freqsw(data_parent_folder, meas_folder, T2bound, en_figure):

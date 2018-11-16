@@ -41,6 +41,21 @@ def parse_csv_float2col(data_folder, file_name):
     return data1, data2
 
 
+def parse_csv_float3col(data_folder, file_name):
+    file_path = data_folder + "/" + file_name
+    f = open(file_path)
+    csv_f = csv.reader(f, delimiter='\t')
+    data1 = []
+    data2 = []
+    data3 = []
+    for a in csv_f:
+        data1.append(float(a[0]))
+        data2.append(float(a[1]))
+        data3.append(float(a[2]))
+    f.close()
+    return data1, data2, data3
+
+
 def parse_info(data_folder, file_name):
     # filename = "CPMG_iterate_settings.txt"
     file_path = data_folder + file_name
