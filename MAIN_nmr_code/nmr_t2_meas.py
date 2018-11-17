@@ -26,13 +26,14 @@ en_remote_dbg = 0
 if en_remote_dbg:
     from pydevd_file_utils import setup_client_server_paths
     server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
+    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\129.22.143.88\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
     PATH_TRANSLATION = [(client_path, server_path)]
     setup_client_server_paths(PATH_TRANSLATION)
     pydevd.settrace("dajo-compaqsff")
 
 # system setup
 nmrObj = tunable_nmr_system_2018(data_folder)
+
 nmrObj.initNmrSystem()
 nmrObj.turnOnPower()
 nmrObj.setPreampTuning()
@@ -45,10 +46,10 @@ pulse1_us = 2.5  # pulse pi/2 length
 pulse2_us = pulse1_us * 1.6  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 300
+echo_spacing_us = 100
 scan_spacing_us = 400000
-samples_per_echo = 128  # number of points
-echoes_per_scan = 1024  # number of echos
+samples_per_echo = 1024  # number of points
+echoes_per_scan = 64  # number of echos
 init_adc_delay_compensation = 7  # acquisition shift microseconds
 number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
