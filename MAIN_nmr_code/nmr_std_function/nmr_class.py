@@ -56,6 +56,8 @@ class tunable_nmr_system_2018:
         self.PSU_5V_ANA_P_EN_msk = (1 << self.PSU_5V_ANA_P_EN_ofst)
         self.PSU_5V_ANA_N_EN_msk = (1 << self.PSU_5V_ANA_N_EN_ofst)
 
+        self.gnrl_cnt = 0
+
         # variables
         self.data_folder = data_folder
         self.exec_folder = "/c_exec/"
@@ -77,22 +79,12 @@ class tunable_nmr_system_2018:
     def initNmrSystem(self):
         os.system(self.work_dir + "/c_exec/init")
 
-    def turnOnPower(self):
-        # Turn on power supply
-        self.gnrl_cnt = self.PSU_15V_TX_P_EN_msk | self.PSU_15V_TX_N_EN_msk | self.PSU_5V_TX_N_EN_msk | self.PSU_5V_ADC_EN_msk | self.PSU_5V_ANA_P_EN_msk | self.PSU_5V_ANA_N_EN_msk
-        os.system(
-            self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
-            str(self.gnrl_cnt)
-        )
-
-    def setPreampTuning(self):
+    def setPreampTuning(self, vbias, vvarac):
         # set preamp tuning
-        self.vbias = -3.35
-        self.vvarac = -1.2
         os.system(
             self.work_dir + self.exec_folder + "preamp_tuning" + " " +
-            str(self.vbias) + " " +
-            str(self.vvarac)
+            str(vbias) + " " +
+            str(vvarac)
         )
 
     def setMatchingNetwork(self, cpar, cser):
@@ -113,6 +105,14 @@ class tunable_nmr_system_2018:
             str(self.gnrl_cnt)
         )
 
+    def turnOnPower(self):
+        # Turn on power supply
+        self.gnrl_cnt = self.PSU_15V_TX_P_EN_msk | self.PSU_15V_TX_N_EN_msk | self.PSU_5V_TX_N_EN_msk | self.PSU_5V_ADC_EN_msk | self.PSU_5V_ANA_P_EN_msk | self.PSU_5V_ANA_N_EN_msk
+        os.system(
+            self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
+            str(self.gnrl_cnt)
+        )
+
     def turnOffSystem(self):
         # Turn off matching network
         os.system(
@@ -124,6 +124,20 @@ class tunable_nmr_system_2018:
         os.system(
             self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
             str(0)
+        )
+
+    def assertControlSignal(self, cnt_in):
+        self.gnrl_cnt = self.gnrl_cnt | cnt_in
+        os.system(
+            self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
+            str(self.gnrl_cnt)
+        )
+
+    def deassertControlSignal(self, cnt_in):
+        self.gnrl_cnt = self.gnrl_cnt & (~cnt_in)
+        os.system(
+            self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
+            str(self.gnrl_cnt)
         )
 
     def doLaplaceInversion(self, filename, outpath):
@@ -154,12 +168,33 @@ class tunable_nmr_system_2018:
                    )
         os.system(command)  # execute command & ignore its console
 
+    def fid(self, cpmg_freq, pulse2_us, pulse2_dtcl, scan_spacing_us, samples_per_echo, number_of_iteration):
+        # execute cpmg sequence
+        command = (self.work_dir + self.exec_folder + "fid" + " " +
+                   str(cpmg_freq) + " " +
+                   str(pulse2_us) + " " +
+                   str(pulse2_dtcl) + " " +
+                   str(scan_spacing_us) + " " +
+                   str(samples_per_echo) + " " +
+                   str(number_of_iteration)
+                   )
+        os.system(command)  # execute command & ignore its console
+
+    def noise(self, samp_freq, scan_spacing_us, samples_per_echo, number_of_iteration):
+        # execute cpmg sequence
+        command = (self.work_dir + self.exec_folder + "noise" + " " +
+                   str(samp_freq) + " " +
+                   str(scan_spacing_us) + " " +
+                   str(samples_per_echo) + " " +
+                   str(number_of_iteration)
+                   )
+        os.system(command)  # execute command & ignore its console
+
     def cpmgT1(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_us, logsw, delay180_sta, delay180_sto, delay180_ste, ref_number_of_iteration, ref_twait_mult, data_folder, en_scan_fig, en_fig):
 
         # create t1 measurement folder
         t1_meas_folder = datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '_t1_meas'
         os.mkdir(t1_meas_folder)
-
         t1_meas_hist = 't1_meas_hist.txt'  # the history file name for t1 measurement
 
         self.fig_num = 1
@@ -194,7 +229,7 @@ class tunable_nmr_system_2018:
                           echoes_per_scan, init_adc_delay_compensation, ref_number_of_iteration, ph_cycl_en, pulse180_t1_int, ref_twait_int)
         # process the data
         meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-        (a_ref, a0_ref, snr_ref, T2_ref, noise_ref, res_ref, theta_ref, data_filt_ref, echo_avg_ref, Df, _) = compute_iterate(
+        (a_ref, _, a0_ref, snr_ref, T2_ref, noise_ref, res_ref, theta_ref, data_filt_ref, echo_avg_ref, Df, _) = compute_iterate(
             data_folder, meas_folder[0], 0, 0, 0, en_scan_fig)
 
         # move the folder to t1 measurement folder and write history
@@ -215,7 +250,7 @@ class tunable_nmr_system_2018:
             # process the data (note that a0 and T2 is based on single
             # exponential fit)
             meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-            (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, _) = compute_iterate(
+            (a, _, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, _) = compute_iterate(
                 data_folder, meas_folder[0], 1, theta_ref, echo_avg_ref, en_scan_fig)
 
             # move the folder to t1 measurement folder and write history
@@ -229,6 +264,7 @@ class tunable_nmr_system_2018:
             asum_table_decay[i] = np.mean(np.real(a_ref)) - np.mean(np.real(a))
 
             if en_fig:
+                print('Loading Figure')
                 plt.ion()
                 fig = plt.figure(self.fig_num)
                 fig.clf()
@@ -267,7 +303,7 @@ class tunable_nmr_system_2018:
 
                 fig.canvas.draw()
                 fig.canvas.flush_events()
-
+                print('Figure Loaded')
         # save t1 data to csv file to be processed
         f = open(t1_meas_folder + '/' + 't1heel_in.csv', "w+")
         for i in range(0, delay180_ste):
@@ -280,14 +316,18 @@ class tunable_nmr_system_2018:
                                 t1_meas_folder)
         tvect, data = parse_csv_float2col(
             t1_meas_folder, 't1heel_out.csv')
-        i_peaks = signal.find_peaks_cwt(data, np.arange(1, 2))
 
+        i_peaks = signal.find_peaks_cwt(data, np.arange(1, 10))
+
+        t1_opt = tvect[max(i_peaks)]
+        '''
         a_peaks = np.zeros(len(i_peaks))
         for i in range(0, len(i_peaks)):
             a_peaks[i] = data[i_peaks[i]]
 
         # find tvect in which the largest peak is found
         t1_opt = tvect[i_peaks[np.where(max(a_peaks))[0][0]]]  # in second
+        '''
 
         if en_fig:
             ax = fig.add_subplot(3, 1, 3)
@@ -303,4 +343,4 @@ class tunable_nmr_system_2018:
         # copy the measurement history script
         shutil.copy('measurement_history_matlab_script.txt', t1_meas_folder)
 
-        return delay180_t1_sw, a0_table, a0_ref, asum_table
+        return delay180_t1_sw, a0_table, a0_ref, asum_table, t1_opt, t1_meas_folder

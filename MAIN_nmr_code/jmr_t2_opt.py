@@ -34,6 +34,7 @@ if en_remote_dbg:
     setup_client_server_paths(PATH_TRANSLATION)
     pydevd.settrace("dajo-compaqsff")
 
+
 # system setup
 nmrObj = tunable_nmr_system_2018(data_folder)
 

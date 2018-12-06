@@ -26,20 +26,23 @@ en_remote_dbg = 1
 fig_num = 1
 
 # remote debug setup
+server_ip = '129.22.143.88'
+client_ip = '129.22.143.39'
 if en_remote_dbg:
     from pydevd_file_utils import setup_client_server_paths
     server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
+    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\' + \
+        server_ip + '\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
     PATH_TRANSLATION = [(client_path, server_path)]
     setup_client_server_paths(PATH_TRANSLATION)
-    pydevd.settrace("dajo-compaqsff")
+    pydevd.settrace(client_ip)
 
 # system setup
 nmrObj = tunable_nmr_system_2018(data_folder)
 nmrObj.initNmrSystem()
 nmrObj.turnOnPower()
-nmrObj.setPreampTuning()
-nmrObj.setMatchingNetwork(0, 0)
+nmrObj.setPreampTuning(-3.35, -1.4)
+nmrObj.setMatchingNetwork(19, 66)
 nmrObj.setSignalPath()
 
 pulse1_us = 2.5  # pulse pi/2 length
@@ -48,18 +51,18 @@ pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 150
 scan_spacing_us = 400000
-samples_per_echo = 1024  # number of points
-echoes_per_scan = 64  # number of echos
-init_adc_delay_compensation = 10  # acquisition shift microseconds
+samples_per_echo = 128  # number of points
+echoes_per_scan = 256  # number of echos
+init_adc_delay_compensation = 7  # acquisition shift microseconds
 number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
 
 # sweep settings
-cpmg_freq_sta = 4.1  # in microsecond
-cpmg_freq_sto = 4.2  # in microsecond
-cpmg_freq_ste = 10  # number of steps
+cpmg_freq_sta = 7.05  # in microsecond
+cpmg_freq_sto = 7.15  # in microsecond
+cpmg_freq_ste = 20  # number of steps
 cpmg_freq_sw = np.linspace(cpmg_freq_sta, cpmg_freq_sto, cpmg_freq_ste)
 
 a0_table = np.zeros(cpmg_freq_ste)
@@ -68,7 +71,7 @@ for i in range(0, cpmg_freq_ste):
     nmrObj.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int)
     meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
+    (a, _, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
         data_folder, meas_folder[0], 0, 0, 0, en_scan_fig)
     a0_table[i] = a0
     if en_fig:

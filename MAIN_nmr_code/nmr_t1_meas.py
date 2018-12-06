@@ -47,19 +47,19 @@ pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 120
 scan_spacing_us = 400000
-samples_per_echo = 1024  # number of points
-echoes_per_scan = 64  # number of echos
+samples_per_echo = 64  # number of points
+echoes_per_scan = 10000  # number of echos
 init_adc_delay_compensation = 10  # acquisition shift microseconds
 number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_us = pulse2_us
 # sweep parameters
-logsw = 1  # logsw specifies logsweep, or otherwise linsweep
+logsw = 0  # logsw specifies logsweep, or otherwise linsweep
 delay180_sta = 100  # in microsecond
 delay180_sto = 400000  # in microsecond
 delay180_ste = 20  # number of steps
 # reference parameters
-ref_number_of_iteration = 20  # number of averaging
+ref_number_of_iteration = 5  # number of averaging
 ref_twait_mult = 3  # wait time mult. from delay180_sto entered
 
 nmrObj.cpmgT1(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation,

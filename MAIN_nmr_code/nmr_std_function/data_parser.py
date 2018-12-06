@@ -94,6 +94,69 @@ def ensure_dir(file_path):
         os.makedirs(directory)
 
 
+def write_text_overwrite(data_folder, filename, data):
+    with open(data_folder + '/' + filename, 'w', newline='') as csvfile:
+        csvfile.write(data)
+        csvfile.write('\n')
+
+
+def write_text_append(data_folder, filename, data):
+    with open(data_folder + '/' + filename, 'a', newline='') as csvfile:
+        csvfile.write(data)
+        csvfile.write('\n')
+
+
+def convert_to_prospa_data_t1(datain, path, write_csv):
+    # datain     : input data in tauSteps*NoE matrix format
+    # write_csv  : write output to csv file
+
+    # SETTINGS AND DATA PARSING
+    # find nmr settings from the folder
+    file_info_name = "acqu.par"
+    (param_list, value_list) = data_parser.parse_info(
+        path, file_info_name)  # read file
+    tE = data_parser.find_value('echoTimeRun', param_list, value_list)
+    SpE = int(data_parser.find_value('nrPnts', param_list, value_list))
+    NoE = int(data_parser.find_value('nrEchoes', param_list, value_list))
+    en_ph_cycle_proc = int(data_parser.find_value(
+        'usePhaseCycle', param_list, value_list))
+    nrIterations = int(data_parser.find_value(
+        'nrIterations', param_list, value_list))
+    Sf = data_parser.find_value(
+        'adcFreq', param_list, value_list) * 1e6
+    Df = data_parser.find_value(
+        'b1Freq', param_list, value_list) * 1e6
+    start_param = data_parser.find_value('minTau', param_list, value_list)
+    stop_param = data_parser.find_value('maxTau', param_list, value_list)
+    nsteps = int(data_parser.find_value('tauSteps', param_list, value_list))
+    logspaceyesno = int(data_parser.find_value(
+        'logSpace', param_list, value_list))
+
+    # CONVERSION
+    if logspaceyesno:
+        sweep_param = np.logspace(
+            np.log10(start_param), np.log10(stop_param), nsteps)
+    else:
+        sweep_param = np.linspace(start_param, stop_param, nsteps)
+
+    data = np.zeros((len(sweep_param), NoE * 2), dtype=float)
+    for i in range(0, len(sweep_param)):
+        data[i, 0:NoE * 2:2] = np.real(datain[i, :])
+        data[i, 1:NoE * 2:2] = np.imag(datain[i, :])
+
+    if write_csv:
+        kea_dir = path + '1/'
+        ensure_dir(kea_dir)  # create dir for kea data
+        shutil.copyfile(path + file_info_name, kea_dir +
+                        file_info_name)  # copy kea acqu.par
+
+        with open(kea_dir + 'data2.csv', 'w', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=',')
+            for i in range(0, len(sweep_param)):
+                filewriter.writerow(data[i, :])
+
+
+''' OBSOLETE
 def convert_to_kea_format(data_parent_folder, meas_folder, file_name_prefix):
 
     # variables to be input
@@ -161,66 +224,7 @@ def convert_to_kea_format(data_parent_folder, meas_folder, file_name_prefix):
     return
 
 
-def write_text_overwrite(data_folder, filename, data):
-    with open(data_folder + '/' + filename, 'w', newline='') as csvfile:
-        csvfile.write(data)
-        csvfile.write('\n')
 
-
-def write_text_append(data_folder, filename, data):
-    with open(data_folder + '/' + filename, 'a', newline='') as csvfile:
-        csvfile.write(data)
-        csvfile.write('\n')
-
-
-def convert_to_prospa_data_t1(datain, path, write_csv):
-    # datain     : input data in tauSteps*NoE matrix format
-    # write_csv  : write output to csv file
-
-    # SETTINGS AND DATA PARSING
-    # find nmr settings from the folder
-    file_info_name = "acqu.par"
-    (param_list, value_list) = data_parser.parse_info(
-        path, file_info_name)  # read file
-    tE = data_parser.find_value('echoTimeRun', param_list, value_list)
-    SpE = int(data_parser.find_value('nrPnts', param_list, value_list))
-    NoE = int(data_parser.find_value('nrEchoes', param_list, value_list))
-    en_ph_cycle_proc = int(data_parser.find_value(
-        'usePhaseCycle', param_list, value_list))
-    nrIterations = int(data_parser.find_value(
-        'nrIterations', param_list, value_list))
-    Sf = data_parser.find_value(
-        'adcFreq', param_list, value_list) * 1e6
-    Df = data_parser.find_value(
-        'b1Freq', param_list, value_list) * 1e6
-    start_param = data_parser.find_value('minTau', param_list, value_list)
-    stop_param = data_parser.find_value('maxTau', param_list, value_list)
-    nsteps = int(data_parser.find_value('tauSteps', param_list, value_list))
-    logspaceyesno = int(data_parser.find_value(
-        'logSpace', param_list, value_list))
-
-    # CONVERSION
-    if logspaceyesno:
-        sweep_param = np.logspace(
-            np.log10(start_param), np.log10(stop_param), nsteps)
-    else:
-        sweep_param = np.linspace(start_param, stop_param, nsteps)
-
-    data = np.zeros((len(sweep_param), NoE * 2), dtype=float)
-    for i in range(0, len(sweep_param)):
-        data[i, 0:NoE * 2:2] = np.real(datain[i, :])
-        data[i, 1:NoE * 2:2] = np.imag(datain[i, :])
-
-    if write_csv:
-        kea_dir = path + '1/'
-        ensure_dir(kea_dir)  # create dir for kea data
-        shutil.copyfile(path + file_info_name, kea_dir +
-                        file_info_name)  # copy kea acqu.par
-
-        with open(kea_dir + 'data2.csv', 'w', newline='') as csvfile:
-            filewriter = csv.writer(csvfile, delimiter=',')
-            for i in range(0, len(sweep_param)):
-                filewriter.writerow(data[i, :])
 
 
 def convert_to_t2heel_format(data_parent_folder, meas_folder, file_name_prefix):
@@ -287,3 +291,4 @@ def convert_to_t2heel_format(data_parent_folder, meas_folder, file_name_prefix):
     #shutil.copyfile(data_folder + file_info_name, kea_dir + file_info_name)
 
     return
+'''

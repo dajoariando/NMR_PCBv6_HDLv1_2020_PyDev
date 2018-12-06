@@ -23,65 +23,62 @@ data_folder = "/root/NMR_DATA"
 en_scan_fig = 0
 en_fig = 1
 en_remote_dbg = 1
-fig_num = 1
-
+fig_num = 100
 
 # remote debug setup
-server_ip = '129.22.143.88'
-client_ip = '129.22.143.39'
 if en_remote_dbg:
     from pydevd_file_utils import setup_client_server_paths
     server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\' + \
-        server_ip + '\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
+    client_path = 'C:\\AcquisitionSW\\python_code\\RemoteSystemsTempFiles\\192.168.2.101\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
     PATH_TRANSLATION = [(client_path, server_path)]
     setup_client_server_paths(PATH_TRANSLATION)
-    pydevd.settrace(client_ip)
+    pydevd.settrace("192.168.2.1")
 
 # system setup
 nmrObj = tunable_nmr_system_2018(data_folder)
 nmrObj.initNmrSystem()
 nmrObj.turnOnPower()
 nmrObj.setPreampTuning(-3.35, -1.4)
-nmrObj.setMatchingNetwork(19, 66)
+# nmrObj.setMatchingNetwork(14, 95)
+nmrObj.setMatchingNetwork(0, 0)
 nmrObj.setSignalPath()
 
 # cpmg settings
-cpmg_freq = 4.146
+cpmg_freq = 1.788
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 100
-scan_spacing_us = 400000
+echo_spacing_us = 200
+scan_spacing_us = 100000
 samples_per_echo = 512  # number of points
 echoes_per_scan = 256  # number of echos
-init_adc_delay_compensation = 7  # acquisition shift microseconds
-number_of_iteration = 4  # number of averaging
+init_adc_delay_compensation = 17  # acquisition shift microseconds
+number_of_iteration = 64  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
 
 # sweep settings
-pulse1_us_sta = 1.0  # in microsecond
-pulse1_us_sto = 3.0  # in microsecond
-pulse1_us_ste = 30  # number of steps
+pulse1_us_sta = 8  # in microsecond
+pulse1_us_sto = 20  # in microsecond
+pulse1_us_ste = 40  # number of steps
 pulse1_us_sw = np.linspace(pulse1_us_sta, pulse1_us_sto, pulse1_us_ste)
 
-a_integ_table = np.zeros(pulse1_us_ste)
+a0_table = np.zeros(pulse1_us_ste)
 for i in range(0, pulse1_us_ste):
-    pulse1_us = pulse1_us_sw[i]  # pulse pi/2 length
-    pulse2_us = pulse1_us * 1.6  # pulse pi length
+    pulse1_us = 8  # pulse pi/2 length
+    pulse2_us = pulse1_us_sw[i]  # pulse pi length
     nmrObj.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int)
     meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
+    (a, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
         data_folder, meas_folder[0], 0, 0, 0, en_scan_fig)
-    a_integ_table[i] = a_integ
+    a0_table[i] = a0
     if en_fig:
         plt.ion()
         fig = plt.figure(fig_num)
         fig.clf()
         ax = fig.add_subplot(1, 1, 1)
-        line1, = ax.plot(pulse1_us_sw[0:i + 1], a_integ_table[0:i + 1], 'r-')
+        line1, = ax.plot(pulse1_us_sw[0:i + 1], a0_table[0:i + 1], 'r-')
         # ax.set_ylim(-50, 0)
         # ax.set_xlabel('Frequency [MHz]')
         # ax.set_ylabel('S11 [dB]')
