@@ -17,6 +17,7 @@ from scipy import signal
 from datetime import datetime
 import shutil
 from nmr_std_function.data_parser import write_text_append
+from nmr_std_function.hw_driver import fpga_de1soc
 
 
 class tunable_nmr_system_2018:
@@ -167,6 +168,44 @@ class tunable_nmr_system_2018:
                    str(delay180_t1_int)
                    )
         os.system(command)  # execute command & ignore its console
+
+    def cpmgSequenceDirectRead(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int):
+        data = np.zeros(samples_per_echo * echoes_per_scan)
+
+        for i in range(0, number_of_iteration):
+            # execute cpmg sequence
+            command = (self.work_dir + self.exec_folder + "cpmg_iterate_direct" + " " +
+                       str(cpmg_freq) + " " +
+                       str(pulse1_us) + " " +
+                       str(pulse2_us) + " " +
+                       str(pulse1_dtcl) + " " +
+                       str(pulse2_dtcl) + " " +
+                       str(echo_spacing_us) + " " +
+                       str(scan_spacing_us) + " " +
+                       str(samples_per_echo) + " " +
+                       str(echoes_per_scan) + " " +
+                       str(init_adc_delay_compensation) + " " +
+                       str(1) + " " +
+                       str(ph_cycl_en) + " " +
+                       str(pulse180_t1_int) + " " +
+                       str(delay180_t1_int)
+                       )
+            os.system(command)  # execute command & ignore its console
+
+            # read the data from SDRAM
+            fpgaObj = fpga_de1soc()
+            # get data averaged by number of iteration
+            one_scan = fpgaObj.readSDRAM(samples_per_echo *
+                                         echoes_per_scan)
+            if (ph_cycl_en):
+                if (i % 2):  # phase cycling every other scan
+                    data = data - np.divide(one_scan, number_of_iteration)
+                else:
+                    data = data + np.divide(one_scan, number_of_iteration)
+            else:
+                data = data + np.divide(one_scan, number_of_iteration)
+
+        return data
 
     def fid(self, cpmg_freq, pulse2_us, pulse2_dtcl, scan_spacing_us, samples_per_echo, number_of_iteration):
         # execute cpmg sequence

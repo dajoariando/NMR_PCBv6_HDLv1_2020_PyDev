@@ -84,7 +84,7 @@ def compute_wobble(data_parent_folder, meas_folder, s11_min, en_fig, fig_num):
     return S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
 
-def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg):
+def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain):
 
     # variables to be input
     # data_parent_folder : the folder for all datas
@@ -98,6 +98,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # en_ext_param      : enable external parameter for data signal processing
     # thetaref          : external parameter : rotation angle
     # echoref_avg        : external parameter : echo average reference
+    # datain            : the data captured direct reading. data format: AC,averaged scans, phase-cycled
+    # direct_read        : perform direct reading from SDRAM/FIFO
 
     data_folder = (data_parent_folder + '/' + meas_folder + '/')
 
@@ -126,20 +128,23 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     #    'nrIterations', param_list, value_list))
 
     # parse file and remove DC component
-    data = np.zeros(NoE * SpE)
-    for m in range(1, total_scan + 1):
-        file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
-        # read the data from the file and store it in numpy array format
-        one_scan = np.array(data_parser.read_data(file_path))
-        one_scan = (one_scan - np.mean(one_scan)) / \
-            total_scan  # remove DC component
-        if (en_ph_cycle_proc):
-            if (m % 2):  # phase cycling every other scan
-                data = data - one_scan
+    if (direct_read):
+        data = datain
+    else:
+        data = np.zeros(NoE * SpE)
+        for m in range(1, total_scan + 1):
+            file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
+            # read the data from the file and store it in numpy array format
+            one_scan = np.array(data_parser.read_data(file_path))
+            one_scan = (one_scan - np.mean(one_scan)) / \
+                total_scan  # remove DC component
+            if (en_ph_cycle_proc):
+                if (m % 2):  # phase cycling every other scan
+                    data = data - one_scan
+                else:
+                    data = data + one_scan
             else:
                 data = data + one_scan
-        else:
-            data = data + one_scan
 
     if en_fig:  # plot the averaged scan
         echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
@@ -196,7 +201,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -287,18 +292,18 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     return (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace)
 
 
-def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, en_fig):
+def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, direct_read, datain, en_fig):
 
     data_folder = (data_parent_folder + '/' + meas_folder + '/')
     # variables from NMR settings
     (param_list, value_list) = data_parser.parse_info(
         data_folder, 'acqu.par')  # read file
-    # SpE = int(data_parser.find_value(
-    #    'nrPnts', param_list, value_list))
-    # NoE = int(data_parser.find_value(
-    #    'nrEchoes', param_list, value_list))
-    # en_ph_cycle_proc = data_parser.find_value(
-    #    'usePhaseCycle', param_list, value_list)
+    SpE = int(data_parser.find_value(
+        'nrPnts', param_list, value_list))
+    NoE = int(data_parser.find_value(
+        'nrEchoes', param_list, value_list))
+    en_ph_cycle_proc = data_parser.find_value(
+        'usePhaseCycle', param_list, value_list)
     tE = data_parser.find_value('echoTimeRun', param_list, value_list)
     Sf = data_parser.find_value(
         'adcFreq', param_list, value_list) * 1e6
@@ -310,8 +315,13 @@ def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, ech
     # en_ext_param = 0
     # thetaref = 0
     # echoref_avg = 0
-    (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace) = compute_multiple(data_parent_folder, meas_folder, file_name_prefix,
-                                                                                                      Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg)
+
+    if (direct_read):
+        (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace) = compute_multiple(data_parent_folder, meas_folder, file_name_prefix,
+                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain)
+    else:
+        (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace) = compute_multiple(data_parent_folder, meas_folder, file_name_prefix,
+                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, 0, datain)
 
     # print(snr, T2)
     return a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace
