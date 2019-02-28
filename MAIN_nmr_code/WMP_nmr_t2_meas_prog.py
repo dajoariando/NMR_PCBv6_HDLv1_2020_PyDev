@@ -64,7 +64,7 @@ pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = read_window + 200  # TE
 scan_spacing_us = float(sys.argv[5])  # TR
 # number of points (DesiredReadoutWindowLength*4*freq)
-samples_per_echo = read_window * 4 * cpmg_freq
+samples_per_echo = int(read_window * 4 * cpmg_freq)
 echoes_per_scan = int(sys.argv[3])  # number of echos
 init_adc_delay_compensation = float(
     sys.argv[12])  # acquisition shift microseconds

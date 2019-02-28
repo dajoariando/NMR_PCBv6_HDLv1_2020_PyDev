@@ -34,9 +34,9 @@ if en_remote_dbg:
     pydevd.settrace("129.22.143.39")
 
 # cpmg settings
-samp_freq = 25  # 4.253 original 4.188
+samp_freq = 2  # 4.253 original 4.188
 scan_spacing_us = 400000
-samples_per_echo = 1000  # number of points
+samples_per_echo = 250  # number of points
 number_of_iteration = 1  # number of averaging
 
 # system setup
@@ -58,22 +58,22 @@ while True:
 
     # nmrObj.setSignalPath()
     nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                               nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+                               nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
 
-    time.sleep(1)
+    time.sleep(0.3)
 
     nmrObj.noise(samp_freq,
                  scan_spacing_us, samples_per_echo, number_of_iteration)
 
     # nmrObj.turnOffSystem()
     nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                                 nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+                                 nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
 
     nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                                  nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
 
-    meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    compute_noise(data_folder, meas_folder[0], en_fig)
+    # meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
+    # compute_noise(data_folder, meas_folder[0], en_fig)
 
 
 nmrObj.setMatchingNetwork(0, 0)

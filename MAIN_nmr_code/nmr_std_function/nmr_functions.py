@@ -109,6 +109,9 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # perform rotation to the data -> required for reference data for t1
     # measurement
     perform_rotation = 1
+    # process individual raw data, otherwise it'll load a sum file generated
+    # by C
+    proc_indv_data = 0
 
     # variables from NMR settings
     (param_list, value_list) = data_parser.parse_info(
@@ -131,20 +134,31 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     if (direct_read):
         data = datain
     else:
-        data = np.zeros(NoE * SpE)
-        for m in range(1, total_scan + 1):
-            file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
-            # read the data from the file and store it in numpy array format
-            one_scan = np.array(data_parser.read_data(file_path))
-            one_scan = (one_scan - np.mean(one_scan)) / \
-                total_scan  # remove DC component
-            if (en_ph_cycle_proc):
-                if (m % 2):  # phase cycling every other scan
-                    data = data - one_scan
+        if (proc_indv_data):
+            # read all datas and average it
+            data = np.zeros(NoE * SpE)
+            for m in range(1, total_scan + 1):
+                file_path = (data_folder + file_name_prefix +
+                             '{0:03d}'.format(m))
+                # read the data from the file and store it in numpy array
+                # format
+                one_scan = np.array(data_parser.read_data(file_path))
+                one_scan = (one_scan - np.mean(one_scan)) / \
+                    total_scan  # remove DC component
+                if (en_ph_cycle_proc):
+                    if (m % 2):  # phase cycling every other scan
+                        data = data - one_scan
+                    else:
+                        data = data + one_scan
                 else:
                     data = data + one_scan
-            else:
-                data = data + one_scan
+        else:
+            # read sum data only
+            file_path = (data_folder + 'asum')
+            data = np.zeros(NoE * SpE)
+            data = np.array(data_parser.read_data(file_path))
+            data = (data - np.mean(data)) / \
+                total_scan  # remove DC component
 
     if en_fig:  # plot the averaged scan
         echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
@@ -201,7 +215,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
