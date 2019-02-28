@@ -215,7 +215,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')

@@ -27,7 +27,7 @@ import pydevd
 
 # settings
 data_folder = "/root/NMR_DATA"  # the nmr data folder
-en_fig = 1  # enable figure
+en_fig = 0  # enable figure
 en_remote_dbg = 0  # enable remote debugging. Enable debug server first!
 direct_read = 0   # perform direct read from SDRAM. use with caution above!
 meas_time = 1  # measure time
@@ -60,11 +60,11 @@ nmrObj.setPreampTuning(-3.35, -1.4)
 nmrObj.setMatchingNetwork(19, 66)
 # nmrObj.setSignalPath()
 # for normal path
-# nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-#                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
-# for reflection path or broadband board
 nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
+                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+# for reflection path or broadband board
+# nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
+#                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
 
 # cpmg settings
 cpmg_freq = 0.5  # 4.253 original 4.188
@@ -77,7 +77,7 @@ scan_spacing_us = 100000
 samples_per_echo = 128  # number of points
 echoes_per_scan = 300  # number of echos
 init_adc_delay_compensation = 10  # acquisition shift microseconds
-number_of_iteration = 512  # number of averaging
+number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -95,11 +95,12 @@ else:
 # turn off system
 # nmrObj.turnOffSystem()
 # for normal path
-# nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-#                             nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
-# for reflection path or broadband board
 nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                             nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
+                             nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+# for reflection path or broadband board
+# nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
+# nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
+
 nmrObj.setMatchingNetwork(0, 0)
 nmrObj.setPreampTuning(0, 0)
 nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |

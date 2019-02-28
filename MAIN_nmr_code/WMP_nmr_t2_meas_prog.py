@@ -43,6 +43,7 @@ nmrObj.turnOnPower()
 nmrObj.setPreampTuning(float(sys.argv[8]), float(sys.argv[9]))
 nmrObj.setMatchingNetwork(
     int(sys.argv[10]), int(sys.argv[11]))  # good new ones
+
 #nmrObj.setMatchingNetwork(3, 67)
 
 # nmrObj.setSignalPath(nmrObj.gnrl_cnt | nmrObj.AMP_HP_LT1210_EN_msk |
