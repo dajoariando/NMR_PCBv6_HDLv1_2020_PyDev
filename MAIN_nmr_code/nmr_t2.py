@@ -67,17 +67,19 @@ nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
 #                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
 
 # cpmg settings
-cpmg_freq = 0.5  # 4.253 original 4.188
-pulse1_us = 8  # pulse pi/2 length
+cpmg_freq = 2.2  # 4.06625 for CWRU lab
+pulse1_us = 10  # pulse pi/2 length. put 8 for broadband board
 pulse2_us = pulse1_us * 1.6  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 220
-scan_spacing_us = 100000
-samples_per_echo = 128  # number of points
-echoes_per_scan = 300  # number of echos
-init_adc_delay_compensation = 10  # acquisition shift microseconds
-number_of_iteration = 4  # number of averaging
+echo_spacing_us = 200
+scan_spacing_us = 400000
+samples_per_echo = 256  # number of points
+echoes_per_scan = 100  # number of echos
+
+# put to 10 for broadband board and 6 for tunable board
+init_adc_delay_compensation = 6  # acquisition shift microseconds.
+number_of_iteration = 1  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
