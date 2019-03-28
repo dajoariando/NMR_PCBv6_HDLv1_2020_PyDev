@@ -57,8 +57,15 @@ class tunable_nmr_system_2018:
         self.PSU_5V_ANA_P_EN_msk = (1 << self.PSU_5V_ANA_P_EN_ofst)
         self.PSU_5V_ANA_N_EN_msk = (1 << self.PSU_5V_ANA_N_EN_ofst)
 
+        # General control defaults for the FPGA
         self.gnrl_cnt = 0
-
+        
+        # ip addresses settings for the system
+        self.server_ip = '192.168.137.2'
+        self.client_ip = '192.168.137.1'
+        self.server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
+        self.client_path = 'Z:\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'  # client path with samba
+        
         # variables
         self.data_folder = data_folder
         self.exec_folder = "/c_exec/"
@@ -219,15 +226,27 @@ class tunable_nmr_system_2018:
                    )
         os.system(command)  # execute command & ignore its console
 
-    def noise(self, samp_freq, scan_spacing_us, samples_per_echo, number_of_iteration):
-        # execute cpmg sequence
+    def noise(self, samp_freq , samples):
+        scan_spacing_us = 100000
+        number_of_iteration = 1
+        # execute noise sequence
         command = (self.work_dir + self.exec_folder + "noise" + " " +
                    str(samp_freq) + " " +
                    str(scan_spacing_us) + " " +
-                   str(samples_per_echo) + " " +
+                   str(samples) + " " +
                    str(number_of_iteration)
                    )
         os.system(command)  # execute command & ignore its console
+        
+    def wobble(self, sta_freq, sto_freq, spac_freq, samp_freq):
+        # execute cpmg sequence
+        command = (self.work_dir + self.exec_folder + "wobble" + " " +
+                   str(sta_freq) + " " +
+                   str(sto_freq) + " " +
+                   str(spac_freq) + " " +
+                   str(samp_freq)
+                   )
+        os.system(command)  # execute command & ignore its console  
 
     def cpmgT1(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_us, logsw, delay180_sta, delay180_sto, delay180_ste, ref_number_of_iteration, ref_twait_mult, data_folder, en_scan_fig, en_fig):
 

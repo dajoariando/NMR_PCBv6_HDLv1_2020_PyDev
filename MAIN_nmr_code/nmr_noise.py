@@ -23,32 +23,29 @@ data_folder = "/root/NMR_DATA"
 en_fig = 1
 en_remote_dbg = 0
 
+# nmr object declaration
+nmrObj = tunable_nmr_system_2018(data_folder)
+
 # remote debug setup
 if en_remote_dbg:
     from pydevd_file_utils import setup_client_server_paths
-    server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-    client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\129.22.143.88\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
-    PATH_TRANSLATION = [(client_path, server_path)]
+    PATH_TRANSLATION = [(nmrObj.client_path, nmrObj.server_path)]
     setup_client_server_paths(PATH_TRANSLATION)
-    # pydevd.settrace("dajo-compaqsff")
-    pydevd.settrace("129.22.143.39")
+    print("---server:%s---client:%s---" % (nmrObj.server_ip, nmrObj.client_ip))
+    pydevd.settrace(nmrObj.client_ip)
 
-# cpmg settings
-samp_freq = 25  # 4.253 original 4.188
-scan_spacing_us = 400000
-samples_per_echo = 1000  # number of points
-number_of_iteration = 1  # number of averaging
+# measurement settings
+samp_freq = 25  # sampling frequency
+samples = 100000  # number of points
+min_freq = 1.5
+max_freq = 3.5
 
 # system setup
-nmrObj = tunable_nmr_system_2018(data_folder)
-
 nmrObj.initNmrSystem()
-
 nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
-nmrObj.setPreampTuning(-3.35, -1.4)
-nmrObj.setMatchingNetwork(19, 66)
-
+nmrObj.setPreampTuning(-2.75, 1.4)
+nmrObj.setMatchingNetwork(0, 0)
 
 while True:
 
@@ -58,12 +55,11 @@ while True:
 
     # nmrObj.setSignalPath()
     nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                               nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
+                               nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
 
-    time.sleep(0.3)
+    time.sleep(0.5)
 
-    nmrObj.noise(samp_freq,
-                 scan_spacing_us, samples_per_echo, number_of_iteration)
+    nmrObj.noise(samp_freq, samples)
 
     # nmrObj.turnOffSystem()
     nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
@@ -71,9 +67,10 @@ while True:
 
     nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                                  nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
-
+    
+    # process the data
     meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    compute_noise(data_folder, meas_folder[0], en_fig)
+    compute_noise(min_freq, max_freq, data_folder, meas_folder[0], en_fig)
 
 
 nmrObj.setMatchingNetwork(0, 0)

@@ -45,19 +45,23 @@ def butter_lowpass_filter(data, cutoff, fs, order, en_figure):
 
 
 def down_conv(s, k, tE, Df, Sf):
-
+    
+    filt_ord = 2
+    filt_lpf_cutoff = 50e3 # in Hz
+    
     T = 1 / Sf
     t = np.linspace(k * tE, k * tE + T * (len(s) - 1), len(s))
-
-    # compute the signal frequency: only for ADC freq below Nyquist rate
+    
+    # downconversion below Nyquist rate
     # Ds = abs(Df - Sf)
-
-    #sReal = s * np.cos(2 * math.pi * Ds * t)
+    # sReal = s * np.cos(2 * math.pi * Ds * t)
+    # sImag = s * np.sin(2 * math.pi * Ds * t)
+    
+    # downconversion at Nyquist rate or higher
     sReal = s * np.cos(2 * math.pi * Df * t)
-    #sImag = s * np.sin(2 * math.pi * Ds * t)
     sImag = s * np.sin(2 * math.pi * Df * t)
 
-    r = butter_lowpass_filter(sReal + 1j * sImag, 3e5, Sf, 2, False)
+    r = butter_lowpass_filter(sReal + 1j * sImag, filt_lpf_cutoff, Sf, filt_ord, False)
 
     return r
 
@@ -65,6 +69,7 @@ def down_conv(s, k, tE, Df, Sf):
 def nmr_fft(data, fs, en_fig):
     spectx = np.linspace(-fs / 2, fs / 2, len(data))
     specty = abs(np.fft.fftshift(np.fft.fft(data - np.mean(data))))
+    specty = np.divide(specty,len(data)) # normalize fft
     if en_fig:
         plt.figure
         plt.plot(spectx, specty, 'b')

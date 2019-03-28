@@ -215,7 +215,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)
+                    : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -341,7 +342,7 @@ def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, ech
     return a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace
 
 
-def compute_noise(data_parent_folder, meas_folder, en_fig):
+def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
 
     # variables to be input
     # data_parent_folder : the folder for all datas
@@ -363,22 +364,26 @@ def compute_noise(data_parent_folder, meas_folder, en_fig):
         'nrIterations', param_list, value_list))
 
     # parse file and remove DC component
-    data = np.zeros(nrPnts)
+    # data = np.zeros(nrPnts)
     for m in range(1, total_scan + 1):
         file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
         # read the data from the file and store it in numpy array format
         one_scan = np.array(data_parser.read_data(file_path))
-        # one_scan = (one_scan - np.mean(one_scan)) / \
-        #   total_scan  # remove DC component
-        data = data + one_scan
-
+        one_scan = (one_scan - np.mean(one_scan)) / \
+            total_scan  # remove DC component
+        # data = data + one_scan
+    
     spectx, specty = nmr_fft(one_scan, adcFreq, 0)
+    fft_range = [i for i, value in enumerate(spectx) if (value >= minfreq and value <= maxfreq)] # limit fft display
+    print('\t\tNOISE RMS = ' + '{0:.5f}'.format(np.std(specty[fft_range]))) # standard deviation of the fft
+    
     if en_fig:
         plt.ion()
         fig = plt.figure(fig_num)
         fig.clf()
         ax = fig.add_subplot(2, 1, 1)
-        line1, = ax.plot(spectx, specty, 'r-')
+        
+        line1, = ax.plot(spectx[fft_range], specty[fft_range], 'r-')
         # ax.set_ylim(-50, 0)
         ax.set_xlabel('Frequency [MHz]')
         ax.set_ylabel('Amplitude [a.u.]')
@@ -386,7 +391,7 @@ def compute_noise(data_parent_folder, meas_folder, en_fig):
         ax.grid()
 
         ax = fig.add_subplot(2, 1, 2)
-        line1, = ax.plot(data, 'r-')
+        line1, = ax.plot(one_scan, 'r-')
         ax.set_xlabel('Time')
         ax.set_ylabel('Amplitude [a.u.]')
         ax.set_title("Noise amplitude")

@@ -67,7 +67,7 @@ nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
                            nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
 
 # cpmg settings
-cpmg_freq = 2.2  # 4.06625 for CWRU lab
+cpmg_freq = 1.8  # 4.06625 for CWRU lab
 pulse1_us = 10  # pulse pi/2 length. put 8 for broadband board
 pulse2_us = pulse1_us * 1.6  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
