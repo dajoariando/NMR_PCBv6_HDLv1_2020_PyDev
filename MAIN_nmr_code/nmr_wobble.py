@@ -21,7 +21,7 @@ en_fig = 1
 # measurement properties
 sta_freq = 1
 sto_freq = 4
-spac_freq = 0.01
+spac_freq = 0.05
 samp_freq = 25
 
 # instantiate nmr object
@@ -39,7 +39,6 @@ work_dir = os.getcwd()
 os.chdir(data_parent_folder)
 
 
-
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
 # nmrObj.turnOnPower()
@@ -48,18 +47,21 @@ nmrObj.assertControlSignal(nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk)
 
 
-
-nmrObj.setMatchingNetwork(0,0)
+nmrObj.setMatchingNetwork(80, 10)
 
 while True:
-    nmrObj.assertControlSignal(nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
-    nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
+    nmrObj.assertControlSignal(
+        nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
+    nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
+                               nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
     time.sleep(0.1)
-    
+
     nmrObj.wobble(sta_freq, sto_freq, spac_freq, samp_freq)
 
-    nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
-    nmrObj.deassertControlSignal(nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
+    nmrObj.deassertControlSignal(
+        nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
+    nmrObj.deassertControlSignal(
+        nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
 
     S11_min = -10
     meas_folder = parse_simple_info(data_parent_folder, 'current_folder.txt')
@@ -69,4 +71,3 @@ while True:
         data_parent_folder, meas_folder[0], S11_min, en_fig, fig_num)
     print('fmin={0:0.3f} fmax={1:0.3f} bw={2:0.3f} minS11={3:0.2f} minS11_freq={4:0.2f}'.format(
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq))
-

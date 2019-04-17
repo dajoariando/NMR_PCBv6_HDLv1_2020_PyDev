@@ -21,7 +21,7 @@ from nmr_std_function.hw_driver import fpga_de1soc
 
 
 class tunable_nmr_system_2018:
-    def __init__(self, data_folder):
+    def __init__(self, data_folder, en_remote_dbg):
         # Output control signal to FPGA via I2C
         self.PSU_15V_TX_P_EN_ofst = (0)
         self.PSU_15V_TX_N_EN_ofst = (1)
@@ -59,30 +59,48 @@ class tunable_nmr_system_2018:
 
         # General control defaults for the FPGA
         self.gnrl_cnt = 0
-        
+
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.2'
-        self.client_ip = '192.168.137.1'
+        self.server_ip = '129.22.143.88'
+        self.client_ip = '129.22.143.39'
         self.server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-        self.client_path = 'Z:\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'  # client path with samba
-        
+        # client path with samba
+        self.client_path = 'X:\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
+
+        if en_remote_dbg:
+            from pydevd_file_utils import setup_client_server_paths
+            PATH_TRANSLATION = [(self.client_path, self.server_path)]
+            setup_client_server_paths(PATH_TRANSLATION)
+            print("---server:%s---client:%s---" %
+                  (self.server_ip, self.client_ip))
+            pydevd.settrace(self.client_ip, stdoutToServer=True,
+                            stderrToServer=True)
+
         # variables
         self.data_folder = data_folder
         self.exec_folder = "/c_exec/"
 
         # directories
         self.work_dir = os.getcwd()
+        # only do this after remote debug initialization
         os.chdir(self.data_folder)
 
     def turnOnRemoteDebug(self):
         # CANNOT RUN FROM HERE, YOU HAVE TO COPY THE CONTENT OF THIS FOLDER TO THE EXECUTABLE WHERE YOU RUN THE CODE AND RUN IT FROM THERE
         # THIS IS KEPT FOR CLEAN DOCUMENTATION PURPOSES
+        #from pydevd_file_utils import setup_client_server_paths
+        #server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
+        #client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
+        #PATH_TRANSLATION = [(client_path, server_path)]
+        # setup_client_server_paths(PATH_TRANSLATION)
+        # pydevd.settrace("dajo-compaqsff")
         from pydevd_file_utils import setup_client_server_paths
-        server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
-        client_path = 'D:\\GDrive\\WORKSPACES\\Eclipse_Python_2018\\RemoteSystemsTempFiles\\DAJO-DE1SOC\\root\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
-        PATH_TRANSLATION = [(client_path, server_path)]
+        PATH_TRANSLATION = [(self.client_path, self.server_path)]
         setup_client_server_paths(PATH_TRANSLATION)
-        pydevd.settrace("dajo-compaqsff")
+        print("---server:%s---client:%s---" %
+              (self.server_ip, self.client_ip))
+        pydevd.settrace(self.client_ip, stdoutToServer=True,
+                        stderrToServer=True)
 
     def initNmrSystem(self):
         os.system(self.work_dir + "/c_exec/init")
@@ -226,7 +244,7 @@ class tunable_nmr_system_2018:
                    )
         os.system(command)  # execute command & ignore its console
 
-    def noise(self, samp_freq , samples):
+    def noise(self, samp_freq, samples):
         scan_spacing_us = 100000
         number_of_iteration = 1
         # execute noise sequence
@@ -237,7 +255,7 @@ class tunable_nmr_system_2018:
                    str(number_of_iteration)
                    )
         os.system(command)  # execute command & ignore its console
-        
+
     def wobble(self, sta_freq, sto_freq, spac_freq, samp_freq):
         # execute cpmg sequence
         command = (self.work_dir + self.exec_folder + "wobble" + " " +
@@ -246,7 +264,7 @@ class tunable_nmr_system_2018:
                    str(spac_freq) + " " +
                    str(samp_freq)
                    )
-        os.system(command)  # execute command & ignore its console  
+        os.system(command)  # execute command & ignore its console
 
     def cpmgT1(self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_us, logsw, delay180_sta, delay180_sto, delay180_ste, ref_number_of_iteration, ref_twait_mult, data_folder, en_scan_fig, en_fig):
 
