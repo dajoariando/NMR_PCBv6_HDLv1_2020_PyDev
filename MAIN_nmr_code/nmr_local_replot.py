@@ -16,10 +16,10 @@ import matplotlib.pyplot as plt
 from scipy import signal
 
 # variables
-data_folder = "Z:\\NMR_Data"
+data_folder = "X:\\NMR_Data"
 en_fig = 1
 en_remote_dbg = 0
-use_latest_folder = 1 # use latest experiment, otherwise specify the folder below
+use_latest_folder = 1  # use latest experiment, otherwise specify the folder below
 
 datain = []  # set datain to 0 because the data will be read from file instead
 direct_read = 0   # perform direct read from SDRAM. use with caution above!

@@ -20,8 +20,8 @@ import pydevd
 
 # variables
 data_folder = "/root/NMR_DATA"
-en_fig = 1
-en_remote_dbg = 0
+en_fig = 0
+en_remote_dbg = 1
 
 # nmr object declaration
 nmrObj = tunable_nmr_system_2018(data_folder, en_remote_dbg)
@@ -29,15 +29,18 @@ nmrObj = tunable_nmr_system_2018(data_folder, en_remote_dbg)
 # measurement settings
 samp_freq = 25  # sampling frequency
 samples = 50000  # number of points
-min_freq = 0.5
-max_freq = 5
+min_freq = 1.0
+max_freq = 3.0
 
 # system setup
 nmrObj.initNmrSystem()
 nmrObj.assertControlSignal(
     nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
-nmrObj.setPreampTuning(-2.75, 1.4)
-nmrObj.setMatchingNetwork(250, 100)
+nmrObj.setPreampTuning(-2.6, 4.4)  # 1.79MHz
+nmrObj.setMatchingNetwork(75, 138)  # 1.79MHz
+
+nmrObj.setPreampTuning(0, 0)  # 1.79MHz
+nmrObj.setMatchingNetwork(75, 138)  # 1.79MHz
 
 while True:
 
@@ -45,6 +48,8 @@ while True:
     nmrObj.assertControlSignal(
         nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk |
         nmrObj.PSU_5V_TX_N_EN_msk | nmrObj.PSU_5V_ADC_EN_msk)
+    nmrObj.deassertControlSignal(
+        nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
 
     # nmrObj.setSignalPath()
     nmrObj.assertControlSignal(

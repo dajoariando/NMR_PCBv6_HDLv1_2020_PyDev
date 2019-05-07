@@ -28,7 +28,7 @@ import pydevd
 # settings
 data_folder = "/root/NMR_DATA"  # the nmr data folder
 en_fig = 1  # enable figure
-en_remote_dbg = 0  # enable remote debugging. Enable debug server first!
+en_remote_dbg = 1  # enable remote debugging. Enable debug server first!
 direct_read = 0   # perform direct read from SDRAM. use with caution above!
 meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
@@ -45,8 +45,8 @@ nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
 nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk)
-nmrObj.setPreampTuning(-2.75, 1.4)
-nmrObj.setMatchingNetwork(80, 30)
+nmrObj.setPreampTuning(-3, 1.5)
+nmrObj.setMatchingNetwork(2, 668)
 # nmrObj.setSignalPath()
 # for normal path
 nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
@@ -62,12 +62,12 @@ pulse2_us = pulse1_us  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 600  # cheng' coil : 750
-scan_spacing_us = 1000000
+scan_spacing_us = 20000000
 samples_per_echo = 512  # number of points
 echoes_per_scan = 2048  # number of echos
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 2  # number of averaging
+number_of_iteration = 8  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
