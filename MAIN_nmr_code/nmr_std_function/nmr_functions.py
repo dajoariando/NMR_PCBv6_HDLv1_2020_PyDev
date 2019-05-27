@@ -112,6 +112,17 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # process individual raw data, otherwise it'll load a sum file generated
     # by C
     proc_indv_data = 0
+    proc_dconv = 0  # process dconv with python, otherwise use fpga dconv
+
+    dconv_factor = 4
+
+    # receiver gain
+    pamp_gain_dB = 54
+    rx_gain_dB = 0
+    totGain = 10**((pamp_gain_dB + rx_gain_dB) / 20)
+
+    # ADC conversion
+    voltPerDigit = 3.2 * (10**6) / 16384  # microvolt
 
     # variables from NMR settings
     (param_list, value_list) = data_parser.parse_info(
@@ -130,47 +141,91 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # total_scan = int(data_parser.find_value(
     #    'nrIterations', param_list, value_list))
 
-    # parse file and remove DC component
-    if (direct_read):
-        data = datain
-    else:
-        if (proc_indv_data):
-            # read all datas and average it
-            data = np.zeros(NoE * SpE)
-            for m in range(1, total_scan + 1):
-                file_path = (data_folder + file_name_prefix +
-                             '{0:03d}'.format(m))
-                # read the data from the file and store it in numpy array
-                # format
-                one_scan = np.array(data_parser.read_data(file_path))
-                one_scan = (one_scan - np.mean(one_scan)) / \
-                    total_scan  # remove DC component
-                if (en_ph_cycle_proc):
-                    if (m % 2):  # phase cycling every other scan
-                        data = data - one_scan
+    # compensate for dconv_factor if fpga dconv is used
+    if not proc_dconv:
+        SpE = int(SpE / dconv_factor)
+        Sf = Sf / dconv_factor
+
+    # time domain for plot
+    tacq = (1 / Sf) * 1e6 * np.linspace(1, SpE, SpE)  # in uS
+    t_echospace = tE / 1e6 * np.linspace(1, NoE, NoE)  # in uS
+
+    if proc_dconv:
+        # parse file and remove DC component
+        if (direct_read):
+            data = datain
+        else:
+            if (proc_indv_data):
+                # read all datas and average it
+                data = np.zeros(NoE * SpE)
+                for m in range(1, total_scan + 1):
+                    file_path = (data_folder + file_name_prefix +
+                                 '{0:03d}'.format(m))
+                    # read the data from the file and store it in numpy array
+                    # format
+                    one_scan = np.array(data_parser.read_data(file_path))
+                    one_scan = (one_scan - np.mean(one_scan)) / \
+                        total_scan  # remove DC component
+                    if (en_ph_cycle_proc):
+                        if (m % 2):  # phase cycling every other scan
+                            data = data - one_scan
+                        else:
+                            data = data + one_scan
                     else:
                         data = data + one_scan
-                else:
-                    data = data + one_scan
-        else:
-            # read sum data only
-            file_path = (data_folder + 'asum')
-            data = np.zeros(NoE * SpE)
-            data = np.array(data_parser.read_data(file_path))
-            data = (data - np.mean(data)) / \
-                total_scan  # remove DC component
+            else:
+                # read sum data only
+                file_path = (data_folder + 'asum')
+                data = np.zeros(NoE * SpE)
+                data = np.array(data_parser.read_data(file_path))
+                data = (data - np.mean(data)) / \
+                    total_scan  # remove DC component
 
-    if en_fig:  # plot the averaged scan
-        echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
-        plt.figure(1)
-        for i in range(1, NoE + 1):
-            plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3,
-                     data[(i - 1) * SpE:i * SpE], linewidth=0.4)
+        # compute raw data before gain stage
+        data = data / totGain * voltPerDigit
 
-    # filter the data
-    data_filt = np.zeros((NoE, SpE), dtype=complex)
-    for i in range(0, NoE):
-        data_filt[i, :] = down_conv(data[i * SpE:(i + 1) * SpE], i, tE, Df, Sf)
+        if en_fig:  # plot the averaged scan
+            echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
+            plt.figure(1)
+            for i in range(1, NoE + 1):
+                plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3,
+                         data[(i - 1) * SpE:i * SpE], linewidth=0.4)
+
+        # raw average data
+        echo_rawavg = np.zeros(SpE, dtype=float)
+        for i in range(5, NoE):
+            echo_rawavg += (data[i * SpE:(i + 1) * SpE] / NoE)
+
+        if en_fig:  # plot echo rawavg
+            plt.figure(6)
+            plt.plot(tacq, echo_rawavg, label='echo rawavg')
+            plt.xlim(0, max(tacq))
+            plt.title("Echo Average")
+            plt.xlabel('time(uS)')
+            plt.ylabel('amplitude')
+            plt.legend()
+
+        # filter the data
+        data_filt = np.zeros((NoE, SpE), dtype=complex)
+        for i in range(0, NoE):
+            data_filt[i, :] = down_conv(
+                data[i * SpE:(i + 1) * SpE], i, tE, Df, Sf)
+
+    else:  # use fpga dconv
+        # in-phase data
+        file_path = (data_folder + 'dconvi')
+        dconvi = np.array(data_parser.read_data(file_path))
+        # quadrature data
+        file_path = (data_folder + 'dconvq')
+        dconvq = np.array(data_parser.read_data(file_path))
+        # combined IQ
+        data_filt = np.zeros((NoE, SpE), dtype=complex)
+        for i in range(0, NoE):
+            data_filt[i, :] = \
+                dconvi[i * SpE:(i + 1) * SpE] + 1j * \
+                dconvq[i * SpE:(i + 1) * SpE]
+        # normalize data
+        data_filt = np.divide(data_filt, NoE * 25e3)
 
     # scan rotation
     if en_ext_param:
@@ -199,7 +254,6 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
 
     if en_fig:  # plot echo shape
         plt.figure(3)
-        tacq = (1 / Sf) * 1e6 * np.linspace(1, SpE, SpE)  # in uS
         plt.plot(tacq, np.abs(echo_avg), label='abs')
         plt.plot(tacq, np.real(echo_avg), label='real part')
         plt.plot(tacq, np.imag(echo_avg), label='imag part')
@@ -215,8 +269,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)
-                    : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -240,8 +293,6 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
 
     a_integ = np.sum(np.real(a))
 
-    t_echospace = tE / 1e6 * np.linspace(1, NoE, NoE)
-
     # def exp_func(x, a, b, c, d):
     #    return a * np.exp(-b * x) + c * np.exp(-d * x)
     def exp_func(x, a, b):
@@ -261,37 +312,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     #guess = np.array([a_guess, b_guess, c_guess, d_guess])
     guess = np.array([a_guess, b_guess])
 
-    try:
+    try:  # try fitting data
         popt, pocv = curve_fit(exp_func, t_echospace, np.real(a), guess)
-        a0 = popt[0]
-        T2 = 1 / popt[1]
-        # Estimate SNR/echo/scan
-        f = exp_func(t_echospace, *popt)  # curve fit
-        noise = np.std(np.imag(a))
-        res = np.std(np.real(a) - f)
-        snr = a0 / (noise * math.sqrt(total_scan))
-
-        if en_fig:
-            # plot data
-            plt.figure(5)
-            plt.cla()
-            # plot in milisecond
-            plt.plot(t_echospace * 1e3, np.real(a), label="real")
-            # plot in milisecond
-            plt.plot(t_echospace * 1e3, np.imag(a), label="imag")
-
-            # plot fitted line
-            plt.figure(5)
-            plt.plot(t_echospace * 1e3, f, label="fit")  # plot in milisecond
-            plt.plot(t_echospace * 1e3, np.real(a) - f, label="residue")
-            #plt.set(gca, 'FontSize', 12)
-            plt.legend()
-            plt.title('Filtered data')
-            plt.xlabel('Time (mS)')
-            plt.ylabel('Amplitude')
-
-        if en_fig:
-            plt.show()
     except:
         print('Problem in fitting. Set a0 and T2 output to 0\n')
         a0 = 0
@@ -299,6 +321,37 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         noise = 0
         res = 0
         snr = 0
+
+    # obtain fitting parameter
+    a0 = popt[0]
+    T2 = 1 / popt[1]
+
+    # Estimate SNR/echo/scan
+    f = exp_func(t_echospace, *popt)  # curve fit
+    noise = np.std(np.imag(a))
+    res = np.std(np.real(a) - f)
+    snr = a0 / (noise * math.sqrt(total_scan))
+
+    if en_fig:
+        # plot data
+        plt.figure(5)
+        plt.cla()
+        # plot in milisecond
+        plt.plot(t_echospace * 1e3, np.real(a), label="real")
+        # plot in milisecond
+        plt.plot(t_echospace * 1e3, np.imag(a), label="imag")
+
+        # plot fitted line
+        plt.figure(5)
+        plt.plot(t_echospace * 1e3, f, label="fit")  # plot in milisecond
+        plt.plot(t_echospace * 1e3, np.real(a) - f, label="residue")
+        #plt.set(gca, 'FontSize', 12)
+        plt.legend()
+        plt.title('Filtered data')
+        plt.xlabel('Time (mS)')
+        plt.ylabel('Amplitude')
+
+        plt.show()
 
     print('a0 = ' + '{0:.2f}'.format(a0))
     print('SNR/echo/scan = ' + '{0:.2f}'.format(snr))
@@ -372,17 +425,19 @@ def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
         one_scan = (one_scan - np.mean(one_scan)) / \
             total_scan  # remove DC component
         # data = data + one_scan
-    
+
     spectx, specty = nmr_fft(one_scan, adcFreq, 0)
-    fft_range = [i for i, value in enumerate(spectx) if (value >= minfreq and value <= maxfreq)] # limit fft display
-    print('\t\tNOISE RMS = ' + '{0:.5f}'.format(np.std(specty[fft_range]))) # standard deviation of the fft
-    
+    fft_range = [i for i, value in enumerate(spectx) if (
+        value >= minfreq and value <= maxfreq)]  # limit fft display
+    # standard deviation of the fft
+    print('\t\tNOISE RMS = ' + '{0:.5f}'.format(np.std(specty[fft_range])))
+
     if en_fig:
         plt.ion()
         fig = plt.figure(fig_num)
         fig.clf()
         ax = fig.add_subplot(2, 1, 1)
-        
+
         line1, = ax.plot(spectx[fft_range], specty[fft_range], 'r-')
         # ax.set_ylim(-50, 0)
         ax.set_xlabel('Frequency [MHz]')
@@ -399,6 +454,35 @@ def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
 
         fig.canvas.draw()
         fig.canvas.flush_events()
+
+
+def calcP90(Vpp, rs, L, f, numTurns, coilLength, coilFactor):
+
+    # estimates the 90 degree pulse length based on voltage output at the coil
+    # Vpp: measured voltage at the coil
+    # rs: series resitance of coil
+    # L: inductance of coil
+    # f: Larmor frequency in Hz
+    # numTurns: Number of turns in coil
+    # coilLength: Length of coil in m
+    # coilFactor: obtained by measurement compensation with KeA, will be coil geometry
+    # dependant
+
+    import math
+    import numpy as np
+
+    gamma = 42.58e6  # MHz/Tesla
+    u = 4 * np.pi * 10 ** -7
+    Q = 2 * np.pi * f * L / rs
+    Vrms = Vpp / (2 * math.sqrt(2))
+    Irms = Vrms / (math.sqrt(Q**2 + 1**2) * rs)
+
+    # extra factor due to finite coil length (geometry)
+    B1 = u * (numTurns / (2 * coilLength)) * Irms / coilFactor
+    P90 = (1 / (gamma * B1)) * (90 / 360)
+    Pwatt = (Irms**2) * rs
+
+    return P90, Pwatt
 
 
 ''' OBSOLETE

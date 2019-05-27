@@ -20,7 +20,7 @@ import pydevd
 
 # variables
 data_folder = "/root/NMR_DATA"
-en_fig = 0
+en_fig = 1
 en_remote_dbg = 1
 
 # nmr object declaration
@@ -28,19 +28,21 @@ nmrObj = tunable_nmr_system_2018(data_folder, en_remote_dbg)
 
 # measurement settings
 samp_freq = 25  # sampling frequency
-samples = 50000  # number of points
-min_freq = 1.0
-max_freq = 3.0
+samples = 10000  # number of points
+min_freq = 3.8
+max_freq = 4.3
 
 # system setup
 nmrObj.initNmrSystem()
 nmrObj.assertControlSignal(
     nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
-nmrObj.setPreampTuning(-2.6, 4.4)  # 1.79MHz
-nmrObj.setMatchingNetwork(75, 138)  # 1.79MHz
-
-nmrObj.setPreampTuning(0, 0)  # 1.79MHz
-nmrObj.setMatchingNetwork(75, 138)  # 1.79MHz
+# nmrObj.setPreampTuning(-2.93, 3.7)  # for 2.43MHz BLACK
+nmrObj.setPreampTuning(-3.72, -5)  # for 1.87MHz BLACK
+# nmrObj.setMatchingNetwork(2700, 350)  # for 2.43MHz BLACK
+# nmrObj.setMatchingNetwork(3180, 420)  # for 1.87MHz BLACK
+# nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
+# nmrObj.setMatchingNetwork(189, 74)  # 4.17 MHz KeA
+nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
 
 while True:
 

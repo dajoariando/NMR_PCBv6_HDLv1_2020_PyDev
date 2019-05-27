@@ -14,30 +14,21 @@ from nmr_std_function.nmr_class import tunable_nmr_system_2018
 
 # variables
 data_parent_folder = "/root/NMR_DATA"
-en_remote_dbg = 0
+en_remote_dbg = 1
 fig_num = 1
 en_fig = 1
 
 # measurement properties
-sta_freq = 1
-sto_freq = 4
-spac_freq = 0.05
+sta_freq = 3
+sto_freq = 5
+spac_freq = 0.01
 samp_freq = 25
 
 # instantiate nmr object
-nmrObj = tunable_nmr_system_2018(data_parent_folder)
-
-# remote debug setup
-if en_remote_dbg:
-    from pydevd_file_utils import setup_client_server_paths
-    PATH_TRANSLATION = [(nmrObj.client_path, nmrObj.server_path)]
-    setup_client_server_paths(PATH_TRANSLATION)
-    print("---server:%s---client:%s---" % (nmrObj.server_ip, nmrObj.client_ip))
-    pydevd.settrace(nmrObj.client_ip)
+nmrObj = tunable_nmr_system_2018(data_parent_folder, en_remote_dbg)
 
 work_dir = os.getcwd()
 os.chdir(data_parent_folder)
-
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
@@ -47,7 +38,14 @@ nmrObj.assertControlSignal(nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk)
 
 
-nmrObj.setMatchingNetwork(80, 10)
+# nmrObj.setPreampTuning(-2.93, 3.7)  # for 2.43MHz BLACK
+# nmrObj.setPreampTuning(-3.1, -4.2)  # for 1.87MHz BLACK
+# nmrObj.setMatchingNetwork(2700, 350)  # for 2.43MHz BLACK
+# nmrObj.setMatchingNetwork(3180, 420)  # for 1.87MHz BLACK
+# nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
+# nmrObj.setMatchingNetwork(189, 74)  # 4.17 MHz KeA
+nmrObj.setPreampTuning(-2.9, -0)
+nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
 
 while True:
     nmrObj.assertControlSignal(
