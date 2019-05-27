@@ -47,7 +47,7 @@ def butter_lowpass_filter(data, cutoff, fs, order, en_figure):
 def down_conv(s, k, tE, Df, Sf):
 
     # settings
-    simp_dconv = True  # perform simplified downconversion for 4 phases signal
+    simp_dconv = False  # perform simplified downconversion for 4 phases signal
 
     # filter parameter
     filt_ord = 2
@@ -61,12 +61,11 @@ def down_conv(s, k, tE, Df, Sf):
     # sReal = s * np.cos(2 * math.pi * Ds * t)
     # sImag = s * np.sin(2 * math.pi * Ds * t)
 
-    if not simp_dconv:
+    if not simp_dconv:  # normal downconversion
         # downconversion at Nyquist rate or higher
         sReal = s * np.cos(2 * math.pi * Df * t)
         sImag = s * np.sin(2 * math.pi * Df * t)
-
-    else:
+    else:  # simulated downconversion happened in FPGA
          # echo is assumed to always start at phase 0. It is true if the pulse
          # length and delay length for pi and 2pi pulse is multiplication of 4
         sReal = np.zeros(len(s), dtype=float)

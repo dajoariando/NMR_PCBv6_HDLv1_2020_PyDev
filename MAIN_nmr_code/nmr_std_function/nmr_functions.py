@@ -112,9 +112,9 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # process individual raw data, otherwise it'll load a sum file generated
     # by C
     proc_indv_data = 0
-    proc_dconv = 0  # process dconv with python, otherwise use fpga dconv
+    proc_dconv = 0  # process dconv in python, otherwise use fpga dconv
 
-    dconv_factor = 4
+    dconv_factor = 4  # decimation factor for downconversion
 
     # receiver gain
     pamp_gain_dB = 54
@@ -269,7 +269,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)
+                    : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -314,6 +315,23 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
 
     try:  # try fitting data
         popt, pocv = curve_fit(exp_func, t_echospace, np.real(a), guess)
+
+        # obtain fitting parameter
+        a0 = popt[0]
+        T2 = 1 / popt[1]
+
+        # Estimate SNR/echo/scan
+        f = exp_func(t_echospace, *popt)  # curve fit
+        noise = np.std(np.imag(a))
+        res = np.std(np.real(a) - f)
+        snr = a0 / (noise * math.sqrt(total_scan))
+
+        # plot fitted line
+        plt.figure(5)
+        plt.cla()
+        plt.plot(t_echospace * 1e3, f, label="fit")  # plot in milisecond
+        plt.plot(t_echospace * 1e3, np.real(a) - f, label="residue")
+
     except:
         print('Problem in fitting. Set a0 and T2 output to 0\n')
         a0 = 0
@@ -322,29 +340,14 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         res = 0
         snr = 0
 
-    # obtain fitting parameter
-    a0 = popt[0]
-    T2 = 1 / popt[1]
-
-    # Estimate SNR/echo/scan
-    f = exp_func(t_echospace, *popt)  # curve fit
-    noise = np.std(np.imag(a))
-    res = np.std(np.real(a) - f)
-    snr = a0 / (noise * math.sqrt(total_scan))
-
     if en_fig:
         # plot data
         plt.figure(5)
-        plt.cla()
         # plot in milisecond
         plt.plot(t_echospace * 1e3, np.real(a), label="real")
         # plot in milisecond
         plt.plot(t_echospace * 1e3, np.imag(a), label="imag")
 
-        # plot fitted line
-        plt.figure(5)
-        plt.plot(t_echospace * 1e3, f, label="fit")  # plot in milisecond
-        plt.plot(t_echospace * 1e3, np.real(a) - f, label="residue")
         #plt.set(gca, 'FontSize', 12)
         plt.legend()
         plt.title('Filtered data')
