@@ -112,9 +112,10 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # process individual raw data, otherwise it'll load a sum file generated
     # by C
     proc_indv_data = 0
+
     proc_dconv = 0  # process dconv in python, otherwise use fpga dconv
 
-    dconv_factor = 4  # decimation factor for downconversion
+    dconv_factor = 1  # decimation factor for downconversion
 
     # receiver gain
     pamp_gain_dB = 54
@@ -324,7 +325,9 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         f = exp_func(t_echospace, *popt)  # curve fit
         noise = np.std(np.imag(a))
         res = np.std(np.real(a) - f)
-        snr = a0 / (noise * math.sqrt(total_scan))
+        snr_imag = a0 / (noise * math.sqrt(total_scan))
+        snr_res = a0 / (res * math.sqrt(total_scan))
+        snr = snr_imag
 
         # plot fitted line
         plt.figure(5)
@@ -357,7 +360,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         plt.show()
 
     print('a0 = ' + '{0:.2f}'.format(a0))
-    print('SNR/echo/scan = ' + '{0:.2f}'.format(snr))
+    print('SNR/echo/scan = ' +
+          'imag:{0:.2f}, res:{1:.2f}'.format(snr, snr_res))
     print('T2 = ' + '{0:.4f}'.format(T2 * 1e3) + ' msec')
 
     return (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace)

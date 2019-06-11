@@ -36,18 +36,18 @@ meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.1678  # 4.06625 for CWRU lab
+cpmg_freq = 4.1656  # 4.06625 for CWRU lab
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 1.6 * pulse1_us  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 150  # cheng' coil : 750
+echo_spacing_us = 200  # cheng' coil : 750
 scan_spacing_us = 50000
-samples_per_echo = 512  # number of points
+samples_per_echo = 256  # number of points
 echoes_per_scan = 128  # number of echos
 # put to 10 for broadband board and 6 for tunable board
-init_adc_delay_compensation = 11  # acquisition shift microseconds.
-number_of_iteration = 128  # number of averaging
+init_adc_delay_compensation = 6.5  # acquisition shift microseconds.
+number_of_iteration = 64  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -93,7 +93,7 @@ nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
 # nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
 # for reflection path or broadband board
 nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
+                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
 
 if (direct_read):
     datain = nmrObj.cpmgSequenceDirectRead(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
