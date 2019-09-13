@@ -30,13 +30,13 @@ import pydevd
 # settings
 data_folder = "/root/NMR_DATA"  # the nmr data folder
 en_fig = 1  # enable figure
-en_remote_dbg = 0  # enable remote debugging. Enable debug server first!
+en_remote_dbg = 1  # enable remote debugging. Enable debug server first!
 direct_read = 0   # perform direct read from SDRAM. use with caution above!
 meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.1656  # 4.06625 for CWRU lab
+cpmg_freq = 2  # 4.06625 for CWRU lab
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 1.6 * pulse1_us  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
@@ -44,7 +44,7 @@ pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200  # cheng' coil : 750
 scan_spacing_us = 50000
 samples_per_echo = 256  # number of points
-echoes_per_scan = 128  # number of echos
+echoes_per_scan = 4  # number of echos
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6.5  # acquisition shift microseconds.
 number_of_iteration = 64  # number of averaging
@@ -86,7 +86,7 @@ nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_m
 # nmrObj.setMatchingNetwork(3180, 420)  # for 1.87MHz BLACK
 # nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
 # nmrObj.setMatchingNetwork(189, 74)  # 4.17 MHz KeA
-nmrObj.setPreampTuning(-2.9, -0)
+nmrObj.setPreampTuning(-1.2, -0)
 nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
 # nmrObj.setSignalPath()
 # for normal path

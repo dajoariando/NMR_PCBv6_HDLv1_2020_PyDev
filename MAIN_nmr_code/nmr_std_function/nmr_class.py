@@ -61,8 +61,8 @@ class tunable_nmr_system_2018:
         self.gnrl_cnt = 0
 
         # ip addresses settings for the system
-        self.server_ip = '129.22.143.88'
-        self.client_ip = '129.22.143.39'
+        self.server_ip = '192.168.100.1'  # '129.22.143.88'
+        self.client_ip = '192.168.100.2'  # '129.22.143.39'
         self.server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
         # client path with samba
         self.client_path = 'X:\\nmr_pcb20_hdl10_2018\\MAIN_nmr_code\\'
