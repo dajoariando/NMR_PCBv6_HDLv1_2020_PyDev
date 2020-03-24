@@ -43,8 +43,8 @@ pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200  # cheng' coil : 750
 scan_spacing_us = 50000
-samples_per_echo = 512  # number of points
-echoes_per_scan = 256  # number of echos
+samples_per_echo = 20  # number of points
+echoes_per_scan = 20  # number of echos
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
 number_of_iteration = 32  # number of averaging
