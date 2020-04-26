@@ -35,31 +35,33 @@ nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_m
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk)
 # nmrObj.setPreampTuning(-2.93, 3.7)  # for 2.43MHz BLACK
-nmrObj.setPreampTuning(-2.93, -5)  # for 1.87MHz BLACK
+# nmrObj.setPreampTuning(-2.93, -5)  # for 1.87MHz BLACK
 # nmrObj.setMatchingNetwork(2700, 350)  # for 2.43MHz BLACK
 # nmrObj.setMatchingNetwork(3180, 420)  # for 1.87MHz BLACK
-nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
-nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                           nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+nmrObj.setPreampTuning(-2.7, -1.8)
+# nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
+nmrObj.setMatchingNetwork(2390, 500)
+nmrObj.assertControlSignal(
+    nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk)
 
 
-pulse1_us = 2.9  # pulse pi/2 length
+pulse1_us = 3  # pulse pi/2 length
 pulse2_us = pulse1_us * 1.6  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 200
-scan_spacing_us = 400000
+echo_spacing_us = 500
+scan_spacing_us = 2000000
 samples_per_echo = 512  # number of points
-echoes_per_scan = 256  # number of echos
+echoes_per_scan = 512  # number of echos
 init_adc_delay_compensation = 6  # acquisition shift microseconds
-number_of_iteration = 32  # number of averaging
+number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
 
 # sweep settings
-cpmg_freq_sta = 3.9  # in MHz
-cpmg_freq_sto = 4.0  # in MHz
+cpmg_freq_sta = 4  # in MHz
+cpmg_freq_sto = 4.4  # in MHz
 cpmg_freq_ste = 10  # number of steps
 cpmg_freq_sw = np.linspace(cpmg_freq_sta, cpmg_freq_sto, cpmg_freq_ste)
 
@@ -89,7 +91,8 @@ for i in range(0, cpmg_freq_ste):
 
 # turn off system
 nmrObj.deassertControlSignal(
-    nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
+    nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk)
+
 nmrObj.setMatchingNetwork(0, 0)
 nmrObj.setPreampTuning(0, 0)
 nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |

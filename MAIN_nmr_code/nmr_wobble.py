@@ -44,22 +44,26 @@ nmrObj.assertControlSignal(nmrObj.PSU_5V_TX_N_EN_msk |
 # nmrObj.setMatchingNetwork(3180, 420)  # for 1.87MHz BLACK
 # nmrObj.setMatchingNetwork(255, 76)  # 4.05 MHz
 # nmrObj.setMatchingNetwork(189, 74)  # 4.17 MHz KeA
-nmrObj.setPreampTuning(-2.9, -0)
-nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
+# nmrObj.setPreampTuning(-2.9, -0)
+# nmrObj.setMatchingNetwork(192, 74)  # 4.17 MHz AFE
+nmrObj.setPreampTuning(-2.7, 0.3)
+nmrObj.setMatchingNetwork(2390, 500)
 
 while True:
-    nmrObj.assertControlSignal(
-        nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
-    nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                               nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
+    nmrObj.assertControlSignal(nmrObj.RX1_2L_msk | nmrObj.RX1_2H_msk | nmrObj.RX_SEL2_msk |
+                               nmrObj.RX_FL_msk | nmrObj.RX_FH_msk)
+    nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
+                               nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
+                               nmrObj.PSU_5V_ANA_N_EN_msk)
     time.sleep(0.1)
 
     nmrObj.wobble(sta_freq, sto_freq, spac_freq, samp_freq)
 
-    nmrObj.deassertControlSignal(
-        nmrObj.AMP_HP_LT1210_EN_msk | nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
-    nmrObj.deassertControlSignal(
-        nmrObj.RX_IN_SEL_2_msk | nmrObj.PAMP_IN_SEL_RX_msk)
+    nmrObj.deassertControlSignal(nmrObj.RX1_2L_msk | nmrObj.RX1_2H_msk | nmrObj.RX_SEL2_msk |
+                                 nmrObj.RX_FL_msk | nmrObj.RX_FH_msk)
+    nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
+                                 nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
+                                 nmrObj.PSU_5V_ANA_N_EN_msk)
 
     S11_min = -10
     meas_folder = parse_simple_info(data_parent_folder, 'current_folder.txt')

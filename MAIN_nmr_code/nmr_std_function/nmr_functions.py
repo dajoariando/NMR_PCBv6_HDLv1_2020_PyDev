@@ -1,6 +1,7 @@
 import math
 import csv
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
@@ -27,7 +28,7 @@ def compute_wobble(data_parent_folder, meas_folder, s11_min, en_fig, fig_num):
     S11 = np.zeros(len(freqSw))
     for m in range(0, len(freqSw)):
         # for m in freqSw:
-        file_path = (data_folder + file_name_prefix +
+        file_path = (data_folder + file_name_prefix + 
                      '{:4.3f}'.format(freqSw[m]))
         one_scan = np.array(data_parser.read_data(file_path))
         spectx, specty = nmr_fft(one_scan, freqSamp, 0)
@@ -118,12 +119,12 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     dconv_factor = 1  # decimation factor for downconversion
 
     # receiver gain
-    pamp_gain_dB = 54
-    rx_gain_dB = 0
-    totGain = 10**((pamp_gain_dB + rx_gain_dB) / 20)
+    pamp_gain_dB = 46.7
+    rx_gain_dB = 30
+    totGain = 10 ** ((pamp_gain_dB + rx_gain_dB) / 20)
 
     # ADC conversion
-    voltPerDigit = 3.2 * (10**6) / 16384  # microvolt
+    uvoltPerDigit = 3.2 * (10 ** 6) / 16384  # microvolt
 
     # variables from NMR settings
     (param_list, value_list) = data_parser.parse_info(
@@ -160,7 +161,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                 # read all datas and average it
                 data = np.zeros(NoE * SpE)
                 for m in range(1, total_scan + 1):
-                    file_path = (data_folder + file_name_prefix +
+                    file_path = (data_folder + file_name_prefix + 
                                  '{0:03d}'.format(m))
                     # read the data from the file and store it in numpy array
                     # format
@@ -179,18 +180,22 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                 file_path = (data_folder + 'asum')
                 data = np.zeros(NoE * SpE)
                 data = np.array(data_parser.read_data(file_path))
+                dataraw = data
                 data = (data - np.mean(data)) / \
                     total_scan  # remove DC component
 
         # compute raw data before gain stage
-        data = data / totGain * voltPerDigit
+        data = data / totGain * uvoltPerDigit
 
         if en_fig:  # plot the averaged scan
             echo_space = (1 / Sf) * np.linspace(1, SpE, SpE)  # in s
             plt.figure(1)
             for i in range(1, NoE + 1):
-                plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3,
-                         data[(i - 1) * SpE:i * SpE], linewidth=0.4)
+                # plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3, data[(i - 1) * SpE:i * SpE], linewidth=0.4)
+                plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3, dataraw[(i - 1) * SpE:i * SpE], linewidth=0.4)
+            plt.title("Averaged raw data")
+            plt.xlabel('time(ms)')
+            plt.ylabel('probe voltage (uV)')
 
         # raw average data
         echo_rawavg = np.zeros(SpE, dtype=float)
@@ -203,7 +208,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
             plt.xlim(0, max(tacq))
             plt.title("Echo Average")
             plt.xlabel('time(uS)')
-            plt.ylabel('amplitude')
+            plt.ylabel('probe voltage (uV)')
             plt.legend()
 
         # filter the data
@@ -247,6 +252,10 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
                      np.real(data_filt[i, :]), 'b', linewidth=0.4)
             plt.plot((i * tE * 1e-6 + echo_space) * 1e3,
                      np.imag(data_filt[i, :]), 'r', linewidth=0.4)
+        plt.legend()
+        plt.title('Filtered data')
+        plt.xlabel('Time (mS)')
+        plt.ylabel('probe voltage (uV)')
 
     # find echo average, echo magnitude
     echo_avg = np.zeros(SpE, dtype=complex)
@@ -261,7 +270,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         plt.xlim(0, max(tacq))
         plt.title("Echo Shape")
         plt.xlabel('time(uS)')
-        plt.ylabel('amplitude')
+        plt.ylabel('probe voltage (uV)')
         plt.legend()
 
         # plot fft of the echosum
@@ -270,7 +279,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         ws = 2 * np.pi / (tacq[1] - tacq[0])  # in MHz
         wvect = np.linspace(-ws / 2, ws / 2, len(tacq) * zf)
         echo_zf = np.zeros(zf * len(echo_avg), dtype=complex)
-        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2)                : int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
+        echo_zf[int((zf / 2) * len(echo_avg) - len(echo_avg) / 2): int((zf / 2) * len(echo_avg) + len(echo_avg) / 2)] = echo_avg
         spect = zf * (np.fft.fftshift(np.fft.fft(np.fft.ifftshift(echo_zf))))
         plt.plot(wvect / (2 * np.pi), np.real(spect),
                  label='real')
@@ -301,7 +310,7 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
 
     # average the first 5% of datas
     a_guess = np.mean(np.real(a[0:int(np.round(SpE / 20))]))
-    #c_guess = a_guess
+    # c_guess = a_guess
     # find min idx value where the value of (a_guess/exp) is larger than
     # real(a)
     # b_guess = np.where(np.real(a) == np.min(
@@ -309,8 +318,8 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
     # this is dummy b_guess, use the one I made above this for smarter one
     # (but sometimes it doesn't work)
     b_guess = 10
-    #d_guess = b_guess
-    #guess = np.array([a_guess, b_guess, c_guess, d_guess])
+    # d_guess = b_guess
+    # guess = np.array([a_guess, b_guess, c_guess, d_guess])
     guess = np.array([a_guess, b_guess])
 
     try:  # try fitting data
@@ -350,16 +359,16 @@ def compute_multiple(data_parent_folder, meas_folder, file_name_prefix, Df, Sf, 
         # plot in milisecond
         plt.plot(t_echospace * 1e3, np.imag(a), label="imag")
 
-        #plt.set(gca, 'FontSize', 12)
+        # plt.set(gca, 'FontSize', 12)
         plt.legend()
-        plt.title('Filtered data')
+        plt.title('Matched Filtered data')
         plt.xlabel('Time (mS)')
-        plt.ylabel('Amplitude')
+        plt.ylabel('probe voltage (uV)')
 
         plt.show()
 
     print('a0 = ' + '{0:.2f}'.format(a0))
-    print('SNR/echo/scan = ' +
+    print('SNR/echo/scan = ' + 
           'imag:{0:.2f}, res:{1:.2f}'.format(snr, snr_res))
     print('T2 = ' + '{0:.4f}'.format(T2 * 1e3) + ' msec')
 
@@ -401,7 +410,7 @@ def compute_iterate(data_parent_folder, meas_folder, en_ext_param, thetaref, ech
     return a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace
 
 
-def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
+def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, plotname, en_fig):
 
     # variables to be input
     # data_parent_folder : the folder for all datas
@@ -415,8 +424,8 @@ def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
     # variables from NMR settings
     (param_list, value_list) = data_parser.parse_info(
         data_folder, 'acqu.par')  # read file
-    adcFreq = int(data_parser.find_value(
-        'adcFreq', param_list, value_list))
+    adcFreq = data_parser.find_value(
+        'adcFreq', param_list, value_list)
     nrPnts = int(data_parser.find_value(
         'nrPnts', param_list, value_list))
     total_scan = int(data_parser.find_value(
@@ -424,42 +433,75 @@ def compute_noise(minfreq, maxfreq, data_parent_folder, meas_folder, en_fig):
 
     # parse file and remove DC component
     # data = np.zeros(nrPnts)
+    nmean = 0
     for m in range(1, total_scan + 1):
         file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
         # read the data from the file and store it in numpy array format
         one_scan = np.array(data_parser.read_data(file_path))
-        one_scan = (one_scan - np.mean(one_scan)) / \
+        nmean = np.mean(one_scan)
+        one_scan = (one_scan - nmean) / \
             total_scan  # remove DC component
         # data = data + one_scan
-
+        
+    # compute fft
     spectx, specty = nmr_fft(one_scan, adcFreq, 0)
     fft_range = [i for i, value in enumerate(spectx) if (
         value >= minfreq and value <= maxfreq)]  # limit fft display
-    # standard deviation of the fft
-    print('\t\tNOISE RMS = ' + '{0:.5f}'.format(np.std(specty[fft_range])))
-
+    
+    # compute std
+    nstd = np.std(one_scan)
+    
     if en_fig:
         plt.ion()
         fig = plt.figure(fig_num)
+        
+         # maximize window
+        plot_backend = matplotlib.get_backend()
+        mng = plt.get_current_fig_manager()
+        if plot_backend == 'TkAgg':
+            # mng.resize(*mng.window.maxsize())
+            mng.resize(800, 600)
+        elif plot_backend == 'wxAgg':
+            mng.frame.Maximize(True)
+        elif plot_backend == 'Qt4Agg':
+            mng.window.showMaximized()
+        
         fig.clf()
-        ax = fig.add_subplot(2, 1, 1)
+        ax = fig.add_subplot(311)
 
-        line1, = ax.plot(spectx[fft_range], specty[fft_range], 'r-')
+        line1, = ax.plot(spectx[fft_range], specty[fft_range], 'b-')
         # ax.set_ylim(-50, 0)
-        ax.set_xlabel('Frequency [MHz]')
-        ax.set_ylabel('Amplitude [a.u.]')
+        ax.set_xlabel('Frequency (MHz)')
+        ax.set_ylabel('Amplitude (a.u.)')
         ax.set_title("Noise spectrum")
         ax.grid()
 
-        ax = fig.add_subplot(2, 1, 2)
-        line1, = ax.plot(one_scan, 'r-')
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Amplitude [a.u.]')
-        ax.set_title("Noise amplitude")
+        ax = fig.add_subplot(312)
+        x_time = np.linspace(1, len(one_scan), len(one_scan))
+        x_time = np.multiply(x_time, (1 / adcFreq))  # in us
+        x_time = np.multiply(x_time, 1e-3)  # in ms
+        line1, = ax.plot(x_time, one_scan, 'b-')
+        ax.set_xlabel('Time(ms)')
+        ax.set_ylabel('Amplitude (a.u.)')
+        ax.set_title("Noise amplitude. std=%0.2f. mean=%0.2f." % (nstd, nmean))
         ax.grid()
-
+        
+        # plot histogram
+        n_bins = 200
+        ax = fig.add_subplot(313)
+        n, bins, patches = ax.hist(one_scan, bins=n_bins)
+        ax.set_title("Noise histogram")
+        
+        plt.tight_layout()
         fig.canvas.draw()
         fig.canvas.flush_events()
+        
+        # fig = plt.gcf() # obtain handle
+        fig.savefig(data_folder + plotname)
+        
+    # standard deviation of signal
+    print('\t\tnoise: rms= ' + '{0:.4f}'.format(nstd) + ' mean= {0:.4f}'.format(nmean))
+    return nstd, nmean
 
 
 def calcP90(Vpp, rs, L, f, numTurns, coilLength, coilFactor):
@@ -481,15 +523,14 @@ def calcP90(Vpp, rs, L, f, numTurns, coilLength, coilFactor):
     u = 4 * np.pi * 10 ** -7
     Q = 2 * np.pi * f * L / rs
     Vrms = Vpp / (2 * math.sqrt(2))
-    Irms = Vrms / (math.sqrt(Q**2 + 1**2) * rs)
+    Irms = Vrms / (math.sqrt(Q ** 2 + 1 ** 2) * rs)
 
     # extra factor due to finite coil length (geometry)
     B1 = u * (numTurns / (2 * coilLength)) * Irms / coilFactor
     P90 = (1 / (gamma * B1)) * (90 / 360)
-    Pwatt = (Irms**2) * rs
+    Pwatt = (Irms ** 2) * rs
 
     return P90, Pwatt
-
 
 ''' OBSOLETE
 def compute_freqsw(data_parent_folder, meas_folder, T2bound, en_figure):
