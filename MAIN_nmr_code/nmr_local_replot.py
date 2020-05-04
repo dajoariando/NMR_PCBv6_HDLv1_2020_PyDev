@@ -19,17 +19,17 @@ from scipy import signal
 data_folder = "Z:\\NMR_Data"
 en_fig = True
 en_remote_dbg = False
-use_latest_folder = True  # use latest experiment, otherwise specify the folder below
+use_latest_folder = False  # use latest experiment, otherwise specify the folder below
 
 datain = []  # set datain to 0 because the data will be read from file instead
 direct_read = 0  # perform direct read from SDRAM. use with caution above!
 
-if (use_latest_folder): 
-    meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
-        data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig)
+if ( use_latest_folder ):
+    meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
+    ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
+        data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig )
 else:
-    meas_folder = '2019_05_26_21_23_56_cpmg'  # with scope probe placed at W45
+    meas_folder = '2020_05_04_07_21_39_cpmg'  # with scope probe placed at W45
     # meas_folder = '2019_05_26_21_24_41_cpmg'  # no scope probe placed at W45
-    (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
-        data_folder, meas_folder, 0, 0, 0, direct_read, datain, en_fig)
+    ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
+        data_folder, meas_folder, 0, 0, 0, direct_read, datain, en_fig )

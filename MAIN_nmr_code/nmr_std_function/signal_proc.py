@@ -88,7 +88,7 @@ def down_conv(s, k, tE, Df, Sf):
 
 def nmr_fft(data, fs, en_fig):
     spectx = np.linspace(-fs / 2, fs / 2, len(data))
-    specty = abs(np.fft.fftshift(np.fft.fft(data - np.mean(data))))
+    specty = np.fft.fftshift(np.fft.fft(data - np.mean(data)))
     specty = np.divide(specty, len(data))  # normalize fft
     if en_fig:
         plt.figure

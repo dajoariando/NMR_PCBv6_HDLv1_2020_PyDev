@@ -45,15 +45,15 @@ nmrObj.assertControlSignal(
     nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk)
 
 # cpmg settings
-cpmg_freq = 4.226
+cpmg_freq = 4.170
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 180
-scan_spacing_us = 50000
+echo_spacing_us = 200
+scan_spacing_us = 100000
 samples_per_echo = 1024  # number of points
-echoes_per_scan = 256  # number of echos
+echoes_per_scan = 1024  # number of echos
 init_adc_delay_compensation = 6  # acquisition shift microseconds
-number_of_iteration = 128  # number of averaging
+number_of_iteration = 2  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -61,7 +61,7 @@ delay180_t1_int = 0
 # sweep settings
 pulse_us_sta = 1.0  # in microsecond
 pulse_us_sto = 10.0  # in microsecond
-pulse_us_ste = 91  # number of steps
+pulse_us_ste = 31  # number of steps
 pulse_us_sw = np.linspace(pulse_us_sta, pulse_us_sto, pulse_us_ste)
 
 a_integ_table = np.zeros(pulse_us_ste)
@@ -69,8 +69,8 @@ for i in range(0, pulse_us_ste):
     print('----------------------------------')
     print('plength = ' + str(pulse_us_sw[i]) + ' us')
     
-    pulse1_us = 2.4  # pulse pi/2 length
-    pulse2_us = pulse_us_sw[i]  # pulse pi length
+    pulse1_us = pulse_us_sw[i]  # pulse pi/2 length
+    pulse2_us = 5.5  # pulse pi length
     nmrObj.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int)
     datain = []  # set datain to 0 because the data will be read from file instead
