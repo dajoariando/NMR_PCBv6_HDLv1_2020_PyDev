@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import os
 from scipy.optimize import curve_fit
 
 from nmr_std_function import data_parser
@@ -24,7 +25,7 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
     spect_bw = ( freqSamp / nSamples ) * 4  # determining the RBW
 
     file_name_prefix = 'tx_acq_'
-    freqSw = np.arange( freqSta, freqSto, freqSpa )
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus freqSpa/2 is to include the endpoint (just like what the C does)
     S11 = np.zeros( len( freqSw ) )
     S11_ph = np.zeros( len( freqSw ) )
     for m in range( 0, len( freqSw ) ):
@@ -32,6 +33,9 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
         file_path = ( data_folder + file_name_prefix +
                      '{:4.3f}'.format( freqSw[m] ) )
         one_scan = np.array( data_parser.read_data( file_path ) )
+
+        os.remove( file_path )  # delete the file after use
+
         spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
 
         # FIND INDEX WHERE THE MAXIMUM SIGNAL IS PRESENT
@@ -40,7 +44,7 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
         # BETTER METHOD: find reflection signal peak around the bandwidth
         ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )
 
-        # S11[m] = max(abs(specty[ref_idx]))  # find reflection peak
+        # S11[m] = max( abs( specty[ref_idx] ) )  # find reflection peak
         S11[m] = np.mean( abs( specty[ref_idx] ) )  # compute the mean of amplitude inside RBW
         S11_ph[m] = np.mean( np.angle( specty[ref_idx] ) ) * ( 360 / ( 2 * np.pi ) )
 
@@ -66,7 +70,7 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
         fig.clf()
         ax = fig.add_subplot( 211 )
         line1, = ax.plot( freqSw, S11dB, 'r-' )
-        ax.set_ylim( -50, 0 )
+        ax.set_ylim( -35, 0 )
         ax.set_ylabel( 'S11 [dB]' )
         ax.set_title( "Reflection Measurement (S11) Parameter" )
         ax.grid()
@@ -80,6 +84,13 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
 
         fig.canvas.draw()
         fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'wobble.png' )
+
+    # write S11 to a file
+    with open( data_folder + 'S11.txt', 'w' ) as f:
+        for ( a, b, c ) in zip ( freqSw, S11dB, S11_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
     # print(S11_fmin, S11_fmax, S11_bw)
     return S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
@@ -98,7 +109,7 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
     spect_bw = ( freqSamp / nSamples ) * 4  # determining the RBW
 
     file_name_prefix = 'tx_acq_'
-    freqSw = np.arange( freqSta, freqSto, freqSpa )
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus freqSpa/2 is to include the endpoint (just like what the C does)
     S21 = np.zeros( len( freqSw ) )
     S21_ph = np.zeros( len( freqSw ) )
     for m in range( 0, len( freqSw ) ):
@@ -106,6 +117,8 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         file_path = ( data_folder + file_name_prefix +
                      '{:4.3f}'.format( freqSw[m] ) )
         one_scan = np.array( data_parser.read_data( file_path ) )
+
+        # os.remove( file_path )  # delete the file after use
 
         '''
         plt.ion()
@@ -139,7 +152,7 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         fig.clf()
         ax = fig.add_subplot( 111 )
         line1, = ax.plot( freqSw, S21dB, 'r-' )
-        ax.set_ylim( -3, 30 )
+        ax.set_ylim( -30, 80 )
         ax.set_ylabel( 'S21 [dB]' )
         ax.set_title( "Transmission Measurement (S21) Parameter" )
         ax.grid()
@@ -153,6 +166,13 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
 
         fig.canvas.draw()
         fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'gain.png' )
+
+    # write gain values to a file
+    with open( data_folder + 'S21.txt', 'w' ) as f:
+        for ( a, b, c ) in zip ( freqSw, S21dB, S21_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
     return maxS21, maxS21_freq
 
@@ -192,7 +212,7 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
 
     # receiver gain
     pamp_gain_dB = 46.7
-    rx_gain_dB = 30
+    rx_gain_dB = 0
     totGain = 10 ** ( ( pamp_gain_dB + rx_gain_dB ) / 20 )
 
     # ADC conversion
@@ -515,9 +535,9 @@ def compute_noise( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
     for m in range( 1, total_scan + 1 ):
         file_path = ( data_folder + file_name_prefix + '{0:03d}'.format( m ) )
         # read the data from the file and store it in numpy array format
-        one_scan = np.array( data_parser.read_data( file_path ) )
-        nmean = np.mean( one_scan )
-        one_scan = ( one_scan - nmean ) / \
+        one_scan_raw = np.array( data_parser.read_data( file_path ) )
+        nmean = np.mean( one_scan_raw )
+        one_scan = ( one_scan_raw - nmean ) / \
             total_scan  # remove DC component
         # data = data + one_scan
 
@@ -556,10 +576,10 @@ def compute_noise( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         ax.grid()
 
         ax = fig.add_subplot( 312 )
-        x_time = np.linspace( 1, len( one_scan ), len( one_scan ) )
+        x_time = np.linspace( 1, len( one_scan_raw ), len( one_scan_raw ) )
         x_time = np.multiply( x_time, ( 1 / adcFreq ) )  # in us
         x_time = np.multiply( x_time, 1e-3 )  # in ms
-        line1, = ax.plot( x_time, one_scan, 'b-' )
+        line1, = ax.plot( x_time, one_scan_raw, 'b-' )
         ax.set_xlabel( 'Time(ms)' )
         ax.set_ylabel( 'Amplitude (a.u.)' )
         ax.set_title( "Noise amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )

@@ -22,7 +22,7 @@ en_fig = 1
 sta_freq = 3
 sto_freq = 5
 spac_freq = 0.01
-samp_freq = 16
+samp_freq = 25
 
 # instantiate nmr object
 nmrObj = tunable_nmr_system_2018( data_parent_folder, en_remote_dbg )
@@ -44,8 +44,8 @@ nmrObj.setMatchingNetwork( 2381, 440 )  # 4.25 MHz AFE
 nmrObj.setMatchingNetwork( 2381, 440 )
 
 while True:
-    nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX1_2H_msk | nmrObj.RX_SEL2_msk |
-                               nmrObj.RX_FL_msk | nmrObj.RX_FH_msk )
+    nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk |
+                               nmrObj.RX_FL_msk )
     nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                                nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                                nmrObj.PSU_5V_ANA_N_EN_msk )

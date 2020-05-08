@@ -35,7 +35,7 @@ meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.222
+cpmg_freq = 4.225
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
@@ -50,7 +50,7 @@ number_of_iteration = 8  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
-tx_sd_msk = 0  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
+tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
 
 # coil param and measured voltage across the coil
 Vpp = 312  # 190
@@ -92,7 +92,7 @@ if ( nmrObj.PCBVer == 'v4.0_and_below' ):
 elif ( nmrObj.PCBVer == 'v5.0' ):
     nmrObj.assertControlSignal( 
         nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-# nmrObj.deassertControlSignal( nmrObj.RX_FH_msk )
+    # nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk )
 
 if ( direct_read ):
     datain = nmrObj.cpmgSequenceDirectRead( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,

@@ -256,6 +256,7 @@ class tunable_nmr_system_2018:
                       )
 
     def deassertAll ( self ):
+        self.gnrl_cnt = 0
         os.system( 
                 self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
                 str( 0 ) + " " +
