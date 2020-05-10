@@ -510,12 +510,15 @@ def compute_iterate( data_parent_folder, meas_folder, en_ext_param, thetaref, ec
     return a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace
 
 
-def compute_noise( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, en_fig ):
+def compute_stats( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, en_fig ):
 
     # variables to be input
     # data_parent_folder : the folder for all datas
     # meas_folder        : the specific folder for one measurement
     # en_fig            : enable figure
+
+    # compute settings
+    process_sum_data = 1  # otherwise process raw data
 
     file_name_prefix = 'dat_'
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
@@ -532,16 +535,21 @@ def compute_noise( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         'nrIterations', param_list, value_list ) )
 
     # parse file and remove DC component
-    # data = np.zeros(nrPnts)
     nmean = 0
-    for m in range( 1, total_scan + 1 ):
-        file_path = ( data_folder + file_name_prefix + '{0:03d}'.format( m ) )
-        # read the data from the file and store it in numpy array format
+    if process_sum_data:
+        file_path = ( data_folder + 'asum' )
         one_scan_raw = np.array( data_parser.read_data( file_path ) )
         nmean = np.mean( one_scan_raw )
-        one_scan = ( one_scan_raw - nmean ) / \
-            total_scan  # remove DC component
-        # data = data + one_scan
+        one_scan = ( one_scan_raw - nmean ) / total_scan
+
+    else:
+        for m in range( 1, total_scan + 1 ):
+            file_path = ( data_folder + file_name_prefix + '{0:03d}'.format( m ) )
+            # read the data from the file and store it in numpy array format
+            one_scan_raw = np.array( data_parser.read_data( file_path ) )
+            nmean = np.mean( one_scan_raw )
+            one_scan = ( one_scan_raw - nmean ) / \
+                total_scan  # remove DC component
 
     # compute fft
     spectx, specty = nmr_fft( one_scan, adcFreq, 0 )

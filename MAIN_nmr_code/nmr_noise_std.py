@@ -15,7 +15,7 @@ import time
 
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.nmr_functions import compute_noise
+from nmr_std_function.nmr_functions import compute_stats
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.data_parser import parse_csv_float2col
 import matplotlib.pyplot as plt
@@ -41,7 +41,7 @@ max_freq = 12.5
 
 # get current time
 now = datetime.now()
-datename = now.strftime( "%y%m%d_%H%M%S_" )
+datename = now.strftime( "%y_%m_%d_%H_%M_%S" )
 swfolder = data_folder + '/' + datename + '_noise_with_RXGain_sw'
 
 fignum = 0
@@ -59,7 +59,7 @@ def perform_noise_test ( plotname , fignum ):
 
     # process the data
     meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
-    nstd, nmean = compute_noise( min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )  # real scan
+    nstd, nmean = compute_stats( min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )  # real scan
     f.write( "std: %08.3f\tmean: %08.3f \t-> %s\n" % ( nstd, nmean, info ) )
 
     shutil.move ( data_folder + '/' + meas_folder[0], swfolder + '/' + info )  # move the data folder

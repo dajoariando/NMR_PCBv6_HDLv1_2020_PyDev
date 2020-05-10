@@ -333,7 +333,7 @@ class tunable_nmr_system_2018:
 
         return data
 
-    def fid( self, cpmg_freq, pulse2_us, pulse2_dtcl, scan_spacing_us, samples_per_echo, number_of_iteration ):
+    def fid( self, cpmg_freq, pulse2_us, pulse2_dtcl, scan_spacing_us, samples_per_echo, number_of_iteration, tx_opa_sd ):
         # execute cpmg sequence
         command = ( self.work_dir + self.exec_folder + "fid" + " " +
                    str( cpmg_freq ) + " " +
@@ -341,7 +341,8 @@ class tunable_nmr_system_2018:
                    str( pulse2_dtcl ) + " " +
                    str( scan_spacing_us ) + " " +
                    str( samples_per_echo ) + " " +
-                   str( number_of_iteration )
+                   str( number_of_iteration ) + " " +
+                   str( tx_opa_sd )
                    )
         os.system( command )  # execute command & ignore its console
 
