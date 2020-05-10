@@ -35,7 +35,7 @@ nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg )
 
 # general measurement settings
 samp_freq = 25  # sampling frequency
-samples = 10000  # number of points
+samples = 100000  # number of points
 min_freq = 0.200
 max_freq = 12.5
 
@@ -80,7 +80,7 @@ fignum = 0  # variable to store figure number
 nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk )
-nmrObj.setPreampTuning( -2.7, 0.3 )  # try -2.7, -1.8 if fail
+nmrObj.setPreampTuning( -2.7, -0.4 )  # try -2.7, -1.8 if fail
 nmrObj.setMatchingNetwork( 2381, 439 )  # 4.25 MHz AFE
 nmrObj.setMatchingNetwork( 2381, 439 )
 nmrObj.assertControlSignal( nmrObj.RX_SEL1_msk | nmrObj.PAMP_IN_SEL2_msk )

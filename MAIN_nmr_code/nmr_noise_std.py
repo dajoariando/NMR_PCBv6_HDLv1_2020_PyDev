@@ -113,7 +113,7 @@ fignum = perform_noise_test ( info, fignum )
 
 # enable the pamp tuning
 info = 'en_pamp_tuning'
-nmrObj.setPreampTuning( -2.7, 0.3 )  # enable the preamp tuning
+nmrObj.setPreampTuning( -2.7, -0.4 )  # enable the preamp tuning
 fignum = perform_noise_test ( info, fignum )
 
 # enable the pamp input

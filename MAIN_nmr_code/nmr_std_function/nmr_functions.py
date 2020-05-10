@@ -211,12 +211,13 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
     dconv_factor = 1  # decimation factor for downconversion
 
     # receiver gain
-    pamp_gain_dB = 46.7
+    pamp_gain_dB = 0
     rx_gain_dB = 0
     totGain = 10 ** ( ( pamp_gain_dB + rx_gain_dB ) / 20 )
 
     # ADC conversion
     uvoltPerDigit = 3.2 * ( 10 ** 6 ) / 16384  # microvolt
+    uvoltPerDigit = 1
 
     # variables from NMR settings
     ( param_list, value_list ) = data_parser.parse_info( 
@@ -272,12 +273,13 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
                 file_path = ( data_folder + 'asum' )
                 data = np.zeros( NoE * SpE )
                 data = np.array( data_parser.read_data( file_path ) )
-                dataraw = data
+
+                # compute raw data before gain stage
+                data = data / totGain * uvoltPerDigit
+
+                dataraw = data / total_scan
                 data = ( data - np.mean( data ) ) / \
                     total_scan  # remove DC component
-
-        # compute raw data before gain stage
-        data = data / totGain * uvoltPerDigit
 
         if en_fig:  # plot the averaged scan
             echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s

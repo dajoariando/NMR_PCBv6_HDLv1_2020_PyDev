@@ -35,15 +35,15 @@ meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.225
+cpmg_freq = 4.217
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 200  # cheng' coil : 750
+echo_spacing_us = 200  # 200
 scan_spacing_us = 1
-samples_per_echo = 1024  # number of points
-echoes_per_scan = 1024  # number of echos
+samples_per_echo = 1024  # 3072
+echoes_per_scan = 1024  # 342
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
 number_of_iteration = 8  # number of averaging
@@ -92,7 +92,7 @@ if ( nmrObj.PCBVer == 'v4.0_and_below' ):
 elif ( nmrObj.PCBVer == 'v5.0' ):
     nmrObj.assertControlSignal( 
         nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-    # nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk )
+    nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk | nmrObj.RX_FH_msk )
 
 if ( direct_read ):
     datain = nmrObj.cpmgSequenceDirectRead( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
