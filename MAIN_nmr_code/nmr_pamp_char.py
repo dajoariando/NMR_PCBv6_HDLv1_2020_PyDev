@@ -22,9 +22,9 @@ fig_num = 1
 en_fig = 1
 
 # measurement properties
-sta_freq = 3.5
-sto_freq = 4.5
-spac_freq = 0.01
+sta_freq = 1
+sto_freq = 10
+spac_freq = 0.05
 samp_freq = 25
 
 # instantiate nmr object

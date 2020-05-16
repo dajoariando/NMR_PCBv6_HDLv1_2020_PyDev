@@ -93,7 +93,7 @@ nmrObj.assertControlSignal ( nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN
 
 # enable the final rx path
 info = 'en_final_rx_path'
-nmrObj.assertControlSignal ( nmrObj.RX_FL_msk | nmrObj.RX_FH_msk )
+nmrObj.assertControlSignal ( nmrObj.RX_FH_msk )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the rx selector
@@ -103,12 +103,12 @@ fignum = perform_noise_test ( info, fignum )
 
 # enable the 2nd rx path
 info = 'en_2nd_rx_path'
-nmrObj.assertControlSignal ( nmrObj.RX2_L_msk | nmrObj.RX2_H_msk )
+nmrObj.assertControlSignal ( nmrObj.RX2_H_msk )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the 1st rx path
 info = 'en_1st_rx_path'
-nmrObj.assertControlSignal ( nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk )
+nmrObj.assertControlSignal ( nmrObj.RX1_1H_msk )
 fignum = perform_noise_test ( info, fignum )
 
 # enable the pamp tuning

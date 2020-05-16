@@ -25,11 +25,11 @@ en_fig = 1
 en_remote_dbg = 0
 
 # cpmg settings
-cpmg_freq = 4.191  # 4.253 original 4.188
-pulse2_us = 10  # pulse pi length
+cpmg_freq = 4.2  # 4.253 original 4.188
+pulse2_us = 5.5  # pulse pi length
 pulse2_dtcl = 0.5  # useless with current code
 scan_spacing_us = 100
-samples_per_echo = 10000  # number of points
+samples_per_echo = 1500  # number of points
 number_of_iteration = 1  # number of averaging
 tx_opa_sd = 1  # put 1 to shutdown tx opamp during reception or 0 to keep it on
 min_freq = 1
@@ -49,7 +49,7 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 
 nmrObj.assertControlSignal( 
         nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk | nmrObj.RX_FH_msk )
+# nmrObj.deassertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX_FL_msk )
 
 while True:
     nmrObj.fid( cpmg_freq, pulse2_us, pulse2_dtcl,

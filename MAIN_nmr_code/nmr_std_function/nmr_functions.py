@@ -582,7 +582,7 @@ def compute_stats( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         # ax.set_ylim(-50, 0)
         ax.set_xlabel( 'Frequency (MHz)' )
         ax.set_ylabel( 'Amplitude (a.u.)' )
-        ax.set_title( "Noise spectrum" )
+        ax.set_title( "Spectrum" )
         ax.grid()
 
         ax = fig.add_subplot( 312 )
@@ -592,14 +592,14 @@ def compute_stats( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         line1, = ax.plot( x_time, one_scan_raw, 'b-' )
         ax.set_xlabel( 'Time(ms)' )
         ax.set_ylabel( 'Amplitude (a.u.)' )
-        ax.set_title( "Noise amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )
+        ax.set_title( "Amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )
         ax.grid()
 
         # plot histogram
         n_bins = 200
         ax = fig.add_subplot( 313 )
         n, bins, patches = ax.hist( one_scan, bins = n_bins )
-        ax.set_title( "Noise histogram" )
+        ax.set_title( "Histogram" )
 
         plt.tight_layout()
         fig.canvas.draw()
@@ -609,7 +609,7 @@ def compute_stats( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         plt.savefig( data_folder + plotname )
 
     # standard deviation of signal
-    print( '\t\tnoise: rms= ' + '{0:.4f}'.format( nstd ) + ' mean= {0:.4f}'.format( nmean ) )
+    print( '\t\t: rms= ' + '{0:.4f}'.format( nstd ) + ' mean= {0:.4f}'.format( nmean ) )
     return nstd, nmean
 
 
