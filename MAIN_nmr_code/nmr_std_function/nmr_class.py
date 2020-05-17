@@ -274,7 +274,7 @@ class tunable_nmr_system_2018:
             outpath
         )
 
-    def cpmgSequence( self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk ):
+    def cpmgSequence( self, cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk , dconv_fact ):
         # execute cpmg sequence
         command = ( self.work_dir + self.exec_folder + "cpmg_iterate" + " " +
                    str( cpmg_freq ) + " " +
@@ -291,7 +291,8 @@ class tunable_nmr_system_2018:
                    str( ph_cycl_en ) + " " +
                    str( pulse180_t1_int ) + " " +
                    str( delay180_t1_int ) + " " +
-                   str( tx_sd_msk )
+                   str( tx_sd_msk ) + " " +
+                   str( dconv_fact )
                    )
         os.system( command )  # execute command & ignore its console
 

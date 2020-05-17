@@ -206,10 +206,6 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
     # by C
     proc_indv_data = 0
 
-    proc_dconv = 1  # process dconv in python, otherwise use fpga dconv
-
-    dconv_factor = 1  # decimation factor for downconversion
-
     # receiver gain
     pamp_gain_dB = 0
     rx_gain_dB = 0
@@ -235,18 +231,34 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
     #    'b1Freq', param_list, value_list) * 1e6
     # total_scan = int(data_parser.find_value(
     #    'nrIterations', param_list, value_list))
+    fpga_dconv = data_parser.find_value( 
+        'fpgaDconv', param_list, value_list )
+    dconv_fact = data_parser.find_value( 
+        'dconvFact', param_list, value_list )
 
-    # compensate for dconv_factor if fpga dconv is used
-    if not proc_dconv:
-        SpE = int( SpE / dconv_factor )
-        Sf = Sf / dconv_factor
+    # compensate for dconv_fact if fpga dconv is used
+    if fpga_dconv:
+        SpE = int( SpE / dconv_fact )
+        Sf = Sf / dconv_fact
 
     # time domain for plot
     tacq = ( 1 / Sf ) * 1e6 * np.linspace( 1, SpE, SpE )  # in uS
     t_echospace = tE / 1e6 * np.linspace( 1, NoE, NoE )  # in uS
 
-    if proc_dconv:
-        # parse file and remove DC component
+    if fpga_dconv:  # use fpga dconv
+        # load IQ data
+        file_path = ( data_folder + 'dconvi' )
+        dconvi = np.array( data_parser.read_data( file_path ) )
+
+        # combined IQ
+        data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
+        for i in range( 0, NoE ):
+            data_filt[i, :] = \
+                dconvi[i * ( 2 * SpE ):( i + 1 ) * ( 2 * SpE ):2] + 1j * dconvi[i * ( 2 * SpE ) + 1:( i + 1 ) * ( 2 * SpE ):2]
+        # normalize data
+        data_filt = np.divide( data_filt, NoE )
+    else:
+        # do down conversion locally
         if ( direct_read ):
             data = datain
         else:
@@ -312,22 +324,6 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
         for i in range( 0, NoE ):
             data_filt[i, :] = down_conv( 
                 data[i * SpE:( i + 1 ) * SpE], i, tE, Df, Sf )
-
-    else:  # use fpga dconv
-        # in-phase data
-        file_path = ( data_folder + 'dconvi' )
-        dconvi = np.array( data_parser.read_data( file_path ) )
-        # quadrature data
-        file_path = ( data_folder + 'dconvq' )
-        dconvq = np.array( data_parser.read_data( file_path ) )
-        # combined IQ
-        data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
-        for i in range( 0, NoE ):
-            data_filt[i, :] = \
-                dconvi[i * SpE:( i + 1 ) * SpE] + 1j * \
-                dconvq[i * SpE:( i + 1 ) * SpE]
-        # normalize data
-        data_filt = np.divide( data_filt, NoE * 25e3 )
 
     # scan rotation
     if en_ext_param:
@@ -460,7 +456,7 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
 
         # plt.set(gca, 'FontSize', 12)
         plt.legend()
-        plt.title( 'Matched Filtered data' )
+        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}'.format( snr, snr_res ) )
         plt.xlabel( 'Time (mS)' )
         plt.ylabel( 'probe voltage (uV)' )
         plt.savefig( data_folder + 'fig_matched_filt_data.png' )
