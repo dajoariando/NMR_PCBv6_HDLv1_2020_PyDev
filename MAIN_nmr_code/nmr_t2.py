@@ -35,14 +35,14 @@ meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.198
+cpmg_freq = 4.286 + ( 9 - 99 ) * 1e-3
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200  # 200
 scan_spacing_us = 1
-samples_per_echo = 1024  # 3072
+samples_per_echo = 512  # 3072
 echoes_per_scan = 1024  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
@@ -51,7 +51,8 @@ ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
 tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
-dconv_fact = 8  # downconversion factor. minimum of 4.
+en_dconv = 1  # enable downconversion in the fpga
+dconv_fact = 4  # downconversion factor. minimum of 4.
 
 # coil param and measured voltage across the coil
 Vpp = 312  # 190
@@ -76,7 +77,7 @@ if ( meas_time ):
 nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg )
 
 # system setup
-nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
+nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting. Also fix the
 nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk )
@@ -102,7 +103,7 @@ if ( direct_read ):
 else:
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
-                        ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, dconv_fact )
+                        ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact )
     datain = []  # set datain to 0 because the data will be read from file instead
 
 if ( nmrObj.PCBVer == 'v4.0_and_below' ):
