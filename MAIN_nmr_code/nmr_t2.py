@@ -35,7 +35,7 @@ meas_time = 1  # measure time
 process_data = 0  # process data within the SoC
 
 # cpmg settings
-cpmg_freq = 4.286 + ( 9 - 99 ) * 1e-3
+cpmg_freq = 4.286 + ( 9 - 99 + 20 + 19 ) * 1e-3
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
@@ -84,7 +84,7 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 # nmrObj.deassertControlSignal(
 #    nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
 
-nmrObj.setPreampTuning( -2.7, -0.4 )  # try -2.7, -1.8 if fail
+nmrObj.setPreampTuning( -2.1, -0.4 )  # try -2.7, -1.8 if fail
 nmrObj.setMatchingNetwork( 2381, 439 )  # 4.25 MHz AFE
 nmrObj.setMatchingNetwork( 2381, 439 )
 

@@ -21,7 +21,7 @@ en_fig = 1
 # measurement properties
 sta_freq = 3
 sto_freq = 5
-spac_freq = 0.01
+spac_freq = 0.05
 samp_freq = 25
 
 # instantiate nmr object
@@ -59,7 +59,7 @@ while True:
     meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
     # meas_folder[0] = "nmr_wobb_2018_06_25_12_44_48"
 
-    S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( 
+    S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( nmrObj,
         data_parent_folder, meas_folder[0], S11_min, en_fig, fig_num )
     print( 'fmin={0:0.3f} fmax={1:0.3f} bw={2:0.3f} minS11={3:0.2f} minS11_freq={4:0.2f}'.format( 
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq ) )

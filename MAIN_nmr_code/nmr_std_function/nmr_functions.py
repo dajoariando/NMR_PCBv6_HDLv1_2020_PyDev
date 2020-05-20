@@ -12,7 +12,7 @@ from nmr_std_function.data_parser import convert_to_prospa_data_t1
 from nmr_std_function.signal_proc import nmr_fft
 
 
-def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
+def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
     ( param_list, value_list ) = data_parser.parse_info( 
@@ -35,6 +35,9 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
         one_scan = np.array( data_parser.read_data( file_path ) )
 
         os.remove( file_path )  # delete the file after use
+
+        # find voltage at the input of ADC in mV
+        one_scan = one_scan * nmrObj.uvoltPerDigit / 1e3
 
         spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
 
@@ -93,10 +96,10 @@ def compute_wobble( data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
             f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
     # print(S11_fmin, S11_fmax, S11_bw)
-    return S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+    return S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
 
-def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
+def compute_gain( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
     ( param_list, value_list ) = data_parser.parse_info( 
@@ -117,8 +120,7 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         file_path = ( data_folder + file_name_prefix +
                      '{:4.3f}'.format( freqSw[m] ) )
         one_scan = np.array( data_parser.read_data( file_path ) )
-
-        # os.remove( file_path )  # delete the file after use
+        os.remove( file_path )  # delete the file after use
 
         '''
         plt.ion()
@@ -130,18 +132,21 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         fig.canvas.flush_events()
         '''
 
+        # find voltage at the input of ADC in mV
+        one_scan = one_scan * nmrObj.uvoltPerDigit / 1e3
+
         spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
 
         # FIND INDEX WHERE THE MAXIMUM SIGNAL IS PRESENT
         # PRECISE METHOD: find reflection at the desired frequency: creating precision problem where usually the signal shift a little bit from its desired frequency
         # ref_idx = abs(spectx - freqSw[m]) == min(abs(spectx - freqSw[m]))
         # BETTER METHOD: find reflection signal peak around the bandwidth
-        ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )
+        ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )  # divide 2 is due to +/- half-BW around the interested frequency
 
-        S21[m] = np.mean( abs( specty[ref_idx] ) )  # compute the sum of amplitude inside RBW
-        S21_ph[m] = np.mean( np.angle( specty[ref_idx] ) ) * ( 360 / ( 2 * np.pi ) )
+        S21[m] = np.mean( abs( specty[ref_idx] ) )  # compute the mean of amplitude inside RBW
+        S21_ph[m] = np.mean( np.angle( specty[ref_idx] ) ) * ( 360 / ( 2 * np.pi ) )  # compute the angle mean. Currently it is not useful because the phase is not preserved in the sequence
 
-    S21dB = 20 * np.log10( S21 )  # convert to dB scale
+    S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
 
     maxS21 = max( S21dB )
     maxS21_freq = freqSw[np.argmax( S21dB )]
@@ -153,7 +158,7 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         ax = fig.add_subplot( 111 )
         line1, = ax.plot( freqSw, S21dB, 'r-' )
         ax.set_ylim( -30, 80 )
-        ax.set_ylabel( 'S21 [dB]' )
+        ax.set_ylabel( 'S21 [dBmV]' )
         ax.set_title( "Transmission Measurement (S21) Parameter" )
         ax.grid()
 
@@ -174,12 +179,13 @@ def compute_gain( data_parent_folder, meas_folder, en_fig, fig_num ):
         for ( a, b, c ) in zip ( freqSw, S21dB, S21_ph ):
             f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
-    return maxS21, maxS21_freq
+    return maxS21, maxS21_freq, S21
 
 
-def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain ):
+def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain ):
 
     # variables to be input
+    # nmrObj            : the hardware definition
     # data_parent_folder : the folder for all datas
     # meas_folder        : the specific folder for one measurement
     # filename_prefix   : the name of data prefix
@@ -208,17 +214,6 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
     # simulate decimation in software (DO NOT use this for normal operation, only for debugging purpose)
     sim_dec = 0
     sim_dec_fact = 32
-
-    # receiver gain
-    pamp_gain_dB = 60
-    rx_gain_dB = 20
-    totGain = 10 ** ( ( pamp_gain_dB + rx_gain_dB ) / 20 )
-
-    # ADC conversion
-    uvoltPerDigit = 3.2 * ( 10 ** 6 ) / 16384  # microvolt
-
-    # downconversion FIR filter gain (sum of all coefficients)
-    fir_gain = 21513
 
     # variables from NMR settings
     ( param_list, value_list ) = data_parser.parse_info( 
@@ -257,9 +252,9 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
 
         # normalize the data
         dconv = dconv / dconv_fact  # normalize with decimation factor (due to sum in the fpga)
-        dconv = dconv / fir_gain  # normalize with the FIR gain in the fpga
-        dconv = dconv / totGain * uvoltPerDigit  # convert to voltage unit at the probe
-        dconv = dconv * 0.707106781  # scale all the data to magnitude of sin(45). The FPGA uses unity magnitude (instead of sin45,135,225,315) to simplify downconversion operation
+        dconv = dconv / nmrObj.fir_gain  # normalize with the FIR gain in the fpga
+        dconv = dconv / nmrObj.totGain * nmrObj.uvoltPerDigit  # convert to voltage unit at the probe
+        dconv = dconv * nmrObj.dconv_gain  # scale all the data to magnitude of sin(45). The FPGA uses unity magnitude (instead of sin45,135,225,315) to simplify downconversion operation
 
         # combined IQ
         data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
@@ -530,7 +525,7 @@ def compute_multiple( data_parent_folder, meas_folder, file_name_prefix, Df, Sf,
     return ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace )
 
 
-def compute_iterate( data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, direct_read, datain, en_fig ):
+def compute_iterate( nmrObj, data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, direct_read, datain, en_fig ):
 
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
     # variables from NMR settings
@@ -555,10 +550,10 @@ def compute_iterate( data_parent_folder, meas_folder, en_ext_param, thetaref, ec
     # echoref_avg = 0
 
     if ( direct_read ):
-        ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( data_parent_folder, meas_folder, file_name_prefix,
+        ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
                                                                                                           Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain )
     else:
-        ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( data_parent_folder, meas_folder, file_name_prefix,
+        ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
                                                                                                           Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, 0, datain )
 
     # print(snr, T2)

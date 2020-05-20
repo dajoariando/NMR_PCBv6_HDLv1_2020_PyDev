@@ -99,7 +99,7 @@ for i in np.arange ( len( RxGainSet ) ) :
 
     meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
 
-    maxS21, maxS21_freq = compute_gain( data_parent_folder, meas_folder[0], en_fig, fig_num )
+    maxS21, maxS21_freq , _ = compute_gain( nmrObj, data_parent_folder, meas_folder[0], en_fig, fig_num )
     print( 'maxS21={0:0.2f} maxS21_freq={1:0.2f}'.format( 
          maxS21, maxS21_freq ) )
 

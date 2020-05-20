@@ -8,9 +8,7 @@ This module characterizes the preamp gain and show the gain over frequency
 
 import os
 import time
-
 from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.nmr_functions import compute_wobble
 from nmr_std_function.nmr_functions import compute_gain
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
@@ -61,6 +59,6 @@ while True:
     meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
     # meas_folder[0] = "nmr_wobb_2018_06_25_12_44_48"
 
-    maxS21, maxS21_freq = compute_gain( data_parent_folder, meas_folder[0], en_fig, fig_num )
+    maxS21, maxS21_freq, _ = compute_gain( nmrObj, data_parent_folder, meas_folder[0], en_fig, fig_num )
     print( 'maxS21={0:0.2f} maxS21_freq={1:0.2f}'.format( 
          maxS21, maxS21_freq ) )

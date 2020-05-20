@@ -19,17 +19,17 @@ f0 = B1 * gamma
 f0 = 4.3e6
 
 filename = './PARAM_mtch_ntwrk_caps_preamp_v2.csv'
-cser, cpar = mn.read_PARAM_mtch_ntwrk_caps(filename)
-Cp = conv_cInt_to_cReal(79, cpar)
-print(Cp)
-Z = comp_Z1(L, RL, CL, Cp, f0)
-print('{0:0.3f}'.format(np.real(Z)))
+cser, cpar = mn.read_PARAM_mtch_ntwrk_caps( filename )
+Cp = conv_cInt_to_cReal( 79, cpar )
+print( Cp )
+Z = comp_Z1( L, RL, CL, Cp, f0 )
+print( '{0:0.3f}'.format( np.real( Z ) ) )
 
-Z, Cp_idx, Cs_idx = mn.Cp_opt(L, RL, CL, f0)
-print('f0 = ', f0)
-print('Z = ', Z)
-print('Cp_idx = ', Cp_idx)
-print('Cs_idx = ', Cs_idx)
+Z, Cp_idx, Cs_idx = mn.Cp_opt( L, RL, CL, f0 )
+print( 'f0 = ', f0 )
+print( 'Z = ', Z )
+print( 'Cp_idx = ', Cp_idx )
+print( 'Cs_idx = ', Cs_idx )
 pass
 
 '''

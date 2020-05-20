@@ -147,6 +147,14 @@ class tunable_nmr_system_2018:
         # General control defaults for the FPGA
         self.gnrl_cnt = 0
 
+        # Numeric conversion of the hardware
+        self.pamp_gain_dB = 60  # preamp gain
+        self.rx_gain_dB = 20  # rx amp gain
+        self.totGain = 10 ** ( ( self.pamp_gain_dB + self.rx_gain_dB ) / 20 )
+        self.uvoltPerDigit = 3.2 * ( 10 ** 6 ) / 16384  # ADC conversion, in microvolt
+        self.fir_gain = 21513  # downconversion FIR filter gain (sum of all coefficients)
+        self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
+
         # ip addresses settings for the system
         self.server_ip = '192.168.137.10'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
