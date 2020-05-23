@@ -18,7 +18,7 @@ from datetime import datetime
 import shutil
 from nmr_std_function.data_parser import write_text_append
 from nmr_std_function.hw_driver import fpga_de1soc
-from email.errors import ObsoleteHeaderDefect
+# from email.errors import ObsoleteHeaderDefect
 
 
 class tunable_nmr_system_2018:

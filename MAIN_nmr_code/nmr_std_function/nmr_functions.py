@@ -1,15 +1,16 @@
 import math
 import csv
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 import os
-from scipy.optimize import curve_fit
 
 from nmr_std_function import data_parser
 from nmr_std_function.signal_proc import down_conv
 from nmr_std_function.data_parser import convert_to_prospa_data_t1
 from nmr_std_function.signal_proc import nmr_fft
+
+from scipy.optimize import curve_fit
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
@@ -333,7 +334,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
                 data = ( data - np.mean( data ) )
 
         # compute the probe voltage before gain stage
-        data = data / totGain * uvoltPerDigit
+        data = data / nmrObj.totGain * nmrObj.uvoltPerDigit
 
         if en_fig:  # plot the averaged scan
             echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s

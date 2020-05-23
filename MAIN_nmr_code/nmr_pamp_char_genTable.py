@@ -1,9 +1,8 @@
 '''
     Created on May 19th 2020
     author: David Joseph Ariando
-    this program generates a table that contains preamp frequency response
-    characteristics with variable vvar and vbias. vbias sweep can be ignored
-    if the optimum vbias is already tested
+    this program generates a table that contains an optimum setting for the preamp vbias
+    and preamp varactor voltage by sweeping of vbias and vvarac
 
 '''
 

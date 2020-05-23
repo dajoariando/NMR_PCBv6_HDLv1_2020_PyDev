@@ -19,10 +19,10 @@ fig_num = 1
 en_fig = 1
 
 # measurement properties
-sta_freq = 3
+sta_freq = 4
 sto_freq = 5
-spac_freq = 0.05
-samp_freq = 25
+spac_freq = 0.01
+samp_freq = 16
 
 # instantiate nmr object
 nmrObj = tunable_nmr_system_2018( data_parent_folder, en_remote_dbg )
@@ -40,8 +40,8 @@ nmrObj.assertControlSignal( nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk )
 
 nmrObj.setPreampTuning( -2.7, 0.3 )  # try -2.7, -1.8 if fail
-nmrObj.setMatchingNetwork( 2381, 440 )  # 4.25 MHz AFE
-nmrObj.setMatchingNetwork( 2381, 440 )
+nmrObj.setMatchingNetwork( 1930, 280 )  # 4.25 MHz AFE
+nmrObj.setMatchingNetwork( 1930, 280 )
 
 while True:
     nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk |
