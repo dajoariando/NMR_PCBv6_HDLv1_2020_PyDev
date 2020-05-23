@@ -49,24 +49,25 @@ from faulthandler import disable
 data_parent_folder = "/root/NMR_DATA"
 en_remote_dbg = 0
 fig_num = 1
-en_fig = True  # enable figure for every measurement
+en_fig = False  # enable figure for every measurement
 keepRawData = True  # set this to keep the S11 raw data in text file
 tblMtchNtwrk = '/hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
+meas_time = 1  # measure time
 
 # acquisition settings (frequency to be shown in the table
 freqSta = 2
-freqSto = 6
+freqSto = 8
 freqSpa = 0.01
 freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 4.5
-S11FreqSto = 4.7
+S11FreqSta = 3.5
+S11FreqSto = 6
 
 # sweep precision
-cparPrec = 1  # change cpar by this value.
-cserPrec = 1  # change cser by this value.
+cparPrec = 10  # change cpar by this value.
+cserPrec = 5  # change cser by this value.
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -140,6 +141,9 @@ def updateTable( Table, newVal, setting1, setting2 ):
 
 
 def runExpt( cparVal, cserVal, minReflxTable ):
+    if meas_time:
+        start_time = time.time()
+
     # enable power and signal path
     nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk )
     nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
@@ -155,10 +159,19 @@ def runExpt( cparVal, cserVal, minReflxTable ):
     # disable all to save power
     nmrObj.deassertAll()
 
+    if meas_time :
+        elapsed_time = time.time() - start_time
+        start_time = time.time()  # reset the start time
+        print( "### time elapsed for running wobble exec: %.3f" % ( elapsed_time ) )
+
     # compute the generated data
     meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
     S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( nmrObj, data_parent_folder, meas_folder[0], S11_min, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
+
+    if meas_time :
+        elapsed_time = time.time() - start_time
+        print( "### time elapsed for compute_wobble: %.3f" % ( elapsed_time ) )
 
     # update the table
     minReflxTable = updateTable( minReflxTable, S11mV, cparVal, cserVal )
@@ -266,27 +279,27 @@ while ( True ):  # search lower frequency
 # write the optimum setting with the frequency and gain into the main file
 Table = open( swfolder + '/genS11Table.txt', 'w' )
 Table.write( 'settings:\n' )
-Table.write( '\tCpar Precision={:d}\n'.format( cparPrec ) )
-Table.write( '\tCser Precision={:d}\n'.format( cserPrec ) )
-Table.write( '\tAcq. Frequency Start={:.3f}MHz\n'.format( freqSta ) )
-Table.write( '\tAcq. Frequency Stop={:.3f}MHz\n'.format( freqSto ) )
-Table.write( '\tAcq. Frequency Spacing={:.3f}MHz\n'.format( freqSpa ) )
-Table.write( '\tAcq. Frequency Sampling={:.1f}MHz\n'.format( freqSamp ) )
-Table.write( '\tS11 Optimization Frequency Start={:.2f}MHz\n'.format( S11FreqSta ) )
-Table.write( '\tS11 Optimiztaion Frequency Stop={:.2f}MHz\n'.format( S11FreqSto ) )
+Table.write( '\tCpar Precision = {:d}\n'.format( cparPrec ) )
+Table.write( '\tCser Precision = {:d}\n'.format( cserPrec ) )
+Table.write( '\tAcq. Frequency Start = {:.3f} MHz\n'.format( freqSta ) )
+Table.write( '\tAcq. Frequency Stop = {:.3f} MHz\n'.format( freqSto ) )
+Table.write( '\tAcq. Frequency Spacing = {:.3f} MHz\n'.format( freqSpa ) )
+Table.write( '\tAcq. Frequency Sampling = {:.1f} MHz\n'.format( freqSamp ) )
+Table.write( '\tS11 Optimization Frequency Start = {:.2f} MHz\n'.format( S11FreqSta ) )
+Table.write( '\tS11 Optimiztaion Frequency Stop = {:.2f} MHz\n'.format( S11FreqSto ) )
 if lrSeed:
     l_init = 1e-6  # coil inductance
     r_init = 0.1  # coil resistance
     c_init = 0.0  # coil parasitic capacitance
-    Table.write( '\tCoil inductance={:.3f}uH\n'.format( l_init * 1e6 ) )
-    Table.write( '\tCoil resistance={:.1f}MHz\n'.format( r_init * 1e3 ) )
-    Table.write( '\tCoil capacitance={:.3f}pF\n'.format( c_init * 1e12 ) )
-    Table.write( '\tderived Cpar={:d}(:.1f)pF\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
-    Table.write( '\tderived Cpar={:d}(:.1f)pF\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
+    Table.write( '\tCoil inductance = {:.3f} uH\n'.format( l_init * 1e6 ) )
+    Table.write( '\tCoil resistance = {:.1f} MHz\n'.format( r_init * 1e3 ) )
+    Table.write( '\tCoil capacitance = {:.3f} pF\n'.format( c_init * 1e12 ) )
+    Table.write( '\tderived Cpar = {:d} ({:.1f} pF)\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
+    Table.write( '\tderived Cser = {:d} ({:.1f} pF)\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        Table.write( '\tCpar={:d}({:.1f})pF\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
-        Table.write( '\tCpar={:d}({:.1f})pF\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
+        Table.write( '\tCpar = {:d} ({:.1f} pF)\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
+        Table.write( '\tCser = {:d} ({:.1f} pF)\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
 
 Table.write( '\n' );
 Table.write( 'freq(MHz)\t min-voltage(mV)\t Cpar(digit)\t Cser(digit)\n' )

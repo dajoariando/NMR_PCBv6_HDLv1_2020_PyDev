@@ -125,3 +125,18 @@ pprint( ans )
 # system of nonlinear equation
 ans = nonlinsolve( [x ** 2 + 1, y ** 2 + 1], [x, y] )
 pprint( ans )
+
+
+# system with defined functions and multiple non-linear equation
+def addition( a, b ):
+    return a + b
+
+
+def subtract( a, b ):
+    return a - b
+
+
+x, y = symbols( 'x y' )
+f = Eq( addition( x, y ), 50 )
+g = Eq( subtract( x, y ), 10 )
+ans = linsolve( [f, g], ( x, y ) )
