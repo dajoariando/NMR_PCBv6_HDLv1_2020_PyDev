@@ -190,9 +190,9 @@ def runExpt( cparVal, cserVal, minReflxTable ):
             for ( a, b ) in zip ( freqSw, S11mV ):
                 f.write( '{:-8.3f},{:-8.3f}\n' .format( a, b ) )
 
-        shutil.rmtree ( data_parent_folder + '/' + meas_folder[0], swfolder_ind )  # move the data folder
+        shutil.rmtree ( data_parent_folder + '/' + meas_folder[0] )  # remove the data folder
     else:
-        shutil.rmtree( data_parent_folder + '/' + meas_folder[0], swfolder_ind )
+        shutil.rmtree( data_parent_folder + '/' + meas_folder[0]) # remove the data folder
 
     return S11mV, minS11_freq, minReflxTable
 
@@ -213,7 +213,7 @@ def findMinS11_atCparVal( cpar, cser_iFirst, minReflxTable , cser_Prec ):
             break
         S11mVCurr, minS11FreqCurr, minReflxTable = runExpt( cpar, cser_i, minReflxTable )
         MinS11mVCurr = np.min( S11mVCurr )
-        if MinS11mVCurr < MinS11mV:
+        if MinS11mVCurr < MinS11mV: # find if current S11 is better than the previous one
             minS11Freq = minS11FreqCurr
             MinS11mV = MinS11mVCurr
             cser_ret = cser_i
@@ -232,14 +232,14 @@ def findMinS11_atCparVal( cpar, cser_iFirst, minReflxTable , cser_Prec ):
             break
         S11mVCurr, minS11FreqCurr, minReflxTable = runExpt( cpar, cser_i , minReflxTable )
         MinS11mVCurr = np.min( S11mVCurr )
-        if MinS11mVCurr < MinS11mV:
+        if MinS11mVCurr < MinS11mV: # find if current S11 is better than the previous one
             minS11Freq = minS11FreqCurr
             MinS11mV = MinS11mVCurr
             cser_ret = cser_i
         else:
-            return minS11Freq, cser_ret, minReflxTable
             break
 
+	return minS11Freq, cser_ret, minReflxTable
 
 # find initial seed, and update cser_init if better cser value is found for the corresponding cpar_init
 S11minFreq, cser_init, minReflxTable = findMinS11_atCparVal( cpar_init, cser_init, minReflxTable , cserPrec )

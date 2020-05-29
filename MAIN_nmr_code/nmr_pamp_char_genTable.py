@@ -110,7 +110,7 @@ for i in range( len( vvaracSw ) ):
 
             shutil.move ( data_parent_folder + '/' + meas_folder[0], swfolder_ind )  # move the data folder
         else:
-            shutil.rmtree( data_parent_folder + '/' + meas_folder[0], swfolder_ind )
+            shutil.rmtree( data_parent_folder + '/' + meas_folder[0] ) # remove the data folder
 
 # write the optimum setting with the frequency and gain
 Table = open( swfolder + '/genS21Table.txt', 'w' )

@@ -126,7 +126,7 @@ for i in range( len( cparSw ) ):
 
             shutil.move ( data_parent_folder + '/' + meas_folder[0], swfolder_ind )  # move the data folder
         else:
-            shutil.rmtree( data_parent_folder + '/' + meas_folder[0], swfolder_ind )
+            shutil.rmtree( data_parent_folder + '/' + meas_folder[0])
 
 # write the optimum setting with the frequency and gain into the main file
 Table = open( swfolder + '/genS11Table.txt', 'w' )
