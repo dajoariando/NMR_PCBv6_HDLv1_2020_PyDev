@@ -156,7 +156,7 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.10'  # '129.22.143.88'
+        self.server_ip = '192.168.137.168'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
         self.server_path = '/root/nmr_pcb20_hdl10_2018/MAIN_nmr_code/'
         # client path with samba

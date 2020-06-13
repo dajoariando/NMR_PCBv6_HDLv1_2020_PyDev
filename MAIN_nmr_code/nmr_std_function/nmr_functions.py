@@ -13,7 +13,14 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fig_num ):
+def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
+
+    # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
+    # useRef uses the S11mV_ref as reference, otherwise it will use the max signal available in the data
+
+    # settings
+    binary_OR_ascii = 1  # put 1 if the data file uses binary representation, otherwise it is in ascii format
+
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
     ( param_list, value_list ) = data_parser.parse_info( 
@@ -27,13 +34,17 @@ def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fi
 
     file_name_prefix = 'tx_acq_'
     freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus freqSpa/2 is to include the endpoint (just like what the C does)
-    S11 = np.zeros( len( freqSw ) )
+    S11mV = np.zeros( len( freqSw ) )
     S11_ph = np.zeros( len( freqSw ) )
     for m in range( 0, len( freqSw ) ):
         # for m in freqSw:
         file_path = ( data_folder + file_name_prefix +
                      '{:4.3f}'.format( freqSw[m] ) )
-        one_scan = np.array( data_parser.read_data( file_path ) )
+
+        if binary_OR_ascii:
+            one_scan = data_parser.read_hex_int16( file_path )  # use binary representation
+        else:
+            one_scan = np.array( data_parser.read_data( file_path ) )  # use ascii representation
 
         os.remove( file_path )  # delete the file after use
 
@@ -48,11 +59,15 @@ def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fi
         # BETTER METHOD: find reflection signal peak around the bandwidth
         ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )
 
-        # S11[m] = max( abs( specty[ref_idx] ) )  # find reflection peak
-        S11[m] = np.mean( abs( specty[ref_idx] ) )  # compute the mean of amplitude inside RBW
+        # S11mV[m] = max( abs( specty[ref_idx] ) )  # find reflection peak
+        S11mV[m] = np.mean( abs( specty[ref_idx] ) )  # compute the mean of amplitude inside RBW
         S11_ph[m] = np.mean( np.angle( specty[ref_idx] ) ) * ( 360 / ( 2 * np.pi ) )
 
-    S11dB = 20 * np.log10( S11 / max( S11 ) )  # convert to dB scale
+    if useRef:  # if reference is present
+        S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref ) )  # convert to dB scale
+    else:  # if reference is not present
+        S11dB = 20 * np.log10( S11mV / max( S11mV ) )  # convert to dB scale
+
     S11_min10dB = ( S11dB <= s11_min )
 
     minS11 = min( S11dB )
@@ -74,7 +89,7 @@ def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fi
         fig.clf()
         ax = fig.add_subplot( 211 )
         line1, = ax.plot( freqSw, S11dB, 'r-' )
-        ax.set_ylim( -35, 0 )
+        ax.set_ylim( -35, 10 )
         ax.set_ylabel( 'S11 [dB]' )
         ax.set_title( "Reflection Measurement (S11) Parameter" )
         ax.grid()
@@ -91,13 +106,16 @@ def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, en_fig, fi
 
         plt.savefig( data_folder + 'wobble.png' )
 
-    # write S11 to a file
-    with open( data_folder + 'S11.txt', 'w' ) as f:
+    # write S11mV to a file
+    with open( data_folder + 'S11mV.txt', 'w' ) as f:
         for ( a, b, c ) in zip ( freqSw, S11dB, S11_ph ):
             f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
     # print(S11_fmin, S11_fmax, S11_bw)
-    return S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+    if useRef:
+        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+    else:
+        return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
 
 def compute_gain( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):

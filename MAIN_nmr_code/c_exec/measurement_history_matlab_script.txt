@@ -1,1 +1,0 @@
-tx_acq([data_folder,'2020_05_23_18_24_30_tx_acq']);

@@ -93,6 +93,8 @@ def read_hex_float( file_path ):
 
     f = open( file_path , 'rb' )  # read as binary
     rddata = f.read()  # read data in bytes
+    f.close()
+
     rddata = bytearray( rddata )  # convert to bytearray
     rddata = np.array( rddata )  # convert to numpy integer array
     rddata = np.array( rddata ).reshape( len( rddata ) >> 2, 4 )  # restructure to have 4 bytes per float number
@@ -100,7 +102,26 @@ def read_hex_float( file_path ):
     # convert data to float
     data = np.zeros( len( rddata ), dtype = 'float' )
     for i in range( len( rddata ) ):
-        data[i] = struct.unpack( 'f', rddata[i] )[0]
+        data[i] = struct.unpack( 'f', rddata[i] )[0]  # 'f' is float datatype
+
+    return data
+
+
+def read_hex_int16 ( file_path ):
+    import struct
+
+    f = open( file_path , 'rb' )  # read as binary
+    rddata = f.read()  # read data in bytes
+    f.close()
+
+    rddata = bytearray( rddata )  # convert to bytearray
+    rddata = np.array( rddata )  # convert to numpy integer array
+    rddata = np.array( rddata ).reshape( len( rddata ) >> 1, 2 )  # restructure to have 2 bytes per int16 number
+
+    # convert data to float
+    data = np.zeros( len( rddata ), dtype = 'int16' )
+    for i in range( len( rddata ) ):
+        data[i] = struct.unpack( 'H', rddata[i] )[0]  # 'H' is unsigned short integer datatype
 
     return data
 

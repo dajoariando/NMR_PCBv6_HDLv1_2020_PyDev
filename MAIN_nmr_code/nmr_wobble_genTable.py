@@ -109,7 +109,7 @@ for i in range( len( cparSw ) ):
 
         # compute the generated data
         meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
-        S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( nmrObj, data_parent_folder, meas_folder[0], S11_min, en_fig, fig_num )
+        S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( nmrObj, data_parent_folder, meas_folder[0], S11_min, 0, 0, en_fig, fig_num )
         print( 'fmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.2f} cpar={:0.0f} cser={:0.0f}'.format( S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparSw[i], cserSw[j] ) )
 
         # update the table
@@ -126,7 +126,7 @@ for i in range( len( cparSw ) ):
 
             shutil.move ( data_parent_folder + '/' + meas_folder[0], swfolder_ind )  # move the data folder
         else:
-            shutil.rmtree( data_parent_folder + '/' + meas_folder[0])
+            shutil.rmtree( data_parent_folder + '/' + meas_folder[0] )
 
 # write the optimum setting with the frequency and gain into the main file
 Table = open( swfolder + '/genS11Table.txt', 'w' )
