@@ -45,7 +45,7 @@ nmrObj.assertControlSignal(
     nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 
 # cpmg settings
-cpmg_freq = 4.170
+cpmg_freq = 4.172
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200
@@ -57,11 +57,14 @@ number_of_iteration = 2  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
+tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
+en_dconv = 0  # enable downconversion in the fpga
+dconv_fact = 4  # downconversion factor. minimum of 4.
 
 # sweep settings
 pulse_us_sta = 1.0  # in microsecond
-pulse_us_sto = 10.0  # in microsecond
-pulse_us_ste = 31  # number of steps
+pulse_us_sto = 4.0  # in microsecond
+pulse_us_ste = 11  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -72,11 +75,13 @@ for i in range( 0, pulse_us_ste ):
     pulse1_us = pulse_us_sw[i]  # pulse pi/2 length
     pulse2_us = 5.5  # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
-                        echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int )
+                        echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
+                        ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact )
+
     datain = []  # set datain to 0 because the data will be read from file instead
     meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
     ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
-        data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig )
+        nmrObj, data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig )
     a_integ_table[i] = a_integ
     if en_fig:
         plt.ion()

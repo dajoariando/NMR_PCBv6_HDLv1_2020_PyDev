@@ -234,14 +234,10 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     sim_dec_fact = 32
 
     # variables from NMR settings
-    ( param_list, value_list ) = data_parser.parse_info( 
-        data_folder, 'acqu.par' )  # read file
-    SpE = int( data_parser.find_value( 
-        'nrPnts', param_list, value_list ) )
-    NoE = int( data_parser.find_value( 
-        'nrEchoes', param_list, value_list ) )
-    en_ph_cycle_proc = data_parser.find_value( 
-        'usePhaseCycle', param_list, value_list )
+    ( param_list, value_list ) = data_parser.parse_info( data_folder, 'acqu.par' )  # read file
+    SpE = int( data_parser.find_value( 'nrPnts', param_list, value_list ) )
+    NoE = int( data_parser.find_value( 'nrEchoes', param_list, value_list ) )
+    en_ph_cycle_proc = data_parser.find_value( 'usePhaseCycle', param_list, value_list )
     # tE = data_parser.find_value('echoTimeRun', param_list, value_list)
     # Sf = data_parser.find_value(
     #    'adcFreq', param_list, value_list) * 1e6
@@ -249,10 +245,13 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     #    'b1Freq', param_list, value_list) * 1e6
     # total_scan = int(data_parser.find_value(
     #    'nrIterations', param_list, value_list))
-    fpga_dconv = data_parser.find_value( 
-        'fpgaDconv', param_list, value_list )
-    dconv_fact = data_parser.find_value( 
-        'dconvFact', param_list, value_list )
+    fpga_dconv = data_parser.find_value( 'fpgaDconv', param_list, value_list )
+    dconv_fact = data_parser.find_value( 'dconvFact', param_list, value_list )
+    echo_skip = data_parser.find_value( 'echoSkipHw', param_list, value_list )
+
+    # account for skipped echoes
+    NoE = int ( NoE / echo_skip )
+    tE = tE * echo_skip
 
     # compensate for dconv_fact if fpga dconv is used
     if fpga_dconv:
@@ -547,7 +546,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         # plt.set(gca, 'FontSize', 12)
         plt.legend()
-        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:03.1f} n_im:{:03.1f} n_res:{:03.1f}'.format( snr, snr_res, a0, ( noise * math.sqrt( total_scan ) ) , ( res * math.sqrt( total_scan ) ) ) )
+        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:03.1f} n_im:{:03.1f} n_res:{:03.1f} T2:{:0.2f}msec'.format( snr, snr_res, a0, ( noise * math.sqrt( total_scan ) ) , ( res * math.sqrt( total_scan ) ), T2 * 1e3 ) )
         plt.xlabel( 'Time (mS)' )
         plt.ylabel( 'probe voltage (uV)' )
         plt.savefig( data_folder + 'fig_matched_filt_data.png' )

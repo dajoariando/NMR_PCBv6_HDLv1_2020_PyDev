@@ -86,5 +86,5 @@ print( 'Generate reference.' )
 S11mV_ref, minS11Freq_ref = runExpt( 0, 0, 0, 0 )  # background is computed with no capacitor connected -> max reflection
 
 while True:
-    runExpt( 1930, 280, S11mV_ref, 1 )
+    runExpt( 2460, 442, S11mV_ref, 1 )
 

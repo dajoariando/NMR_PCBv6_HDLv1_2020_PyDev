@@ -1,0 +1,7 @@
+compute_iterate([data_folder,'2020_06_19_22_17_28_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_25_53_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_27_40_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_31_24_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_33_23_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_34_10_cpmg']);
+compute_iterate([data_folder,'2020_06_19_22_43_49_cpmg']);

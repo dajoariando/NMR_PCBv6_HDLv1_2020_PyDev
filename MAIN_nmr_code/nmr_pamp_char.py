@@ -40,7 +40,7 @@ nmrObj.assertControlSignal( nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
                            nmrObj.PSU_5V_ANA_N_EN_msk )
 
-nmrObj.setPreampTuning( -2.7, -0.4 )  # try -2.7, -1.8 if fail
+nmrObj.setPreampTuning( -2.1, -0.4 )  # try -2.7, -1.8 if fail
 nmrObj.setMatchingNetwork( 0, 0 )
 nmrObj.setMatchingNetwork( 0, 0 )
 

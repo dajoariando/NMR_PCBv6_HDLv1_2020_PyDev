@@ -62,8 +62,8 @@ freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 4.5
-S11FreqSto = 4.7
+S11FreqSta = 4.15
+S11FreqSto = 4.2
 
 # sweep precision
 cparPrec = 10  # change cpar by this value.
@@ -79,8 +79,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 1930  # the parallel capacitance
-        cser_init = 280  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 2420  # the parallel capacitance
+        cser_init = 348  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin
