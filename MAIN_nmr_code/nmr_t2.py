@@ -43,25 +43,25 @@ if ( meas_time ):
     start_time = time.time()
 
 # cpmg settings
-cpmg_freq = 4.172 + ( 0 ) * 1e-3
+cpmg_freq = 4.222 + ( 50 + -1 ) * 1e-3
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200  # 200
 scan_spacing_us = 4000000
-samples_per_echo = 1024  # 3072
-echoes_per_scan = 8192  # 20
+samples_per_echo = 512  # 3072
+echoes_per_scan = 1024 * 16  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 64  # number of averaging
+number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
 tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
 en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
-echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
+echo_skip = 8  # echo skip factor. set to 1 for the ADC to capture all echoes
 
 # coil param and measured voltage across the coil
 Vpp = 312  # 190

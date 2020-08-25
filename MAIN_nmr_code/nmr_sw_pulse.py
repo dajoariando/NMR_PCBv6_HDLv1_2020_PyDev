@@ -45,13 +45,13 @@ nmrObj.assertControlSignal(
     nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 
 # cpmg settings
-cpmg_freq = 4.172
+cpmg_freq = 4.172 + ( -2.12 - 3 - 2 + 50 + 4 + 2 ) * 1e-3
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200
-scan_spacing_us = 100000
-samples_per_echo = 1024  # number of points
-echoes_per_scan = 1024  # number of echos
+scan_spacing_us = 4000000
+samples_per_echo = 512  # number of points
+echoes_per_scan = 1024 * 16  # number of echos
 init_adc_delay_compensation = 6  # acquisition shift microseconds
 number_of_iteration = 2  # number of averaging
 ph_cycl_en = 1
@@ -60,10 +60,11 @@ delay180_t1_int = 0
 tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powered up during reception
 en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
+echo_skip = 8  # echo skip factor. set to 1 for the ADC to capture all echoes
 
 # sweep settings
-pulse_us_sta = 1.0  # in microsecond
-pulse_us_sto = 4.0  # in microsecond
+pulse_us_sta = 2.0  # in microsecond
+pulse_us_sto = 8.0  # in microsecond
 pulse_us_ste = 11  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
@@ -72,11 +73,11 @@ for i in range( 0, pulse_us_ste ):
     print( '----------------------------------' )
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
-    pulse1_us = pulse_us_sw[i]  # pulse pi/2 length
-    pulse2_us = 5.5  # pulse pi length
+    pulse1_us = 2.5  # pulse pi/2 length
+    pulse2_us = pulse_us_sw[i]  # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
-                        ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact )
+                        ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )
 
     datain = []  # set datain to 0 because the data will be read from file instead
     meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
