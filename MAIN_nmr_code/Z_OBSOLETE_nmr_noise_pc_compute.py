@@ -20,7 +20,8 @@ import meas_configs.wmp_pcb1 as conf
 data_folder = "D:\\TEMP"
 en_remote_dbg = 0
 en_fig = 1
-nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg )
+en_remote_computing = 1
+nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg)
 
 # measurement settings
 min_freq = 1.5 # in MHz
