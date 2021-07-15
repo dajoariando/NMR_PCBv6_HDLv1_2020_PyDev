@@ -20,7 +20,7 @@ from scipy import signal
 import pydevd
 from datetime import datetime
 import meas_configs.wmp_pcb1 as conf
-from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder
+from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 # variables
 server_data_folder = "/root/NMR_DATA"
@@ -40,7 +40,7 @@ nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_c
 
 # measurement settings
 samp_freq = 25  # sampling frequency
-samples = 40000  # number of points
+samples = 500000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
 
@@ -74,6 +74,7 @@ while True:
 
     if  en_remote_computing:  # copy remote folder to local directory
         cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
     # compute_stats( min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )
     compute_in_bw_noise( conf.meas_bw_kHz, conf.Df_MHz, min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )
