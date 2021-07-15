@@ -1,2 +1,0 @@
-fid_iterate([data_folder,'2021_07_14_20_09_36_noise']);
-fid_iterate([data_folder,'2021_07_14_20_09_39_noise']);

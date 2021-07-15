@@ -3,8 +3,13 @@ Created on July 15th 2021
 
 This module supports processing on the SoC/server (old method) and show the result on client via remote X window.
 It also supports processing on the PC/client (new method) and show the result directly on client (much faster).
+
+Set the correct settings in nmr_class for the ip addresses.
+
 When en_remote_computing is 1, make sure to run the python code on the PC/client side.
 When en_remote_computing is 0, make sure to run the python code on the SoCFPGA/server side.
+
+This module calculates the general noise or in-bandwidth noise
 
 @author: David Ariando
 '''
@@ -12,15 +17,16 @@ When en_remote_computing is 0, make sure to run the python code on the SoCFPGA/s
 #!/usr/bin/python
 
 import os
+from datetime import datetime
+import pydevd
+from scipy import signal
+import matplotlib.pyplot as plt
+
 from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col
 from nmr_std_function.nmr_functions import compute_iterate, compute_stats, compute_in_bw_noise
-from nmr_std_function.nmr_class import tunable_nmr_system_2018
-import matplotlib.pyplot as plt
-from scipy import signal
-import pydevd
-from datetime import datetime
-import meas_configs.wmp_pcb1 as conf
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+from nmr_std_function.nmr_class import tunable_nmr_system_2018
+from nmr_std_function.sys_configs import WMP_old_coil as conf
 
 # variables
 server_data_folder = "/root/NMR_DATA"
@@ -53,8 +59,8 @@ nmrObj.deassertControlSignal(
     nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk )
 
 nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
-nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
-# nmrObj.setMatchingNetwork( 0, 0 )
+# nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
+nmrObj.setMatchingNetwork( 0, 0 )
 
 nmrObj.assertControlSignal( 
     nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )

@@ -36,27 +36,27 @@ from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.nmr_functions import calcP90
 from nmr_std_function.nmr_functions import compute_iterate
 
-if (meas_time):
+if ( meas_time ):
     start_time = time.time()
 
-if (meas_time):
+if ( meas_time ):
     elapsed_time = time.time() - start_time
-    print("load library time: %.3f" % (elapsed_time))
+    print( "load library time: %.3f" % ( elapsed_time ) )
     start_time = time.time()
 
 # cpmg settings
-cpmg_freq = 4.2 + (-46) * 1e-3
+cpmg_freq = 4.2 + ( -46 ) * 1e-3
 pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 5.5  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 200  # 200
-scan_spacing_us = 10000000
+scan_spacing_us = 100000
 samples_per_echo = 512  # 3072
 echoes_per_scan = 2048 * 16  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 10  # number of averaging
+number_of_iteration = 1  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -75,73 +75,65 @@ coilFactor = 0.675  # measured_eff_p90/calc'ed_p90. Equal to 1 for calc'ed_p90
 # magnet param
 B0 = 0.099  # T
 gamma = 42.57  # MHz/T
-print("freq estimate: %3.3f MHz" % (gamma * B0))
-P90, Pwatt = calcP90(Vpp, rs, L, cpmg_freq * 1e6,
-                     numTurns, coilLength, coilFactor)
-print("P90 len estimate: %3.3f us, power estimate: %3.3f Watts" %
-      (P90 * 1e6, Pwatt))
+print( "freq estimate: %3.3f MHz" % ( gamma * B0 ) )
+P90, Pwatt = calcP90( Vpp, rs, L, cpmg_freq * 1e6,
+                     numTurns, coilLength, coilFactor )
+print( "P90 len estimate: %3.3f us, power estimate: %3.3f Watts" %
+      ( P90 * 1e6, Pwatt ) )
 
 # instantiate nmr object
-nmrObj = tunable_nmr_system_2018(data_folder, en_remote_dbg)
+nmrObj = tunable_nmr_system_2018( data_folder, en_remote_dbg, 0 )
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting. Also fix the
-nmrObj.assertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
+nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                            nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
-                           nmrObj.PSU_5V_ANA_N_EN_msk)
+                           nmrObj.PSU_5V_ANA_N_EN_msk )
 # nmrObj.deassertControlSignal(
 #    nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
 
-nmrObj.setPreampTuning(-2.1, -0.4)  # try -2.7, -1.8 if fail
-nmrObj.setMatchingNetwork(2460, 442)  # 4.25 MHz AFE
-nmrObj.setMatchingNetwork(2460, 442)  # 4.25 MHz AFE
+nmrObj.setPreampTuning( -2.1, -0.4 )  # try -2.7, -1.8 if fail
+nmrObj.setMatchingNetwork( 2460, 442 )  # 4.25 MHz AFE
+nmrObj.setMatchingNetwork( 2460, 442 )  # 4.25 MHz AFE
 
-if (nmrObj.PCBVer == 'v4.0_and_below'):
-    nmrObj.assertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                               nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_1_msk)
-elif (nmrObj.PCBVer == 'v5.0'):
-    nmrObj.assertControlSignal(
-        nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk)
-nmrObj.deassertControlSignal(nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk)
+nmrObj.assertControlSignal( 
+        nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
 
-if (meas_time):
+if ( meas_time ):
     elapsed_time = time.time() - start_time
-    print("set parameter time: %.3f" % (elapsed_time))
+    print( "set parameter time: %.3f" % ( elapsed_time ) )
     start_time = time.time()
 
-if (direct_read):
-    datain = nmrObj.cpmgSequenceDirectRead(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
+if ( direct_read ):
+    datain = nmrObj.cpmgSequenceDirectRead( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                                            echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en,
-                                           pulse180_t1_int, delay180_t1_int, tx_sd_msk)
+                                           pulse180_t1_int, delay180_t1_int, tx_sd_msk )
 else:
-    nmrObj.cpmgSequence(cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
+    nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
-                        ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv, dconv_fact, echo_skip)
+                        ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv, dconv_fact, echo_skip )
     datain = []  # set datain to 0 because the data will be read from file instead
 
-if (meas_time):
+if ( meas_time ):
     elapsed_time = time.time() - start_time
-    print("cpmgSequence acquisition time: %.3f" % (elapsed_time))
+    print( "cpmgSequence acquisition time: %.3f" % ( elapsed_time ) )
     start_time = time.time()
 
-if (nmrObj.PCBVer == 'v4.0_and_below'):
-    nmrObj.deassertControlSignal(nmrObj.AMP_HP_LT1210_EN_msk |
-                                 nmrObj.PAMP_IN_SEL_RX_msk | nmrObj.RX_IN_SEL_2_msk)
-elif (nmrObj.PCBVer == 'v5.0'):
-    nmrObj.deassertControlSignal(
-        nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk)
+nmrObj.deassertControlSignal( 
+        nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 
-nmrObj.setMatchingNetwork(0, 0)
-nmrObj.setPreampTuning(0, 0)
-nmrObj.deassertControlSignal(nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
-                             nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk)
+nmrObj.setMatchingNetwork( 0, 0 )
+nmrObj.setPreampTuning( 0, 0 )
+nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
+                             nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
 
-if (process_data):
-    meas_folder = parse_simple_info(data_folder, 'current_folder.txt')
-    (a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace) = compute_iterate(
-        data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig)
+if ( process_data ):
+    meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
+    ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
+        data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig )
 
-if (meas_time):
+if ( meas_time ):
     elapsed_time = time.time() - start_time
-    print("data processing time: %.3f" % (elapsed_time))
+    print( "data processing time: %.3f" % ( elapsed_time ) )
     start_time = time.time()

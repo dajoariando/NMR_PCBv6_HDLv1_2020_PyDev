@@ -119,11 +119,11 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.3'  # '129.22.143.88'
-        self.client_ip = '192.168.137.153'  # '129.22.143.39'
+        self.server_ip = '192.168.10.187'  # '129.22.143.88'
+        self.client_ip = '192.168.10.195'  # '129.22.143.39'
         self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
+        self.client_path = 'Y:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
 
@@ -139,6 +139,11 @@ class tunable_nmr_system_2018:
         # variables
         self.data_folder = data_folder
         self.exec_folder = "/c_exec/"
+
+        # This variable supports processing on the SoC/server (old method) and show the result on client via remote X window.
+        # It also supports processing on the PC/client (new method) and show the result directly on client (much faster).
+        # When en_remote_computing is 1, make sure to run the python code on the PC/client side.
+        # When en_remote_computing is 0, make sure to run the python code on the SoCFPGA/server side.
         self.en_remote_computing = en_remote_computing
 
         if not en_remote_computing:
@@ -391,7 +396,7 @@ class tunable_nmr_system_2018:
 
     def wobble( self, sta_freq, sto_freq, spac_freq, samp_freq ):
         # execute cpmg sequence
-        command = ( self.work_dir + self.exec_folder + "wobble" + " " +
+        command = ( "wobble" + " " +
                    str( sta_freq ) + " " +
                    str( sto_freq ) + " " +
                    str( spac_freq ) + " " +
