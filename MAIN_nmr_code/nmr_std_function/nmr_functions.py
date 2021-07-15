@@ -4,9 +4,8 @@ import numpy as np
 import os
 
 from nmr_std_function import data_parser
-from nmr_std_function.signal_proc import down_conv
+from nmr_std_function.signal_proc import down_conv, nmr_fft, butter_lowpass_filter
 from nmr_std_function.data_parser import convert_to_prospa_data_t1
-from nmr_std_function.signal_proc import nmr_fft
 
 from scipy.optimize import curve_fit
 import matplotlib
@@ -734,6 +733,153 @@ def compute_stats(minfreq, maxfreq, data_parent_folder, meas_folder, plotname, e
         x_time = np.multiply(x_time, (1 / adcFreq))  # in us
         x_time = np.multiply(x_time, 1e-3)  # in ms
         line1, = ax.plot(x_time, one_scan_raw, 'b-')
+        ax.set_xlabel('Time(ms)')
+        ax.set_ylabel('Amplitude (a.u.)')
+        ax.set_title("Amplitude. std=%0.2f. mean=%0.2f." % (nstd, nmean))
+        ax.grid()
+
+        # plot histogram
+        n_bins = 200
+        ax = fig.add_subplot(313)
+        n, bins, patches = ax.hist(one_scan, bins=n_bins)
+        ax.set_title("Histogram")
+
+        plt.tight_layout()
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        # fig = plt.gcf() # obtain handle
+        plt.savefig(data_folder + plotname)
+
+    # standard deviation of signal
+    print('\t\t: rms= ' + '{0:.4f}'.format(nstd) +
+          ' mean= {0:.4f}'.format(nmean))
+    return nstd, nmean
+
+def compute_in_bw_noise(bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, meas_folder, plotname, en_fig):
+
+    # variables to be input
+    # data_parent_folder : the folder for all datas
+    # meas_folder        : the specific folder for one measurement
+    # en_fig            : enable figure
+
+    # compute settings
+    process_sum_data = 1  # otherwise process raw data
+
+    file_name_prefix = 'dat_'
+    data_folder = (data_parent_folder + '/' + meas_folder + '/')
+    fig_num = 200
+
+    # variables from NMR settings
+    (param_list, value_list) = data_parser.parse_info(
+        data_folder, 'acqu.par')  # read file
+    adcFreq = data_parser.find_value(
+        'adcFreq', param_list, value_list)
+    nrPnts = int(data_parser.find_value(
+        'nrPnts', param_list, value_list))
+    total_scan = int(data_parser.find_value(
+        'nrIterations', param_list, value_list))
+
+    # parse file and remove DC component
+    nmean = 0
+    if process_sum_data:
+        file_path = (data_folder + 'asum')
+        one_scan_raw = np.array(data_parser.read_data(file_path))
+        nmean = np.mean(one_scan_raw)
+        one_scan = (one_scan_raw - nmean) / total_scan
+
+    else:
+        for m in range(1, total_scan + 1):
+            file_path = (data_folder + file_name_prefix + '{0:03d}'.format(m))
+            # read the data from the file and store it in numpy array format
+            one_scan_raw = np.array(data_parser.read_data(file_path))
+            nmean = np.mean(one_scan_raw)
+            one_scan = (one_scan_raw - nmean) / \
+                total_scan  # remove DC component
+
+    # compute in-bandwidth noise
+    Sf = adcFreq*1e6
+    # filter parameter
+    filt_ord = 2
+    filt_lpf_cutoff = bw_kHz*1e3  # in Hz
+    
+    T = 1 / Sf
+    t = np.linspace(0, T * (len(one_scan) - 1), len(one_scan))
+    
+    # down-conversion
+    sReal = one_scan * np.cos(2 * math.pi * Df_MHz * 1e6 * t)
+    sImag = one_scan * np.sin(2 * math.pi * Df_MHz * 1e6 * t)
+    
+    # filter
+    r = butter_lowpass_filter(
+        sReal + 1j * sImag, filt_lpf_cutoff, Sf, filt_ord, False)
+        
+    # upconversion
+    one_scan = np.real(r) * np.cos(2 * math.pi *  Df_MHz * 1e6 * t) + np.imag(r) * np.sin(2 * math.pi *  Df_MHz * 1e6 * t)  # r * np.exp(1j* 2 * math.pi *  1.742*1e6 * t)
+    one_scan = np.real(one_scan)
+    
+    # filter profile
+    filt_prfl = np.random.randn(len(one_scan)) # generate ones
+    filt_prfl_ori = filt_prfl # noise data with no filter process
+    sfiltReal = filt_prfl * np.cos(2 * math.pi * Df_MHz * 1e6 * t) # real downconversion
+    sfiltImag = filt_prfl * np.sin(2 * math.pi * Df_MHz * 1e6 * t) # imag downconversion
+    filt_out = butter_lowpass_filter(
+        sfiltReal + 1j * sfiltImag, filt_lpf_cutoff, Sf, filt_ord, False) # filter
+    filt_prfl = np.real(filt_out) * np.cos(2 * math.pi *  Df_MHz * 1e6 * t) + np.imag(filt_out) * np.sin(2 * math.pi *  Df_MHz * 1e6 * t)  # upconversion
+    filt_prfl = np.real(filt_prfl)
+    
+    # compute fft
+    spectx, specty = nmr_fft(one_scan, adcFreq, 0)
+    specty = abs(specty)
+    fft_range = [i for i, value in enumerate(spectx) if (
+        value >= minfreq and value <= maxfreq)]  # limit fft display
+    
+    # compute fft for the filter profile
+    filtspectx, filtspecty = nmr_fft(filt_prfl, adcFreq, 0)
+    filtspecty = abs(filtspecty)
+    filtorispecx,filtorispecty = nmr_fft(filt_prfl_ori, adcFreq, 0) # noise data with no filter process
+    filtorispecty = abs(filtorispecty)
+    
+    # compute std
+    nstd = np.std(one_scan)
+    
+    if en_fig:
+        plt.ion()
+        fig = plt.figure(fig_num)
+
+        # maximize window
+        plot_backend = matplotlib.get_backend()
+        mng = plt.get_current_fig_manager()
+        if plot_backend == 'TkAgg':
+            # mng.resize(*mng.window.maxsize())
+            mng.resize(1400, 800)
+        elif plot_backend == 'wxAgg':
+            mng.frame.Maximize(True)
+        elif plot_backend == 'Qt4Agg':
+            mng.window.showMaximized()
+
+        fig.clf()
+        ax = fig.add_subplot(311)
+        
+        filtnorm = sum(specty[fft_range])/sum(filtspecty[fft_range])
+        
+        line1, = ax.plot(spectx[fft_range], specty[fft_range], 'b-', label='data')
+        line2, = ax.plot(filtspectx[fft_range], filtspecty[fft_range]*filtnorm, 'r.', markersize=2.5, label='synth. noise') # amplitude is normalized with the max value of specty
+        # line3, = ax.plot(filtorispecx[fft_range], filtorispecty[fft_range]*(filtnorm/2), 'y.', markersize=2.0, label='synth. noise unfiltered') # amplitude is normalized with the max value of specty
+        
+        # ax.set_ylim(-50, 0)
+        ax.set_xlabel('Frequency (MHz)')
+        ax.set_ylabel('Amplitude (a.u.)')
+        ax.set_title("Spectrum")
+        ax.grid()
+        ax.legend()
+        
+        # plot time domain data
+        ax = fig.add_subplot(312)
+        x_time = np.linspace(1, len(one_scan_raw), len(one_scan_raw))
+        x_time = np.multiply(x_time, (1 / adcFreq))  # in us
+        x_time = np.multiply(x_time, 1e-3)  # in ms
+        line1, = ax.plot(x_time, one_scan, 'b-')
         ax.set_xlabel('Time(ms)')
         ax.set_ylabel('Amplitude (a.u.)')
         ax.set_title("Amplitude. std=%0.2f. mean=%0.2f." % (nstd, nmean))

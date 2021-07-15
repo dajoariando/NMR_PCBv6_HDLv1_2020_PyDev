@@ -1,0 +1,10 @@
+b1Freq = 6.250
+d180LengthRun = 16000.000
+d180LengthCnt = 1600000 @ 100.000 MHz
+ieTime = 100
+nrPnts = 40000
+echoShift = 0.090 --imprecise
+nrIterations = 1
+dummyEchoes = 0
+adcFreq = 25.000
+dwellTime = 0.040
