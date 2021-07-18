@@ -22,6 +22,15 @@ WMP_old_coil = board_config(
     50  # meas_bw_kHz
  )
 
+WMP_old_coil_1p7 = board_config( 
+    1.695,  # Df_MHz
+    -1.9,  # vbias
+    4.6,  # vvarac
+    350,  # cpar
+    185,  # cser
+    50  # meas_bw_kHz
+ )
+
 WMP_new_coil = board_config( 
     1.76,  # Df_MHz
     -2.5,  # vbias

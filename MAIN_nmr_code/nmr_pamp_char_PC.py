@@ -12,8 +12,10 @@ import time
 from nmr_std_function.nmr_functions import compute_iterate, compute_gain
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
-from nmr_std_function.sys_configs import WMP_old_coil as conf
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+
+# load the config
+from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
 # variables
 server_data_folder = "/root/NMR_DATA"

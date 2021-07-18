@@ -48,7 +48,7 @@ nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_c
 
 # measurement settings
 samp_freq = 25  # sampling frequency
-samples = 500000  # number of points
+samples = 100000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
 
