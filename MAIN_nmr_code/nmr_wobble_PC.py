@@ -7,8 +7,7 @@ Created on Oct 30, 2018
 import os
 import time
 
-from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.nmr_functions import compute_wobble
+from nmr_std_function.nmr_functions import compute_iterate, compute_wobble_sync
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
@@ -27,7 +26,7 @@ meas_time = 1
 # measurement properties
 sta_freq = 1.5
 sto_freq = 2.0
-spac_freq = 0.01
+spac_freq = 0.004
 samp_freq = 25
 
 # remote computing configuration. See the NMR class to see details of use
@@ -97,7 +96,7 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
         cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
         exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( 
+    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_sync( 
         nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( 
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )

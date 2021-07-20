@@ -12,6 +12,133 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
+
+    # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
+    # useRef uses the S11mV_ref as reference, otherwise it will use the max
+    # signal available in the data
+
+    # settings
+    # put 1 if the data file uses binary representation, otherwise it is in
+    # ascii format. Find the setting in the C programming file
+    binary_OR_ascii = 1  # manual setting: put the same setting from the C programming
+
+    data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
+
+    ( param_list, value_list ) = data_parser.parse_info( 
+        data_folder, 'acqu.par' )  # read file
+    freqSta = data_parser.find_value( 'freqSta', param_list, value_list )
+    freqSto = data_parser.find_value( 'freqSto', param_list, value_list )
+    freqSpa = data_parser.find_value( 'freqSpa', param_list, value_list )
+    nSamples = data_parser.find_value( 'nSamples', param_list, value_list )
+
+    file_name_prefix = 'tx_acq_'
+    # plus freqSpa/2 is to include the endpoint (just like what the C does)
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )
+    S11mV = np.zeros( len( freqSw ) )
+    S11_ph = np.zeros( len( freqSw ) )
+    for m in range( 0, len( freqSw ) ):
+        freqSamp = freqSw[m] * 4
+        spect_bw = ( freqSamp / nSamples ) * 1  # determining the RBW
+
+        # for m in freqSw:
+        file_path = ( data_folder + file_name_prefix +
+                     '{:4.3f}'.format( freqSw[m] ) )
+
+        if binary_OR_ascii:
+            # one_scan = data_parser.read_hex_int16(file_path)  # use binary
+            # representation
+            one_scan = data_parser.read_hex_int32( 
+                file_path )  # use binary representation for 32-bit file
+        else:
+            one_scan = np.array( data_parser.read_data( 
+                file_path ) )  # use ascii representation
+
+        plt.figure( 12364 )
+        plt.plot( one_scan[0:32] )
+
+        os.remove( file_path )  # delete the file after use
+
+        # find voltage at the input of ADC in mV
+        one_scan = one_scan * nmrObj.uvoltPerDigit / 1e3
+
+        spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
+
+        # plt.figure( 12345 )
+        # plt.plot( spectx, abs( specty ) )
+        # plt.figure( 23451 )
+        # plt.plot( spectx, np.angle( specty, deg=True ) )
+
+        # FIND INDEX WHERE THE MAXIMUM SIGNAL IS PRESENT
+        # PRECISE METHOD: find reflection at the desired frequency: creating precision problem where usually the signal shift a little bit from its desired frequency
+        # ref_idx = abs(spectx - freqSw[m]) == min(abs(spectx - freqSw[m]))
+        # BETTER METHOD: find reflection signal peak around the bandwidth
+        ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )
+
+        # S11mV[m] = max( abs( specty[ref_idx] ) )  # find reflection peak
+        # compute the mean of amplitude inside RBW
+        # S11mV[m] = np.mean( abs( specty[ref_idx] ) )
+        # S11_ph[m] = np.mean( np.angle( specty[ref_idx], deg=True ) )
+        S11mV[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor to correct the shifted index by one when generating fft x-axis
+        S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )  #
+
+    if useRef:  # if reference is present
+        S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref )
+                              )  # convert to dB scale
+    else:  # if reference is not present
+        S11dB = 20 * np.log10( S11mV / max( S11mV ) )  # convert to dB scale
+
+    S11_min10dB = ( S11dB <= s11_min )
+
+    minS11 = min( S11dB )
+    minS11_freq = freqSw[np.argmin( S11dB )]
+
+    try:
+        S11_fmin = min( freqSw[S11_min10dB] )
+        S11_fmax = max( freqSw[S11_min10dB] )
+    except:
+        S11_fmin = 0
+        S11_fmax = 0
+        print( 'S11 requirement is not satisfied...' )
+
+    S11_bw = S11_fmax - S11_fmin
+
+    if en_fig:
+        plt.ion()
+        fig = plt.figure( fig_num )
+        fig.clf()
+        ax = fig.add_subplot( 211 )
+        line1, = ax.plot( freqSw, S11dB, 'r-', marker='.' )
+        ax.set_ylim( -35, 10 )
+        ax.set_ylabel( 'S11 [dB]' )
+        ax.set_title( "Reflection Measurement (S11) Parameter" )
+        ax.grid()
+
+        bx = fig.add_subplot( 212 )
+        bx.plot( freqSw, S11_ph, 'r-' , marker='.' )
+        bx.set_xlabel( 'Frequency [MHz]' )
+        bx.set_ylabel( 'Phase (deg)' )
+        bx.set_title( 
+            'incorrect phase due to non-correlated transmit and sampling' )
+        bx.grid()
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'wobble.png' )
+
+    # write S11mV to a file
+    with open( data_folder + 'S11mV.txt', 'w' ) as f:
+        for ( a, b, c ) in zip( freqSw, S11dB, S11_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
+
+    # print(S11_fmin, S11_fmax, S11_bw)
+    if useRef:
+        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+    else:
+        return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+
+
 def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
 
     # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
