@@ -119,11 +119,11 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.7.188'  # '129.22.143.88'
+        self.server_ip = '192.168.7.109'  # '129.22.143.88'
         self.client_ip = '192.168.7.195'  # '129.22.143.39'
         self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'Y:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
+        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
 
@@ -394,13 +394,28 @@ class tunable_nmr_system_2018:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
 
-    def wobble( self, sta_freq, sto_freq, spac_freq, samp_freq ):
+    def wobble_async( self, sta_freq, sto_freq, spac_freq, samp_freq ):
         # execute cpmg sequence
-        command = ( "wobble" + " " +
+        command = ( "wobble_async" + " " +
                    str( sta_freq ) + " " +
                    str( sto_freq ) + " " +
                    str( spac_freq ) + " " +
                    str( samp_freq )
+                   )
+
+        if self.en_remote_computing:
+            ssh_cmd = self.server_path + "c_exec/" + command
+            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+        else:
+            os_command = ( self.work_dir + self.exec_folder + command )
+            os.system( os_command )  # execute command & ignore its console
+
+    def wobble_sync( self, sta_freq, sto_freq, spac_freq ):
+        # execute cpmg sequence
+        command = ( "wobble_sync" + " " +
+                   str( sta_freq ) + " " +
+                   str( sto_freq ) + " " +
+                   str( spac_freq )
                    )
 
         if self.en_remote_computing:

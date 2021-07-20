@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 
 def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
 
+    # compute_wobble_sync uses 1 clock domain for the sampling clock and the excitation clock, just as it is in synchronized CPMG sequence. The sampling clock is 4x the excitation clock , and the system clock is 4x the sampling clock. The phase in compute_wobble_sync is usable.
+
     # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
     # useRef uses the S11mV_ref as reference, otherwise it will use the max
     # signal available in the data
@@ -54,9 +56,6 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
             one_scan = np.array( data_parser.read_data( 
                 file_path ) )  # use ascii representation
 
-        plt.figure( 12364 )
-        plt.plot( one_scan[0:32] )
-
         os.remove( file_path )  # delete the file after use
 
         # find voltage at the input of ADC in mV
@@ -79,8 +78,8 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
         # compute the mean of amplitude inside RBW
         # S11mV[m] = np.mean( abs( specty[ref_idx] ) )
         # S11_ph[m] = np.mean( np.angle( specty[ref_idx], deg=True ) )
-        S11mV[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor to correct the shifted index by one when generating fft x-axis
-        S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )  #
+        S11mV[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
+        S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
 
     if useRef:  # if reference is present
         S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref )
@@ -103,24 +102,43 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
     S11_bw = S11_fmax - S11_fmin
 
+    # compute impedance
+    if useRef:
+        S11_cmplx = np.multiply( np.divide( S11mV, S11mV_ref ), np.exp( 1j * ( S11_ph * 2 * np.pi / 360 ) ) )
+        Z11 = ( 1 + S11_cmplx ) / ( 1 - S11_cmplx )
+
     if en_fig:
         plt.ion()
-        fig = plt.figure( fig_num )
+        fig = plt.figure( fig_num, figsize=[12, 7] )
         fig.clf()
-        ax = fig.add_subplot( 211 )
-        line1, = ax.plot( freqSw, S11dB, 'r-', marker='.' )
+        ax = fig.add_subplot( 221 )
+        line1, = ax.plot( freqSw, S11dB, 'b-', marker='.', linewidth=1, markersize=6 )
         ax.set_ylim( -35, 10 )
         ax.set_ylabel( 'S11 [dB]' )
         ax.set_title( "Reflection Measurement (S11) Parameter" )
         ax.grid()
 
-        bx = fig.add_subplot( 212 )
-        bx.plot( freqSw, S11_ph, 'r-' , marker='.' )
+        bx = fig.add_subplot( 223 )
+        bx.plot( freqSw, S11_ph, 'r-' , marker='.', linewidth=1, markersize=6 )
         bx.set_xlabel( 'Frequency [MHz]' )
         bx.set_ylabel( 'Phase (deg)' )
-        bx.set_title( 
-            'incorrect phase due to non-correlated transmit and sampling' )
+        # bx.set_title( 'incorrect phase due to non-correlated transmit and sampling' )
         bx.grid()
+
+        if useRef:
+            cx = fig.add_subplot ( 222 )
+            cx.plot( freqSw, np.real( Z11 ), 'b', marker='.', linewidth=1, markersize=6 )
+            cx.set_ylim( -2, 2 )
+            cx.set_ylabel ( 'Re(Z11/Zs)' )
+            cx.set_title( "Normalized Impedance (Z11/Zs)" )
+            cx.grid()
+
+            dx = fig.add_subplot ( 224 )
+            dx.plot( freqSw, np.imag( Z11 ), 'r', marker='.', linewidth=1, markersize=6 )
+            dx.set_ylim( -2, 2 )
+            dx.set_ylabel ( 'Im(Z11/Zs)' )
+            # dx.set_title( "Imaginary Impedance" )
+            dx.grid()
 
         fig.canvas.draw()
         fig.canvas.flush_events()
@@ -139,7 +157,9 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
         return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
 
-def compute_wobble( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
+def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
+
+    # compute_wobble_async uses 2 independent clocks, i.e. for the sampling clock and the excitation clock. The phase in compute_wobble_async is not usable.
 
     # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
     # useRef uses the S11mV_ref as reference, otherwise it will use the max

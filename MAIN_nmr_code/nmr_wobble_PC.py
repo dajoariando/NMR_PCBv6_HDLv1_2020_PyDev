@@ -7,7 +7,7 @@ Created on Oct 30, 2018
 import os
 import time
 
-from nmr_std_function.nmr_functions import compute_iterate, compute_wobble_sync
+from nmr_std_function.nmr_functions import compute_iterate, compute_wobble_sync, compute_wobble_async
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
@@ -24,10 +24,10 @@ en_fig = 1
 meas_time = 1
 
 # measurement properties
-sta_freq = 1.5
-sto_freq = 2.0
-spac_freq = 0.004
-samp_freq = 25
+sta_freq = 1.6
+sto_freq = 1.8
+spac_freq = 0.002
+samp_freq = 25  # not used when using wobble_sync. Will be used when using wobble_async
 
 # remote computing configuration. See the NMR class to see details of use
 en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
@@ -61,6 +61,8 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
     # reflection. If this option is 0, then the compute_wobble will instead
     # generated S11 in mV format instead of dB format
 
+    sync_OR_async = 1  # put 1 for sync method, and 0 for async method
+
     if meas_time:
         start_time = time.time()
 
@@ -76,7 +78,10 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
     nmrObj.setMatchingNetwork( cparVal, cserVal )
 
     # do measurement
-    nmrObj.wobble( sta_freq, sto_freq, spac_freq, samp_freq )
+    if ( sync_OR_async ):
+        nmrObj.wobble_sync( sta_freq, sto_freq, spac_freq )
+    else:
+        nmrObj.wobble_async( sta_freq, sto_freq, spac_freq, samp_freq )
 
     # disable all to save power
     nmrObj.deassertAll()
@@ -96,8 +101,10 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
         cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
         exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_sync( 
-        nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    if ( sync_OR_async ):
+        S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_sync( nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    else:
+        S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( 
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
 

@@ -1,2 +1,0 @@
-tx_acq([data_folder,'2021_07_19_23_42_03_tx_acq']);
-tx_acq([data_folder,'2021_07_19_23_52_01_tx_acq']);
