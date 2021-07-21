@@ -396,7 +396,7 @@ def compute_gain( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
     return maxS21, maxS21_freq, S21
 
 
-def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain ):
+def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix, Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain, dconv_lpf_ord, dconv_lpf_cutoff_Hz ):
 
     # variables to be input
     # nmrObj            : the hardware definition
@@ -620,7 +620,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         data_filt = np.zeros( ( NoE, SpE ), dtype=complex )
         for i in range( 0, NoE ):
             data_filt[i,:] = down_conv( 
-                data[i * SpE:( i + 1 ) * SpE], i, tE, Df, Sf )
+                data[i * SpE:( i + 1 ) * SpE], i, tE, Df, Sf, dconv_lpf_ord, dconv_lpf_cutoff_Hz )
 
         # simulate additional decimation (not needed for normal operqtion). For
         # debugging purpose
@@ -784,7 +784,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     return ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace )
 
 
-def compute_iterate( nmrObj, data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, direct_read, datain, en_fig ):
+def compute_iterate( nmrObj, data_parent_folder, meas_folder, en_ext_param, thetaref, echoref_avg, direct_read, datain, en_fig, dconv_lpf_ord, dconv_lpf_cutoff_Hz ):
 
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
     # variables from NMR settings
@@ -810,10 +810,10 @@ def compute_iterate( nmrObj, data_parent_folder, meas_folder, en_ext_param, thet
 
     if ( direct_read ):
         ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
-                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain )
+                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, direct_read, datain, dconv_lpf_ord, dconv_lpf_cutoff_Hz )
     else:
         ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, t_echospace ) = compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
-                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, 0, datain )
+                                                                                                          Df, Sf, tE, total_scan, en_fig, en_ext_param, thetaref, echoref_avg, 0, datain, dconv_lpf_ord, dconv_lpf_cutoff_Hz )
 
     # print(snr, T2)
     return a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace

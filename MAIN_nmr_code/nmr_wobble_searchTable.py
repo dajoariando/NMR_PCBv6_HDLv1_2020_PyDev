@@ -69,7 +69,7 @@ else:
 
 # acquisition settings (frequency to be shown in the table
 freqSta = 1.5
-freqSto = 1.9
+freqSto = 1.8
 freqSpa = 0.002
 # freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
@@ -79,8 +79,8 @@ S11FreqSta = 1.61
 S11FreqSto = 1.72
 
 # sweep precision
-cparPrec = 10  # change cpar by this value.
-cserPrec = 2  # change cser by this value.
+cparPrec = 2  # change cpar by this value.
+cserPrec = 3  # change cser by this value.
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available

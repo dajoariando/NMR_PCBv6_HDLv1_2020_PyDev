@@ -22,7 +22,7 @@ import pydevd
 from scipy import signal
 import matplotlib.pyplot as plt
 
-from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col
+from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col, find_Cpar_Cser_from_table, find_Vbias_Vvarac_from_table
 from nmr_std_function.nmr_functions import compute_iterate, compute_stats, compute_in_bw_noise
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
@@ -33,6 +33,8 @@ from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 # variables
 server_data_folder = "/root/NMR_DATA"
 client_data_folder = "D:\\TEMP"
+S11_table = "genS11Table.txt"  # filename for S11 tables
+S21_table = "genS21Table.txt"
 en_fig = 1
 en_remote_dbg = 0
 en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
@@ -60,9 +62,12 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 nmrObj.deassertControlSignal( 
     nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk )
 
-nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
-# nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
-nmrObj.setMatchingNetwork( 0, 0 )
+tuning_freq = 1.7
+Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, S11_table )
+Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, S21_table )
+nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
+nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
+# nmrObj.setMatchingNetwork( 0, 0 )
 
 nmrObj.assertControlSignal( 
     nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )

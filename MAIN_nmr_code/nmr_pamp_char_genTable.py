@@ -38,12 +38,12 @@ from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
 # measurement properties
 freqSta = 1.5
-freqSto = 2.0
-freqSpa = 0.01
+freqSto = 1.8
+freqSpa = 0.002
 freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
-keepRawData = False  # setting to keep raw data
+keepRawData = True  # setting to keep raw data
 
 # instantiate nmr object
 nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
@@ -73,14 +73,14 @@ nmrObj.assertControlSignal( nmrObj.PSU_5V_TX_N_EN_msk |
 nmrObj.setMatchingNetwork( 0, 0 )
 nmrObj.setMatchingNetwork( 0, 0 )
 
-vbiasSta = -3  # this value must be lower than vbiasSto
-vbiasSto = -1
-vbiasSpa = 0.1
+vbiasSta = -2.6  # this value must be lower than vbiasSto
+vbiasSto = 0
+vbiasSpa = 10
 vbiasSw = np.arange( vbiasSta, vbiasSto, vbiasSpa )
 
-vvaracSta = 4  # this value must be lower than vvaracSto
-vvaracSto = 4.8
-vvaracSpa = 0.1
+vvaracSta = 4.4  # this value must be lower than vvaracSto
+vvaracSto = 4.9
+vvaracSpa = 0.01
 vvaracSw = np.arange( vvaracSta, vvaracSto, vvaracSpa )
 
 
@@ -101,9 +101,9 @@ maxGainTable[:, 3] = -10  # set column 4 to undefined initial setting voltage of
 
 for i in range( len( vvaracSw ) ):
     for j in range( len( vbiasSw ) ):
-        nmrObj.assertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk )
         nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                                    nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
+        nmrObj.assertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk )
         nmrObj.setPreampTuning( vbiasSw[j], vvaracSw[i] )
 
         nmrObj.pamp_char ( freqSta, freqSto, freqSpa, freqSamp )
@@ -120,15 +120,15 @@ for i in range( len( vvaracSw ) ):
             exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
         maxS21, maxS21_freq, S21mV = compute_gain( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
-        print( 'maxS21={:0.2f} maxS21_freq={:0.2f} vvarac={:0.1f} vbias={:0.1f}'.format( maxS21, maxS21_freq, vvaracSw[i], vbiasSw[j] ) )
+        print( 'maxS21={:0.3f} maxS21_freq={:0.3f} vvarac={:0.3f} vbias={:0.3f}'.format( maxS21, maxS21_freq, vvaracSw[i], vbiasSw[j] ) )
 
         maxGainTable = updateTable( maxGainTable, S21mV, vvaracSw[i], vbiasSw[j] )
 
-        swfolder_ind = swfolder + '/' + str( 'vv_[{:03.2f}]__vb_[{:03.2f}]'.format( vvaracSw[i], vbiasSw[j] ) )
-        shutil.move( data_folder + '/' + meas_folder[0] + '/gain.png', swfolder + '/' + str( 'plot_vv_[{:03.2f}]__vb_[{:03.2f}].png'.format( vvaracSw[i], vbiasSw[j] ) ) )  # move the figure
+        swfolder_ind = swfolder + '/' + str( 'vv_[{:03.3f}]__vb_[{:03.3f}]'.format( vvaracSw[i], vbiasSw[j] ) )
+        shutil.move( data_folder + '/' + meas_folder[0] + '/gain.png', swfolder + '/' + str( 'plot_vv_[{:03.3f}]__vb_[{:03.3f}].png'.format( vvaracSw[i], vbiasSw[j] ) ) )  # move the figure
         if keepRawData:
             # write gain values to a file
-            with open( swfolder + '/gain_vv_[{:03.2f}]__vb_[{:03.2f}].txt'.format( vvaracSw[i], vbiasSw[j] ), 'w' ) as f:
+            with open( swfolder + '/gain_vv_[{:03.3f}]__vb_[{:03.3f}].txt'.format( vvaracSw[i], vbiasSw[j] ), 'w' ) as f:
                 for ( a, b ) in zip ( freqSw, S21mV ):
                     f.write( '{:-8.3f},{:-8.3f}\n' .format( a, b ) )
 
@@ -139,14 +139,14 @@ for i in range( len( vvaracSw ) ):
 # write the optimum setting with the frequency and gain
 Table = open( swfolder + '/genS21Table.txt', 'w' )
 Table.write( 'settings:\n' )
-Table.write( '\tvvarac: start={:03.1f} stop={:03.1f} spacing={:02.2f}\n'.format( vvaracSta, vvaracSto, vvaracSpa ) )
-Table.write( '\tvbias: start={:03.1f} stop={:03.1f} spacing={:02.2f}\n'.format( vbiasSta, vbiasSto, vbiasSpa ) )
+Table.write( '\tvvarac: start={:03.3f} stop={:03.3f} spacing={:02.3f}\n'.format( vvaracSta, vvaracSto, vvaracSpa ) )
+Table.write( '\tvbias: start={:03.3f} stop={:03.3f} spacing={:02.3f}\n'.format( vbiasSta, vbiasSto, vbiasSpa ) )
 Table.write( '\n' );
 Table.write( 'freq(MHz)\t peak-voltage(mV)\t vvarac(V)\t vbias(V)\n' )
 Table.close()
 with open( swfolder + '/genS21Table.txt', 'a' ) as Table:
     for ( a, b , c, d ) in zip ( maxGainTable[:, 0], maxGainTable[:, 1], maxGainTable[:, 2], maxGainTable[:, 3] ):
-        Table.write( '{:-7.2f},{:-7.2f},{:-7.2f},{:-7.2f}\n' .format( a, b, c, d ) )
+        Table.write( '{:-7.4f},{:-7.4f},{:-7.3f},{:-7.3f}\n' .format( a, b, c, d ) )
 
 plt.figure( 2 )
 plt.plot( maxGainTable[:, 0], maxGainTable[:, 1] )

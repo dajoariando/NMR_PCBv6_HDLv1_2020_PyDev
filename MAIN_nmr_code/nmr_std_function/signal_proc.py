@@ -44,14 +44,14 @@ def butter_lowpass_filter( data, cutoff, fs, order, en_figure ):
     return y
 
 
-def down_conv( s, k, tE, Df, Sf ):
+def down_conv( s, k, tE, Df, Sf, dconv_lpf_ord, dconv_lpf_cutoff_Hz ):
 
     # settings
     simp_dconv = False  # perform simplified downconversion for 4 phases signal
 
     # filter parameter
-    filt_ord = 2
-    filt_lpf_cutoff = 10e3  # in Hz
+    # dconv_lpf_ord = 2
+    # lpf_cutoff_Hz = 10e3  # in Hz
 
     T = 1 / Sf
     t = np.linspace( k * tE, k * tE + T * ( len( s ) - 1 ), len( s ) )
@@ -81,7 +81,7 @@ def down_conv( s, k, tE, Df, Sf ):
             sImag[i * 4 + 3] = s[i * 4 + 3] * 0
 
     r = butter_lowpass_filter( 
-        sReal + 1j * sImag, filt_lpf_cutoff, Sf, filt_ord, False )
+        sReal + 1j * sImag, dconv_lpf_cutoff_Hz, Sf, dconv_lpf_ord, False )
 
     return r
 
