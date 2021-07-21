@@ -24,8 +24,8 @@ en_fig = 1
 meas_time = 1
 
 # measurement properties
-sta_freq = 1.6
-sto_freq = 1.8
+sta_freq = 1.55
+sto_freq = 1.75
 spac_freq = 0.002
 samp_freq = 25  # not used when using wobble_sync. Will be used when using wobble_async
 
@@ -102,7 +102,8 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
         exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
     if ( sync_OR_async ):
-        S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_sync( nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+        S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+        fcost = ( freq0 - 1.65 ) * ( freq0 - 1.65 ) + Z11_imag0 * Z11_imag0
     else:
         S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( 

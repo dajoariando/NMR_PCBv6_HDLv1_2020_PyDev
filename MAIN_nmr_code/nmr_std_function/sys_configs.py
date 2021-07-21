@@ -13,12 +13,12 @@ class board_config:
     meas_bw_kHz: float
 
 
-WMP_old_coil = board_config( 
-    1.74,  # Df_MHz
+WMP_old_coil_1p65 = board_config( 
+    1.65,  # Df_MHz
     -2.1,  # vbias
     4.4,  # vvarac
-    308,  # cpar
-    175,  # cser
+    380,  # cpar
+    179,  # cser
     50  # meas_bw_kHz
  )
 

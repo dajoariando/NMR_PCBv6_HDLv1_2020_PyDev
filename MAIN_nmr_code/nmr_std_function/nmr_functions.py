@@ -106,6 +106,25 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
     if useRef:
         S11_cmplx = np.multiply( np.divide( S11mV, S11mV_ref ), np.exp( 1j * ( S11_ph * 2 * np.pi / 360 ) ) )
         Z11 = ( 1 + S11_cmplx ) / ( 1 - S11_cmplx )
+    '''
+        # interpolate to find the frequency where Re(Z11/Zs) is 1, or load impedance is approx. 50 Ohms
+        Z11_maxidx = np.max( abs( np.real( Z11 ) ) ) == np.real( Z11 )
+        Z11_maxidx = np.where( Z11_maxidx == True )[0][0]  # find index of resonance (max impedance)
+        Z11_a = np.sign( np.real( Z11[0:Z11_maxidx] ) - 1 )  # find minimum point where Re(Z11/Zs)-1=0
+        Z11_signidx = np.where( Z11_a == 1 )[0][0]
+        den = ( freqSw[Z11_signidx] - freqSw[Z11_signidx - 1] )
+        num = np.real( Z11[Z11_signidx] ) - np.real( Z11[Z11_signidx - 1] )
+        freq0 = freqSw[Z11_signidx] - ( np.real( Z11[Z11_signidx] ) - 1 ) * den / num  # compute frequency where Z11/Zs = 1
+        print( "freq0 : %f MHz" % freq0 )
+        # find the value of Z11_imag at the frequency above
+        num = np.imag( Z11[Z11_signidx] ) - np.imag( Z11[Z11_signidx - 1] )
+        Z11_imag0 = num / den * ( freq0 - freqSw[Z11_signidx] ) + np.imag( Z11[Z11_signidx] )
+        print( "Z11_imag0 : %f" % Z11_imag0 )
+
+    else:
+    '''
+    freq0 = 0
+    Z11_imag0 = 0
 
     if en_fig:
         plt.ion()
@@ -152,9 +171,9 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
     # print(S11_fmin, S11_fmax, S11_bw)
     if useRef:
-        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
     else:
-        return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+        return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
 
 
 def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):

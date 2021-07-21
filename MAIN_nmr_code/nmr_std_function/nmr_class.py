@@ -119,11 +119,11 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.7.109'  # '129.22.143.88'
+        self.server_ip = '192.168.7.188'  # '129.22.143.88'
         self.client_ip = '192.168.7.195'  # '129.22.143.39'
         self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
+        self.client_path = 'Y:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
 
@@ -358,7 +358,7 @@ class tunable_nmr_system_2018:
 
     def fid( self, cpmg_freq, pulse2_us, pulse2_dtcl, scan_spacing_us, samples_per_echo, number_of_iteration, tx_opa_sd ):
         # execute cpmg sequence
-        command = ( self.work_dir + self.exec_folder + "fid" + " " +
+        command = ( "fid" + " " +
                    str( cpmg_freq ) + " " +
                    str( pulse2_us ) + " " +
                    str( pulse2_dtcl ) + " " +

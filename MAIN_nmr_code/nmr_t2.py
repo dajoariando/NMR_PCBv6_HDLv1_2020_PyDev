@@ -47,7 +47,7 @@ else:
     data_folder = server_data_folder
 
 # load configuration
-from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
+from nmr_std_function.sys_configs import WMP_old_coil_1p65 as conf
 
 if ( meas_time ):
     start_time = time.time()
@@ -58,15 +58,15 @@ if ( meas_time ):
     start_time = time.time()
 
 # cpmg settings
-cpmg_freq = conf.Df_MHz - 30e-3
+cpmg_freq = conf.Df_MHz + 5e-3
 pulse1_us = 15  # 75 for Cheng's coil. pulse pi/2 length.
 pulse2_us = 1.6 * pulse1_us  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
 echo_spacing_us = 500  # 200
 scan_spacing_us = 100000
-samples_per_echo = 512  # 3072
-echoes_per_scan = 256  # 20
+samples_per_echo = 1024  # 3072
+echoes_per_scan = 128  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 34  # acquisition shift microseconds.
 number_of_iteration = 100  # number of averaging
@@ -78,6 +78,7 @@ en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
 
+'''
 # coil param and measured voltage across the coil
 Vpp = 312  # 190
 rs = 1.2
@@ -93,6 +94,7 @@ P90, Pwatt = calcP90( Vpp, rs, L, cpmg_freq * 1e6,
                      numTurns, coilLength, coilFactor )
 print( "P90 len estimate: %3.3f us, power estimate: %3.3f Watts" %
       ( P90 * 1e6, Pwatt ) )
+'''
 
 # instantiate nmr object
 nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )

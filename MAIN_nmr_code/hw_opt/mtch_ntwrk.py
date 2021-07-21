@@ -3,7 +3,6 @@ sys.path.append( ".." )  # MAIN_nmr_code to path
 
 import numpy as np
 import csv
-from nmr_std_function.nmr_functions import compute_wobble
 from nmr_std_function.data_parser import parse_simple_info
 import os
 import csv
@@ -135,7 +134,7 @@ def comp_Copt( L, RL, CL, f0 , CsTbl, CpTbl ):  # find index for Cp and Cs for a
     # CsTbl, CpTbl = read_PARAM_mtch_ntwrk_caps( filename )
 
     # generate Z1 table of all Cp values
-    Z1 = np.zeros( 2 ** CpLen - 1, dtype = complex )  # ignore 0
+    Z1 = np.zeros( 2 ** CpLen - 1, dtype=complex )  # ignore 0
     for i in range( 1, 2 ** CpLen ):
         cpar_sel = 0
         for ii in range( 0, CpLen ):
@@ -157,7 +156,7 @@ def comp_Copt( L, RL, CL, f0 , CsTbl, CpTbl ):  # find index for Cp and Cs for a
     Cp_idx = Cp_idx[0][0]
 
     # generate Z2 table of all Cs values
-    Z2 = np.zeros( 2 ** CsLen - 1, dtype = complex )
+    Z2 = np.zeros( 2 ** CsLen - 1, dtype=complex )
     for i in range( 1, 2 ** CsLen ):
         cser_sel = 0
         for ii in range( 0, CsLen ):

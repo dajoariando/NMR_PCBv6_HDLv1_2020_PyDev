@@ -33,11 +33,11 @@
 
 import os
 import time
-from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.nmr_functions import compute_wobble
+from nmr_std_function.nmr_functions import compute_iterate, compute_wobble_sync, compute_wobble_async
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from hw_opt.mtch_ntwrk import *
+from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 import numpy as np
 from datetime import datetime
@@ -46,28 +46,41 @@ import matplotlib.pyplot as plt
 from faulthandler import disable
 
 # variables
-data_parent_folder = "/root/NMR_DATA"
+server_data_folder = "/root/NMR_DATA"
+client_data_folder = "D:\\TEMP"
 en_remote_dbg = 0
 fig_num = 1
 en_fig = 1  # enable figure for every measurement
 keepRawData = 1  # set this to keep the S11 raw data in text file
-tblMtchNtwrk = '/hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
+tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
 meas_time = 0  # measure time
 
+# load configuration
+from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
+
+# remote computing configuration. See the NMR class to see details of use
+en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
+
+if en_remote_computing:
+    data_folder = client_data_folder
+    en_remote_dbg = 0  # force remote debugging to be disabled
+else:
+    data_folder = server_data_folder
+
 # acquisition settings (frequency to be shown in the table
-freqSta = 2
-freqSto = 8
-freqSpa = 0.01
-freqSamp = 25
+freqSta = 1.5
+freqSto = 1.9
+freqSpa = 0.002
+# freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 4.15
-S11FreqSto = 4.2
+S11FreqSta = 1.61
+S11FreqSto = 1.72
 
 # sweep precision
 cparPrec = 10  # change cpar by this value.
-cserPrec = 10  # change cser by this value.
+cserPrec = 2  # change cser by this value.
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -79,8 +92,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 2420  # the parallel capacitance
-        cser_init = 348  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = conf.cpar  # the parallel capacitance
+        cser_init = conf.cser  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin
@@ -93,17 +106,17 @@ S11_min = -10  # the minimum allowable S11 value to be reported as adequate to s
 # global variable
 exptnum = 0  # this number is automatically increased when runExpt() is called
 
-# instantiate nmr object
-nmrObj = tunable_nmr_system_2018( data_parent_folder, en_remote_dbg )
+# nmr object declaration
+nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
 
 # create name for new folder
 now = datetime.now()
 datename = now.strftime( "%Y_%m_%d_%H_%M_%S" )
-swfolder = data_parent_folder + '/' + datename + '_genS11Table'
+swfolder = data_folder + '/' + datename + '_genS11Table'
 os.mkdir( swfolder )
 
 # find the initial cpar and cser values
-CsTbl, CpTbl = read_PARAM_mtch_ntwrk_caps( nmrObj.work_dir + tblMtchNtwrk )
+CsTbl, CpTbl = read_PARAM_mtch_ntwrk_caps( nmrObj.client_path + tblMtchNtwrk )
 if lrSeed:  # if coil parameters are available
     # seeds for cpar and cser are computed via L,R, and frequency
     print( 'The coil parameters are known: {:0.2f}uH {:0.0f}mOhm {:0.1f}pF'.format( l_init * 1e6, r_init * 1e3, c_init * 1e12 ) )
@@ -115,7 +128,7 @@ else:
         print( 'The seed capacitance are known: cpar={:d}({:0.1f}pF) cser={:d}({:0.1f}pF)'.format( cpar_init, conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12, cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
 
 # define and initialize main table to store minimum S11 at the range of frequencies chosen
-minReflxTable = np.zeros( ( len( freqSw ), 4 ), dtype = float )  # The columns are for frequency, max found value, and setting
+minReflxTable = np.zeros( ( len( freqSw ), 4 ), dtype=float )  # The columns are for frequency, max found value, and setting
 minReflxTable[:, 0] = freqSw  # set column 1 to frequency
 minReflxTable[:, 1] = 5000  # set column 2 to an undefined voltage value
 minReflxTable[:, 2] = -1  # set column 3 to undefined setting of the cpar
@@ -165,22 +178,28 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
     nmrObj.setMatchingNetwork( cparVal, cserVal )
 
     # do measurement
-    nmrObj.wobble( freqSta, freqSto, freqSpa, freqSamp )
+    nmrObj.wobble_sync( freqSta, freqSto, freqSpa )
 
     # disable all to save power
     nmrObj.deassertAll()
 
-    if meas_time :
+    if meas_time:
         elapsed_time = time.time() - start_time
         start_time = time.time()  # reset the start time
         print( "### time elapsed for running wobble exec: %.3f" % ( elapsed_time ) )
 
     # compute the generated data
-    meas_folder = parse_simple_info( data_parent_folder, 'current_folder.txt' )
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble( nmrObj, data_parent_folder, meas_folder[0], S11_min, S11mV_ref, useRef, en_fig, fig_num )
+    if  en_remote_computing:  # copy remote files to local directory
+        cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
+    meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
+
+    if  en_remote_computing:  # copy remote folder to local directory
+        cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
+    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, data_folder, meas_folder[0], S11_min, S11mV_ref, useRef, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
 
-    if meas_time :
+    if meas_time:
         elapsed_time = time.time() - start_time
         print( "### time elapsed for compute_wobble: %.3f" % ( elapsed_time ) )
 
@@ -190,7 +209,7 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
     # move the measurement folder to the main folder
     swfolder_ind = swfolder + '/' + str( 'Cp_[{:d}]__Cs_[{:d}]'.format( cparVal, cserVal ) )
     if en_fig:
-        shutil.move( data_parent_folder + '/' + meas_folder[0] + '/wobble.png', swfolder + '/' + str( 'plt{:03d}_Cp_[{:d}]__Cs_[{:d}].png'.format( exptnum, cparVal, cserVal ) ) )  # move the figure
+        shutil.move( data_folder + '/' + meas_folder[0] + '/wobble.png', swfolder + '/' + str( 'plt{:03d}_Cp_[{:d}]__Cs_[{:d}].png'.format( exptnum, cparVal, cserVal ) ) )  # move the figure
 
     if keepRawData:
         # write gain values to a file
@@ -201,9 +220,9 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
             for ( a, b ) in zip ( freqSw, S11dB ):
                 f.write( '{:-8.3f},{:-8.3f}\n' .format( a, b ) )
 
-        shutil.rmtree ( data_parent_folder + '/' + meas_folder[0] )  # remove the data folder
+        shutil.rmtree ( data_folder + '/' + meas_folder[0] )  # remove the data folder
     else:
-        shutil.rmtree( data_parent_folder + '/' + meas_folder[0] )  # remove the data folder
+        shutil.rmtree( data_folder + '/' + meas_folder[0] )  # remove the data folder
 
     return S11dB, minS11_freq
 
@@ -296,13 +315,13 @@ while ( True ):  # search lower frequency
 
 # write the optimum setting with the frequency and gain into the main file
 Table = open( swfolder + '/genS11Table.txt', 'w' )
-Table.write( 'settings:\n' )
+Table.write( 'search settings:\n' )
 Table.write( '\tCpar Precision = {:d}\n'.format( cparPrec ) )
 Table.write( '\tCser Precision = {:d}\n'.format( cserPrec ) )
 Table.write( '\tAcq. Frequency Start = {:.3f} MHz\n'.format( freqSta ) )
 Table.write( '\tAcq. Frequency Stop = {:.3f} MHz\n'.format( freqSto ) )
 Table.write( '\tAcq. Frequency Spacing = {:.3f} MHz\n'.format( freqSpa ) )
-Table.write( '\tAcq. Frequency Sampling = {:.1f} MHz\n'.format( freqSamp ) )
+# Table.write( '\tAcq. Frequency Sampling = {:.1f} MHz\n'.format( freqSamp ) )
 Table.write( '\tS11 Optimization Frequency Start = {:.2f} MHz\n'.format( S11FreqSta ) )
 Table.write( '\tS11 Optimization Frequency Stop = {:.2f} MHz\n'.format( S11FreqSto ) )
 if lrSeed:
@@ -316,15 +335,15 @@ if lrSeed:
     Table.write( '\tderived Cser = {:d} ({:.1f} pF)\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        Table.write( '\tCpar = {:d} ({:.1f} pF)\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
-        Table.write( '\tCser = {:d} ({:.1f} pF)\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
+        Table.write( '\tCpar seed = {:d} ({:.1f} pF)\n'.format( cpar_init , conv_cInt_to_cFarad( cpar_init, CpTbl ) * 1e12 ) )
+        Table.write( '\tCser seed = {:d} ({:.1f} pF)\n'.format( cser_init , conv_cInt_to_cFarad( cser_init, CsTbl ) * 1e12 ) )
 
 Table.write( '\n' );
 Table.write( 'freq(MHz)\t S11(dB)\t Cpar(digit)\t Cser(digit)\n' )
 Table.close()
 with open( swfolder + '/genS11Table.txt', 'a' ) as Table:
     for ( a, b , c, d ) in zip ( minReflxTable[:, 0], minReflxTable[:, 1], minReflxTable[:, 2], minReflxTable[:, 3] ):
-        Table.write( '{:-7.2f},{:-7.2f},{:-7.0f},{:-7.0f}\n' .format( a, b, c, d ) )
+        Table.write( '{:-7.4f},{:-7.4f},{:-7.0f},{:-7.0f}\n' .format( a, b, c, d ) )
 
 # plot the table figure and save file
 plt.figure( 2 )
