@@ -9,7 +9,7 @@ This module characterizes the preamp gain and show the gain over frequency
 import os
 import time
 
-from nmr_std_function.nmr_functions import compute_iterate, compute_gain
+from nmr_std_function.nmr_functions import compute_iterate, compute_gain_async, compute_gain_sync
 from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
@@ -67,7 +67,8 @@ while True:
                                nmrObj.PSU_5V_ANA_N_EN_msk )
     # time.sleep( 0.1 )
 
-    nmrObj.pamp_char ( sta_freq, sto_freq, spac_freq, samp_freq )
+    # nmrObj.pamp_char_async ( sta_freq, sto_freq, spac_freq, samp_freq )
+    nmrObj.pamp_char_sync ( sta_freq, sto_freq, spac_freq )
 
     nmrObj.deassertAll()
 
@@ -81,6 +82,7 @@ while True:
         cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
         exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
 
-    maxS21, maxS21_freq, _ = compute_gain( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
+    # maxS21, maxS21_freq, _ = compute_gain_async( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
+    maxS21, maxS21_freq, _ = compute_gain_sync( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
     print( 'maxS21={0:0.2f} maxS21_freq={1:0.2f}'.format( 
          maxS21, maxS21_freq ) )

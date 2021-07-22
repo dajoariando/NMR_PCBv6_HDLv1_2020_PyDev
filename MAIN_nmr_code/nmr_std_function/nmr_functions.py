@@ -294,7 +294,114 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
         return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
 
-def compute_gain( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
+def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
+    data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
+
+    # settings
+    # put 1 if the data file uses binary representation, otherwise it is in
+    # ascii format. Find the setting in the C programming file
+    binary_OR_ascii = 1  # manual setting: put the same setting from the C programming
+
+    ( param_list, value_list ) = data_parser.parse_info( 
+        data_folder, 'acqu.par' )  # read file
+    freqSta = data_parser.find_value( 'freqSta', param_list, value_list )
+    freqSto = data_parser.find_value( 'freqSto', param_list, value_list )
+    freqSpa = data_parser.find_value( 'freqSpa', param_list, value_list )
+    nSamples = data_parser.find_value( 'nSamples', param_list, value_list )
+    # freqSamp = data_parser.find_value( 'freqSamp', param_list, value_list )
+    # spect_bw = ( freqSamp / nSamples ) * 4  # determining the RBW
+
+    file_name_prefix = 'tx_acq_'
+    # plus freqSpa/2 is to include the endpoint (just like what the C does)
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )
+    S21 = np.zeros( len( freqSw ) )
+    S21_ph = np.zeros( len( freqSw ) )
+    for m in range( 0, len( freqSw ) ):
+        freqSamp = freqSw[m] * 4
+        spect_bw = ( freqSamp / nSamples ) * 1  # determining the RBW
+
+        # for m in freqSw:
+        file_path = ( data_folder + file_name_prefix +
+                     '{:4.3f}'.format( freqSw[m] ) )
+
+        if binary_OR_ascii:
+            # one_scan = data_parser.read_hex_int16(file_path)  # use binary
+            # representation
+            one_scan = data_parser.read_hex_int32( 
+                file_path )  # use binary representation for 32-bit file
+        else:
+            one_scan = np.array( data_parser.read_data( 
+                file_path ) )  # use ascii representation
+
+        os.remove( file_path )  # delete the file after use
+
+        '''
+        plt.ion()
+        fig = plt.figure( 64 )
+        fig.clf()
+        ax = fig.add_subplot( 111 )
+        ax.plot( one_scan )
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        '''
+
+        # find voltage at the input of ADC in mV
+        one_scan = one_scan * nmrObj.uvoltPerDigit / 1e3
+
+        spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
+
+        # plt.figure( 12345 )
+        # plt.clf()
+        # plt.plot( abs( specty ) )
+        # plt.show()
+
+        # FIND INDEX WHERE THE MAXIMUM SIGNAL IS PRESENT
+        # PRECISE METHOD: find reflection at the desired frequency: creating precision problem where usually the signal shift a little bit from its desired frequency
+        # ref_idx = abs(spectx - freqSw[m]) == min(abs(spectx - freqSw[m]))
+        # BETTER METHOD: find reflection signal peak around the bandwidth
+        # divide 2 is due to +/- half-BW around the interested frequency
+        ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw / 2 ) )
+
+        # compute amplitude at the frequency of interest
+        S21[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
+        S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+
+    S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
+
+    maxS21 = max( S21dB )
+    maxS21_freq = freqSw[np.argmax( S21dB )]
+
+    if en_fig:
+        plt.ion()
+        fig = plt.figure( fig_num )
+        fig.clf()
+        ax = fig.add_subplot( 211 )
+        line1, = ax.plot( freqSw, S21dB, 'r-' )
+        ax.set_ylim( -30, 80 )
+        ax.set_ylabel( 'S21 [dBmV]' )
+        ax.set_title( "Transmission Measurement (S21) Parameter" )
+        ax.grid()
+
+        bx = fig.add_subplot( 212 )
+        bx.plot( freqSw, S21_ph, 'r-' )
+        bx.set_xlabel( 'Frequency [MHz]' )
+        bx.set_ylabel( 'Phase (deg)' )
+        bx.grid()
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'gain.png' )
+
+    # write gain values to a file
+    with open( data_folder + 'S21.txt', 'w' ) as f:
+        for ( a, b, c ) in zip( freqSw, S21dB, S21_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
+
+    return maxS21, maxS21_freq, S21
+
+
+def compute_gain_async( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
     # settings
@@ -435,6 +542,8 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     sim_dec = 0
     sim_dec_fact = 32
 
+    compute_figure = True  # compute the figure and save the figure to file. To show it in runtime, enable the en_fig
+
     # variables from NMR settings
     ( param_list, value_list ) = data_parser.parse_info( 
         data_folder, 'acqu.par' )  # read file
@@ -502,9 +611,10 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
                 dconv[i * ( 2 * SpE ):( i + 1 ) * ( 2 * SpE ):2] + 1j * \
                 dconv[i * ( 2 * SpE ) + 1:( i + 1 ) * ( 2 * SpE ):2]
 
-        if en_fig:  # plot the averaged scan
+        if compute_figure:  # plot the averaged scan
             echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s
             plt.figure( 1 )
+            plt.clf()
             for i in range( 0, NoE ):
                 plt.plot( ( ( i - 1 ) * tE * 1e-6 + echo_space ) * 1e3,
                          np.real( data_filt[i,:] ), linewidth=0.4, color='b' )
@@ -518,18 +628,18 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         # raw average data
         echo_rawavg = np.mean( data_filt, axis=0 )
 
-        if ( en_fig ):
-            if en_fig:  # plot echo rawavg
-                plt.figure( 6 )
-                plt.plot( tacq, np.real( echo_rawavg ), label='real' )
-                plt.plot( tacq, np.imag( echo_rawavg ), label='imag' )
-                plt.plot( tacq, np.abs( echo_rawavg ), label='abs' )
-                plt.xlim( 0, max( tacq ) )
-                plt.title( "Echo Average before rotation (down-converted)" )
-                plt.xlabel( 'time(uS)' )
-                plt.ylabel( 'probe voltage (uV)' )
-                plt.legend()
-                plt.savefig( data_folder + 'fig_echo_avg_dconv.png' )
+        if compute_figure:  # plot echo rawavg
+            plt.figure( 6 )
+            plt.clf()
+            plt.plot( tacq, np.real( echo_rawavg ), label='real' )
+            plt.plot( tacq, np.imag( echo_rawavg ), label='imag' )
+            plt.plot( tacq, np.abs( echo_rawavg ), label='abs' )
+            plt.xlim( 0, max( tacq ) )
+            plt.title( "Echo Average before rotation (down-converted)" )
+            plt.xlabel( 'time(uS)' )
+            plt.ylabel( 'probe voltage (uV)' )
+            plt.legend()
+            plt.savefig( data_folder + 'fig_echo_avg_dconv.png' )
 
         # simulate additional decimation (not needed for normal operqtion). For
         # debugging purpose
@@ -589,9 +699,10 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         # compute the probe voltage before gain stage
         data = data / nmrObj.totGain * nmrObj.uvoltPerDigit
 
-        if en_fig:  # plot the averaged scan
+        if compute_figure:  # plot the averaged scan
             echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s
             plt.figure( 1 )
+            plt.clf()
             for i in range( 1, NoE + 1 ):
                 # plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3, data[(i - 1) * SpE:i * SpE], linewidth=0.4)
                 plt.plot( ( ( i - 1 ) * tE * 1e-6 + echo_space ) * 1e3,
@@ -606,8 +717,9 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         for i in range( 0, NoE ):
             echo_rawavg += ( data[i * SpE:( i + 1 ) * SpE] / NoE )
 
-        if en_fig:  # plot echo rawavg
+        if compute_figure:  # plot echo rawavg
             plt.figure( 6 )
+            plt.clf()
             plt.plot( tacq, echo_rawavg, label='echo rawavg' )
             plt.xlim( 0, max( tacq ) )
             plt.title( "Echo Average (raw)" )
@@ -646,9 +758,10 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         if perform_rotation:
             data_filt = data_filt * np.exp( -1j * theta )
 
-    if en_fig:  # plot filtered data
+    if compute_figure:  # plot filtered data
         echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s
         plt.figure( 2 )
+        plt.clf()
         for i in range( 0, NoE ):
             plt.plot( ( i * tE * 1e-6 + echo_space ) * 1e3,
                      np.real( data_filt[i,:] ), 'b', linewidth=0.4 )
@@ -665,8 +778,9 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     for i in range( 0, NoE ):
         echo_avg += ( data_filt[i,:] / NoE )
 
-    if en_fig:  # plot echo shape
+    if compute_figure:  # plot echo shape
         plt.figure( 3 )
+        plt.clf()
         plt.plot( tacq, np.abs( echo_avg ), label='abs' )
         plt.plot( tacq, np.real( echo_avg ), label='real part' )
         plt.plot( tacq, np.imag( echo_avg ), label='imag part' )
@@ -679,6 +793,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         # plot fft of the echosum
         plt.figure( 4 )
+        plt.clf()
         zf = 100  # zero filling factor to get smooth curve
         ws = 2 * np.pi / ( tacq[1] - tacq[0] )  # in MHz
         wvect = np.linspace( -ws / 2, ws / 2, len( tacq ) * zf )
@@ -746,6 +861,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         # plot fitted line
         plt.figure( 5 )
+        plt.clf()
         plt.cla()
         plt.plot( t_echospace * 1e3, f, label="fit" )  # plot in milisecond
         plt.plot( t_echospace * 1e3, np.real( a ) - f, label="residue" )
@@ -758,7 +874,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         res = 0
         snr = 0
 
-    if en_fig:
+    if compute_figure:
         # plot data
         plt.figure( 5 )
         # plot in milisecond
@@ -774,6 +890,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.ylabel( 'probe voltage (uV)' )
         plt.savefig( data_folder + 'fig_matched_filt_data.png' )
 
+    if en_fig and compute_figure:
         plt.show()
 
     print( 'a0 = ' + '{0:.2f}'.format( a0 ) )

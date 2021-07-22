@@ -425,13 +425,28 @@ class tunable_nmr_system_2018:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
 
-    def pamp_char( self, sta_freq, sto_freq, spac_freq, samp_freq ):
+    def pamp_char_async( self, sta_freq, sto_freq, spac_freq, samp_freq ):
         # execute cpmg sequence
-        command = ( "pamp_char" + " " +
+        command = ( "pamp_char_async" + " " +
                    str( sta_freq ) + " " +
                    str( sto_freq ) + " " +
                    str( spac_freq ) + " " +
                    str( samp_freq )
+                   )
+
+        if self.en_remote_computing:
+            ssh_cmd = self.server_path + "c_exec/" + command
+            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+        else:
+            os_command = ( self.work_dir + self.exec_folder + command )
+            os.system( os_command )  # execute command & ignore its console
+
+    def pamp_char_sync( self, sta_freq, sto_freq, spac_freq ):
+        # execute cpmg sequence
+        command = ( "pamp_char_sync" + " " +
+                   str( sta_freq ) + " " +
+                   str( sto_freq ) + " " +
+                   str( spac_freq )
                    )
 
         if self.en_remote_computing:
