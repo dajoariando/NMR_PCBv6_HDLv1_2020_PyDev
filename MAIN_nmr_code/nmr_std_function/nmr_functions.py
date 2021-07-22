@@ -762,11 +762,19 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         echo_space = ( 1 / Sf ) * np.linspace( 1, SpE, SpE )  # in s
         plt.figure( 2 )
         plt.clf()
+
+        data_parser.write_text_append( data_folder, "fig_filt_data.txt", "settings: NoE: %d, SpE: %d, tE: %0.2f, fs: %0.2f. Format: re(echo1), im(echo1), re(echo2), im(echo2), ... " % ( NoE, SpE, tE, Sf ) )
+
         for i in range( 0, NoE ):
             plt.plot( ( i * tE * 1e-6 + echo_space ) * 1e3,
                      np.real( data_filt[i,:] ), 'b', linewidth=0.4 )
             plt.plot( ( i * tE * 1e-6 + echo_space ) * 1e3,
                      np.imag( data_filt[i,:] ), 'r', linewidth=0.4 )
+
+        for i in range ( 0, NoE ):
+            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.real( data_filt[i,:] ) )
+            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.imag( data_filt[i,:] ) )
+
         plt.legend()
         plt.title( 'Filtered data' )
         plt.xlabel( 'Time (mS)' )
@@ -790,6 +798,11 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.ylabel( 'probe voltage (uV)' )
         plt.legend()
         plt.savefig( data_folder + 'fig_echo_shape.png' )
+        data_parser.write_text_append( data_folder, "fig_echo_shape.txt", "format: abs, real, imag, time_us" )
+        data_parser.write_text_append_row( data_folder, "fig_echo_shape.txt", np.abs( echo_avg ) )
+        data_parser.write_text_append_row( data_folder, "fig_echo_shape.txt", np.real( echo_avg ) )
+        data_parser.write_text_append_row( data_folder, "fig_echo_shape.txt", np.imag( echo_avg ) )
+        data_parser.write_text_append_row( data_folder, "fig_echo_shape.txt", tacq )
 
         # plot fft of the echosum
         plt.figure( 4 )
@@ -812,6 +825,10 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.ylabel( 'Echo amplitude (a.u.)' )
         plt.legend()
         plt.savefig( data_folder + 'fig_echo_A.png' )
+        data_parser.write_text_append( data_folder, "fig_echo_A.txt", "format: real, imag, freq_MHz" )
+        data_parser.write_text_append_row( data_folder, "fig_echo_A.txt", np.real( spect ) )
+        data_parser.write_text_append_row( data_folder, "fig_echo_A.txt", np.imag( spect ) )
+        data_parser.write_text_append_row( data_folder, "fig_echo_A.txt", wvect / ( 2 * np.pi ) )
 
     # matched filtering
     a = np.zeros( NoE, dtype=complex )
@@ -889,6 +906,12 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.xlabel( 'Time (mS)' )
         plt.ylabel( 'probe voltage (uV)' )
         plt.savefig( data_folder + 'fig_matched_filt_data.png' )
+
+        data_parser.write_text_append( data_folder, "fig_matched_filt_data.txt", "output params: noise std: %0.5f, res std: %0.5f, snr_imag: %0.3f, snr_res: %0.3f, a0: %0.3f, T2: %0.3f ms. Format: a_real, a_imag, fit, time(s) " % ( noise, res, snr_imag, snr_res, a0, T2 * 1e3 ) )
+        data_parser.write_text_append_row( data_folder, "fig_matched_filt_data.txt", np.real( a ) )
+        data_parser.write_text_append_row( data_folder, "fig_matched_filt_data.txt", np.imag( a ) )
+        data_parser.write_text_append_row( data_folder, "fig_matched_filt_data.txt", f )
+        data_parser.write_text_append_row( data_folder, "fig_matched_filt_data.txt", t_echospace )
 
     if en_fig and compute_figure:
         plt.show()
@@ -1157,6 +1180,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         ax.set_title( "Spectrum" )
         ax.grid()
         ax.legend()
+        plt.ylim( [-0.2, 20] )
 
         # plot time domain data
         ax = fig.add_subplot( 312 )
@@ -1168,12 +1192,14 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         ax.set_ylabel( 'Amplitude (a.u.)' )
         ax.set_title( "Amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )
         ax.grid()
+        plt.ylim( [-300, 300] )
 
         # plot histogram
         n_bins = 200
         ax = fig.add_subplot( 313 )
         n, bins, patches = ax.hist( one_scan, bins=n_bins )
         ax.set_title( "Histogram" )
+        plt.ylim( [0, 2000] )
 
         plt.tight_layout()
         fig.canvas.draw()

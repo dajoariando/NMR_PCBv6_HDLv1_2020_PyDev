@@ -215,6 +215,14 @@ def write_text_append( data_folder, filename, data ):
         csvfile.write( '\n' )
 
 
+def write_text_append_row( data_folder, filename, rowvect_num ):
+    with open( data_folder + '/' + filename, 'a', newline='' ) as csvfile:
+        for line in rowvect_num:
+            csvfile.write( "%0.5f" % line )
+            csvfile.write( ',' )
+        csvfile.write( '\n' )
+
+
 def convert_to_prospa_data_t1( datain, path, write_csv ):
     # datain     : input data in tauSteps*NoE matrix format
     # write_csv  : write output to csv file
