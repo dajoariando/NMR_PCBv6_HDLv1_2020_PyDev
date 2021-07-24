@@ -148,7 +148,7 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
         print( "data processing time: %.3f" % ( elapsed_time ) )
         start_time = time.time()
 
-'''
+
 # cpmg settings
 cpmg_freq = 1.67
 pulse1_us = 15  # 75 for Cheng's coil. pulse pi/2 length.
@@ -164,4 +164,3 @@ dconv_lpf_ord = 2  # downconversion order
 dconv_lpf_cutoff_Hz = 30e3  # downconversion lpf cutoff
 client_data_folder = "D:\\TEMP"
 nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )
-'''

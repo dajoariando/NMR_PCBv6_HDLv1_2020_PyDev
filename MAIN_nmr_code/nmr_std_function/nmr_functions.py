@@ -317,7 +317,7 @@ def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num 
     S21 = np.zeros( len( freqSw ) )
     S21_ph = np.zeros( len( freqSw ) )
     for m in range( 0, len( freqSw ) ):
-        freqSamp = freqSw[m] * 4
+        freqSamp = freqSw[m] * 4  # defined by the C programming, (*4) is a fix number
         spect_bw = ( freqSamp / nSamples ) * 1  # determining the RBW
 
         # for m in freqSw:
@@ -370,6 +370,13 @@ def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num 
 
     maxS21 = max( S21dB )
     maxS21_freq = freqSw[np.argmax( S21dB )]
+    maxS21_ph = S21_ph[np.argmax( S21dB )]
+    S21_in_bw_range = ( S21dB >= ( maxS21 - 3 ) )
+    S21_in_bw_idx = np.where( S21_in_bw_range == True )
+    S21_lo_bound = freqSw[np.min( S21_in_bw_idx )]
+    S21_hi_bound = freqSw[np.max( S21_in_bw_idx )]
+    S21_lo_phase = S21_ph[np.min( S21_in_bw_idx )]
+    S21_hi_phase = S21_ph[np.max( S21_in_bw_idx )]
 
     if en_fig:
         plt.ion()
@@ -379,7 +386,7 @@ def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num 
         line1, = ax.plot( freqSw, S21dB, 'r-' )
         ax.set_ylim( -30, 80 )
         ax.set_ylabel( 'S21 [dBmV]' )
-        ax.set_title( "Transmission Measurement (S21) Parameter" )
+        ax.set_title( "S21: %0.1f dBmV @%0.3f MHz, BW=%0.0f kHz, ph=%0.0f$\degree$" % ( maxS21, maxS21_freq, ( S21_hi_bound - S21_lo_bound ) * 1e3 , maxS21_ph ) )
         ax.grid()
 
         bx = fig.add_subplot( 212 )

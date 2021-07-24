@@ -70,8 +70,8 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, S11_table )
     Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, S21_table )
     nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
-    # nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
-    nmrObj.setMatchingNetwork( 0, 0 )
+    nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
+    # nmrObj.setMatchingNetwork( 0, 0 )
 
     nmrObj.assertControlSignal( 
         nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )
@@ -110,7 +110,7 @@ min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
 tuning_freq = 1.6  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 10  # downconversion filter bw
-continuous = False # continuous running at one frequency configuration
+continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\TEMP"
-nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous )
+nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, client_data_folder )
 '''
