@@ -1,7 +1,12 @@
 '''
-Created on May 04, 2020
+Created on July 24th 2021
 
-This module characterizes the preamp gain and show the gain over frequency
+Running this module requires both SMAs for transmitter pulse to be disconnected from the sensor board.
+This is important because even though the duplexer acts as high impedance during transmission, it's still generating a high enough voltage at the receiver, which
+prevents the receiver from acquiring a small signal outside the attenuated Tx after the duplexer.
+
+Create a signal loop excitation coil and connect it to the low power output SMA and place it close to the probe coil to create a weakly coupled coil.
+ 
 
 @author: David Ariando
 '''
@@ -13,7 +18,7 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 from nmr_std_function.time_func import time_meas
 
 
-def nmr_rx_char( tune_to_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_data_folder, continuous, en_fig ):
+def nmr_rx_char( tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_data_folder, continuous, en_fig ):
     # load the config (or otherwise load the config from the table)
     # from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
@@ -71,9 +76,9 @@ def nmr_rx_char( tune_to_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_
         nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk | nmrObj.RX_FH_msk )
         # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
 
-        Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tune_to_freq, S21_table )
+        Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, S21_table )
         nmrObj.setPreampTuning( Vbias, Vvarac )
-        Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tune_to_freq, S11_table )
+        Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, S11_table )
         nmrObj.setMatchingNetwork( Cpar, Cser )
 
         timeObj.setTimeSta()
@@ -107,14 +112,15 @@ def nmr_rx_char( tune_to_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_
         if ( not continuous ):
             break
 
-
+'''
 client_data_folder = "D:\\TEMP"
 en_fig = 1
 continuous = 1
 # measurement properties
-tune_to_freq = 1.8  # tune the matching network and preamp to this frequency
+tuning_freq = 1.8  # tune the matching network and preamp to this frequency
 sta_freq = 1.6  # low bound frequency to be shown in the figure
 sto_freq = 1.8  # up bound frequency to be shown in the figure
 spac_freq = 0.001  # frequency resolution
 samp_freq = 25  # only useful when the async method is used
-nmr_rx_char( tune_to_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_data_folder, continuous, en_fig )
+nmr_rx_char( tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, client_data_folder, continuous, en_fig )
+'''
