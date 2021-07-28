@@ -49,7 +49,7 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
         data_folder = server_data_folder
 
     # nmr object declaration
-    nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
+    nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
     # measurement settings
     # samp_freq = 25  # sampling frequency
@@ -77,6 +77,7 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
         nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )
     # nmrObj.deassertControlSignal( nmrObj.RX_FH_msk | nmrObj.RX2_L_msk | nmrObj.RX_FH_msk )
     nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
+    # nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk | nmrObj.RX_FH_msk )
 
     while True:
         # time.sleep(0.5)
@@ -84,14 +85,14 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
         nmrObj.noise( samp_freq, samples )
 
         if  en_remote_computing:  # copy remote files to local directory
-            cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
+            cp_rmt_file( nmrObj.scp, server_data_folder, client_data_folder, "current_folder.txt" )
 
         # process the data
         meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
 
         if  en_remote_computing:  # copy remote folder to local directory
-            cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
-            exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
+            cp_rmt_folder( nmrObj.scp, server_data_folder, client_data_folder, meas_folder[0] )
+            exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
 
         # compute_stats( min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )
         compute_in_bw_noise( meas_bw_kHz, tuning_freq, min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )

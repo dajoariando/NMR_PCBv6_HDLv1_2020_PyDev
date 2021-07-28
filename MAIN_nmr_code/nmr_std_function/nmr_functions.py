@@ -12,6 +12,172 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
+
+    # compute_wobble_sync uses 1 clock domain for the sampling clock and the excitation clock, just as it is in synchronized CPMG sequence. The sampling clock is 4x the excitation clock , and the system clock is 4x the sampling clock. The phase in compute_wobble_sync is usable.
+
+    # S11mV_ref is the reference s11 corresponds to maximum reflection (can be made by totally untuning matching network, e.g. disconnecting all caps in matching network)
+    # useRef uses the S11mV_ref as reference, otherwise it will use the max
+    # signal available in the data
+
+    data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
+
+    ( param_list, value_list ) = data_parser.parse_info( 
+        data_folder, 'acqu.par' )  # read file
+    freqSta = data_parser.find_value( 'freqSta', param_list, value_list )
+    freqSto = data_parser.find_value( 'freqSto', param_list, value_list )
+    freqSpa = data_parser.find_value( 'freqSpa', param_list, value_list )
+    nSamples = data_parser.find_value( 'nSamples', param_list, value_list )
+    fftPts = data_parser.find_value( 'fftPts', param_list, value_list )
+    fftSaveAllData = data_parser.find_value( 'fftSaveAllData', param_list, value_list )
+    fftSaveOnePts = data_parser.find_value( 'fftSaveOnePts', param_list, value_list )
+
+    if ( fftSaveOnePts ):
+        fftPtIdx = data_parser.find_value( 'fftPtIdx', param_list, value_list )
+
+    # plus freqSpa/2 is to include the endpoint (just like what the C does)
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )
+
+    if ( fftSaveAllData ):
+        file_name_prefix = 'tx_acq_'
+
+        S11 = np.zeros( len( freqSw ) )
+        S11_ph = np.zeros( len( freqSw ) )
+        for m in range( 0, len( freqSw ) ):
+            freqSamp = freqSw[m] * 4  # defined by the C programming, (*4) is a fix number
+            spect_bw = freqSw[m] / fftPts * 2  # this is the frequency spacing between adjacent FFT point. Spect_bw is set so that only one point in searching will be found and it will be the closest frequency of interest
+
+            # for m in freqSw:
+            file_path = ( data_folder + file_name_prefix +
+                         '{:4.3f}'.format( freqSw[m] ) )
+
+            # read the data
+            one_scan_real = np.array( data_parser.read_data( 
+                    file_path + "_Re" ) )  # use ascii representation
+            os.remove( file_path + "_Re" )  # delete the file after use
+
+            one_scan_imag = np.array( data_parser.read_data( 
+                    file_path + "_Im" ) )  # use ascii representation
+            os.remove( file_path + "_Im" )  # delete the file after use
+
+            # find voltage at the input of ADC in mV
+            one_scan_real = one_scan_real * nmrObj.uvoltPerDigit / 1e3 / fftPts
+            one_scan_imag = one_scan_imag * nmrObj.uvoltPerDigit / 1e3 / fftPts
+
+            # find the fft output
+            # spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
+            specty = one_scan_real + np.multiply( 1j, one_scan_imag )
+            spectx = np.linspace( -freqSamp / 2, freqSamp / 2, int( fftPts ) )
+
+            # find the index of the excitation frequency
+            ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw ) )
+
+            # compute amplitude at the frequency of interest
+            S11[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
+            S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+
+    elif fftSaveOnePts:
+        S11_re = np.array( data_parser.read_data( data_folder + "S21_fftReal.txt" ) ) / fftPts
+        S11_im = np.array( data_parser.read_data( data_folder + "S21_fftImag.txt" ) ) / fftPts
+        S11_cmplx = S11_re + np.multiply( 1j, S11_im )
+        S11 = abs( S11_cmplx )
+        S11_ph = np.angle( S11_cmplx, deg=True )
+
+    if useRef:  # if reference is present
+        S11dB = 20 * np.log10( np.divide( S11, S11mV_ref )
+                              )  # convert to dB scale
+    else:  # if reference is not present
+        S11dB = 20 * np.log10( S11 / max( S11 ) )  # convert to dB scale
+
+    S11_min10dB = ( S11dB <= s11_min )
+
+    minS11 = min( S11dB )
+    minS11_freq = freqSw[np.argmin( S11dB )]
+
+    try:
+        S11_fmin = min( freqSw[S11_min10dB] )
+        S11_fmax = max( freqSw[S11_min10dB] )
+    except:
+        S11_fmin = 0
+        S11_fmax = 0
+        print( 'S11 requirement is not satisfied...' )
+
+    S11_bw = S11_fmax - S11_fmin
+
+    # compute impedance
+    if useRef:
+        S11_cmplx = np.multiply( np.divide( S11, S11mV_ref ), np.exp( 1j * ( S11_ph * 2 * np.pi / 360 ) ) )
+        Z11 = ( 1 + S11_cmplx ) / ( 1 - S11_cmplx )
+    '''
+        # interpolate to find the frequency where Re(Z11/Zs) is 1, or load impedance is approx. 50 Ohms
+        Z11_maxidx = np.max( abs( np.real( Z11 ) ) ) == np.real( Z11 )
+        Z11_maxidx = np.where( Z11_maxidx == True )[0][0]  # find index of resonance (max impedance)
+        Z11_a = np.sign( np.real( Z11[0:Z11_maxidx] ) - 1 )  # find minimum point where Re(Z11/Zs)-1=0
+        Z11_signidx = np.where( Z11_a == 1 )[0][0]
+        den = ( freqSw[Z11_signidx] - freqSw[Z11_signidx - 1] )
+        num = np.real( Z11[Z11_signidx] ) - np.real( Z11[Z11_signidx - 1] )
+        freq0 = freqSw[Z11_signidx] - ( np.real( Z11[Z11_signidx] ) - 1 ) * den / num  # compute frequency where Z11/Zs = 1
+        print( "freq0 : %f MHz" % freq0 )
+        # find the value of Z11_imag at the frequency above
+        num = np.imag( Z11[Z11_signidx] ) - np.imag( Z11[Z11_signidx - 1] )
+        Z11_imag0 = num / den * ( freq0 - freqSw[Z11_signidx] ) + np.imag( Z11[Z11_signidx] )
+        print( "Z11_imag0 : %f" % Z11_imag0 )
+
+    else:
+    '''
+    freq0 = 0
+    Z11_imag0 = 0
+
+    if en_fig:
+        plt.ion()
+        fig = plt.figure( fig_num, figsize=[12, 7] )
+        fig.clf()
+        ax = fig.add_subplot( 221 )
+        line1, = ax.plot( freqSw, S11dB, 'b-', marker='.', linewidth=1, markersize=6 )
+        ax.set_ylim( -35, 10 )
+        ax.set_ylabel( 'S11 [dB]' )
+        ax.set_title( "Reflection Measurement (S11) Parameter" )
+        ax.grid()
+
+        bx = fig.add_subplot( 223 )
+        bx.plot( freqSw, S11_ph, 'r-' , marker='.', linewidth=1, markersize=6 )
+        bx.set_xlabel( 'Frequency [MHz]' )
+        bx.set_ylabel( 'Phase (deg)' )
+        # bx.set_title( 'incorrect phase due to non-correlated transmit and sampling' )
+        bx.grid()
+
+        if useRef:
+            cx = fig.add_subplot ( 222 )
+            cx.plot( freqSw, np.real( Z11 ), 'b', marker='.', linewidth=1, markersize=6 )
+            cx.set_ylim( -100, 100 )
+            cx.set_ylabel ( 'Re(Z11/Zs)' )
+            cx.set_title( "Normalized Impedance (Z11/Zs)" )
+            cx.grid()
+
+            dx = fig.add_subplot ( 224 )
+            dx.plot( freqSw, np.imag( Z11 ), 'r', marker='.', linewidth=1, markersize=6 )
+            dx.set_ylim( -50, 50 )
+            dx.set_ylabel ( 'Im(Z11/Zs)' )
+            # dx.set_title( "Imaginary Impedance" )
+            dx.grid()
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'wobble.png' )
+
+    # write S11 to a file
+    with open( data_folder + 'S11.txt', 'w' ) as f:
+        for ( a, b, c ) in zip( freqSw, S11dB, S11_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
+
+    # print(S11_fmin, S11_fmax, S11_bw)
+    if useRef:
+        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
+    else:
+        return S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
+
+
 def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV_ref, useRef, en_fig, fig_num ):
 
     # compute_wobble_sync uses 1 clock domain for the sampling clock and the excitation clock, just as it is in synchronized CPMG sequence. The sampling clock is 4x the excitation clock , and the system clock is 4x the sampling clock. The phase in compute_wobble_sync is usable.
@@ -399,6 +565,112 @@ def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num 
         fig.canvas.flush_events()
 
         plt.savefig( data_folder + 'gain.png' )
+
+    # write gain values to a file
+    with open( data_folder + 'S21.txt', 'w' ) as f:
+        for ( a, b, c ) in zip( freqSw, S21dB, S21_ph ):
+            f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
+
+    return maxS21, maxS21_freq, S21
+
+
+def compute_gain_fft_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
+    data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
+
+    ( param_list, value_list ) = data_parser.parse_info( 
+        data_folder, 'acqu.par' )  # read file
+    freqSta = data_parser.find_value( 'freqSta', param_list, value_list )
+    freqSto = data_parser.find_value( 'freqSto', param_list, value_list )
+    freqSpa = data_parser.find_value( 'freqSpa', param_list, value_list )
+    nSamples = data_parser.find_value( 'nSamples', param_list, value_list )
+    fftPts = data_parser.find_value( 'fftPts', param_list, value_list )
+    fftSaveAllData = data_parser.find_value( 'fftSaveAllData', param_list, value_list )
+    fftSaveOnePts = data_parser.find_value( 'fftSaveOnePts', param_list, value_list )
+
+    if ( fftSaveOnePts ):
+        fftPtIdx = data_parser.find_value( 'fftPtIdx', param_list, value_list )
+
+    # plus freqSpa/2 is to include the endpoint (just like what the C does)
+    freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )
+
+    if ( fftSaveAllData ):
+        file_name_prefix = 'tx_acq_'
+
+        S21 = np.zeros( len( freqSw ) )
+        S21_ph = np.zeros( len( freqSw ) )
+        for m in range( 0, len( freqSw ) ):
+            freqSamp = freqSw[m] * 4  # defined by the C programming, (*4) is a fix number
+            spect_bw = freqSw[m] / fftPts * 2  # this is the frequency spacing between adjacent FFT point. Spect_bw is set so that only one point in searching will be found and it will be the closest frequency of interest
+
+            # for m in freqSw:
+            file_path = ( data_folder + file_name_prefix +
+                         '{:4.3f}'.format( freqSw[m] ) )
+
+            # read the data
+            one_scan_real = np.array( data_parser.read_data( 
+                    file_path + "_Re" ) )  # use ascii representation
+            os.remove( file_path + "_Re" )  # delete the file after use
+
+            one_scan_imag = np.array( data_parser.read_data( 
+                    file_path + "_Im" ) )  # use ascii representation
+            os.remove( file_path + "_Im" )  # delete the file after use
+
+            # find voltage at the input of ADC in mV
+            one_scan_real = one_scan_real * nmrObj.uvoltPerDigit / 1e3 / fftPts
+            one_scan_imag = one_scan_imag * nmrObj.uvoltPerDigit / 1e3 / fftPts
+
+            # find the fft output
+            # spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
+            specty = one_scan_real + np.multiply( 1j, one_scan_imag )
+            spectx = np.linspace( -freqSamp / 2, freqSamp / 2, int( fftPts ) )
+
+            # find the index of the excitation frequency
+            ref_idx = ( abs( spectx - freqSw[m] ) <= ( spect_bw ) )
+
+            # compute amplitude at the frequency of interest
+            S21[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
+            S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+
+    elif fftSaveOnePts:
+        S21_re = np.array( data_parser.read_data( data_folder + "S21_fftReal.txt" ) ) / fftPts
+        S21_im = np.array( data_parser.read_data( data_folder + "S21_fftImag.txt" ) ) / fftPts
+        S21_cmplx = S21_re + np.multiply( 1j, S21_im )
+        S21 = abs( S21_cmplx )
+        S21_ph = np.angle( S21_cmplx, deg=True )
+
+    S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
+
+    maxS21 = max( S21dB )
+    maxS21_freq = freqSw[np.argmax( S21dB )]
+    maxS21_ph = S21_ph[np.argmax( S21dB )]
+    S21_in_bw_range = ( S21dB >= ( maxS21 - 3 ) )
+    S21_in_bw_idx = np.where( S21_in_bw_range == True )
+    S21_lo_bound = freqSw[np.min( S21_in_bw_idx )]
+    S21_hi_bound = freqSw[np.max( S21_in_bw_idx )]
+    S21_lo_phase = S21_ph[np.min( S21_in_bw_idx )]
+    S21_hi_phase = S21_ph[np.max( S21_in_bw_idx )]
+
+    if en_fig:
+        plt.ion()
+        fig = plt.figure( fig_num )
+        fig.clf()
+        ax = fig.add_subplot( 211 )
+        line1, = ax.plot( freqSw, S21dB, 'r-' )
+        ax.set_ylim( -30, 80 )
+        ax.set_ylabel( 'S21 [dBmV]' )
+        ax.set_title( "S21: %0.1f dBmV @%0.3f MHz, BW=%0.0f kHz, ph=%0.0f$\degree$" % ( maxS21, maxS21_freq, ( S21_hi_bound - S21_lo_bound ) * 1e3 , maxS21_ph ) )
+        ax.grid()
+
+        bx = fig.add_subplot( 212 )
+        bx.plot( freqSw, S21_ph, 'r-' )
+        bx.set_xlabel( 'Frequency [MHz]' )
+        bx.set_ylabel( 'Phase (deg)' )
+        bx.grid()
+
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+        plt.savefig( data_folder + 'gainFFT.png' )
 
     # write gain values to a file
     with open( data_folder + 'S21.txt', 'w' ) as f:

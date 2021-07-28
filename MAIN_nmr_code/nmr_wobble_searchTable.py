@@ -46,7 +46,6 @@ import matplotlib.pyplot as plt
 from faulthandler import disable
 
 # variables
-server_data_folder = "/root/NMR_DATA"
 client_data_folder = "D:\\TEMP"
 en_remote_dbg = 0
 fig_num = 1
@@ -61,22 +60,16 @@ from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 # remote computing configuration. See the NMR class to see details of use
 en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
 
-if en_remote_computing:
-    data_folder = client_data_folder
-    en_remote_dbg = 0  # force remote debugging to be disabled
-else:
-    data_folder = server_data_folder
-
 # acquisition settings (frequency to be shown in the table
-freqSta = 1.5
-freqSto = 1.8
-freqSpa = 0.002
+freqSta = 1.8
+freqSto = 2.2
+freqSpa = 0.005
 # freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 1.61
-S11FreqSto = 1.72
+S11FreqSta = 2.00
+S11FreqSto = 2.01
 
 # sweep precision
 cparPrec = 2  # change cpar by this value.
@@ -107,12 +100,12 @@ S11_min = -10  # the minimum allowable S11 value to be reported as adequate to s
 exptnum = 0  # this number is automatically increased when runExpt() is called
 
 # nmr object declaration
-nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
+nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # create name for new folder
 now = datetime.now()
 datename = now.strftime( "%Y_%m_%d_%H_%M_%S" )
-swfolder = data_folder + '/' + datename + '_genS11Table'
+swfolder = nmrObj.data_folder + '/' + datename + '_genS11Table'
 os.mkdir( swfolder )
 
 # find the initial cpar and cser values
@@ -190,13 +183,13 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
 
     # compute the generated data
     if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
-    meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
+        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+    meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
 
     if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, data_folder, meas_folder[0], S11_min, S11mV_ref, useRef, en_fig, fig_num )
+        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, nmrObj.server_data_folder, "rm -rf " + meas_folder[0] )  # delete the file in the server
+    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, nmrObj.data_folder, meas_folder[0], S11_min, S11mV_ref, useRef, en_fig, fig_num )
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
 
     if meas_time:
@@ -209,7 +202,7 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
     # move the measurement folder to the main folder
     swfolder_ind = swfolder + '/' + str( 'Cp_[{:d}]__Cs_[{:d}]'.format( cparVal, cserVal ) )
     if en_fig:
-        shutil.move( data_folder + '/' + meas_folder[0] + '/wobble.png', swfolder + '/' + str( 'plt{:03d}_Cp_[{:d}]__Cs_[{:d}].png'.format( exptnum, cparVal, cserVal ) ) )  # move the figure
+        shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/wobble.png', swfolder + '/' + str( 'plt{:03d}_Cp_[{:d}]__Cs_[{:d}].png'.format( exptnum, cparVal, cserVal ) ) )  # move the figure
 
     if keepRawData:
         # write gain values to a file
@@ -220,9 +213,9 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
             for ( a, b ) in zip ( freqSw, S11dB ):
                 f.write( '{:-8.3f},{:-8.3f}\n' .format( a, b ) )
 
-        shutil.rmtree ( data_folder + '/' + meas_folder[0] )  # remove the data folder
+        shutil.rmtree ( nmrObj.data_folder + '/' + meas_folder[0] )  # remove the data folder
     else:
-        shutil.rmtree( data_folder + '/' + meas_folder[0] )  # remove the data folder
+        shutil.rmtree( nmrObj.data_folder + '/' + meas_folder[0] )  # remove the data folder
 
     return S11dB, minS11_freq
 

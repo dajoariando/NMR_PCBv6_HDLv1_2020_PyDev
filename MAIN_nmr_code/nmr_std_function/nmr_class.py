@@ -19,12 +19,12 @@ import shutil
 from nmr_std_function.data_parser import write_text_append
 from nmr_std_function.hw_driver import fpga_de1soc
 # from email.errors import ObsoleteHeaderDefect
-from nmr_std_function.ntwrk_functions import exec_rmt_ssh_cmd_in_datadir
+from nmr_std_function.ntwrk_functions import exec_rmt_ssh_cmd_in_datadir, init_ntwrk, exit_ntwrk
 
 
 class tunable_nmr_system_2018:
 
-    def __init__( self, data_folder, en_remote_dbg, en_remote_computing ):
+    def __init__( self, client_data_folder, en_remote_dbg, en_remote_computing ):
 
         # chip offset declaration (look at the KiCAD for the designated
         # chip name)
@@ -107,6 +107,10 @@ class tunable_nmr_system_2018:
         self.PAMP_IN_SEL1_msk = ( 1 << self.PAMP_IN_SEL1_ofst )
         self.PAMP_IN_SEL2_msk = ( 1 << self.PAMP_IN_SEL2_ofst )
 
+        # definition for FFT hardware measurement
+        self.SAV_ALL_FFT = -1
+        self.NO_SAV_FFT = 0
+
         # General control defaults for the FPGA
         self.gnrl_cnt = 0
 
@@ -126,6 +130,20 @@ class tunable_nmr_system_2018:
         self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
+        # data folder
+        self.server_data_folder = "/root/NMR_DATA"
+        self.client_data_folder = client_data_folder
+        self.exec_folder = "/c_exec/"
+
+        # configuration table to be loaded
+        self.S11_table = "genS11Table.txt"  # filename for S11 tables
+        self.S21_table = "genS21Table.txt"
+
+        if en_remote_computing:
+            self.data_folder = self.client_data_folder
+            en_remote_dbg = 0  # force remote debugging to be disabled
+        else:
+            self.data_folder = self.server_data_folder
 
         if en_remote_dbg:
             from pydevd_file_utils import setup_client_server_paths
@@ -135,10 +153,6 @@ class tunable_nmr_system_2018:
                   ( self.server_ip, self.client_ip ) )
             pydevd.settrace( self.client_ip, stdoutToServer=True,
                             stderrToServer=True )
-
-        # variables
-        self.data_folder = data_folder
-        self.exec_folder = "/c_exec/"
 
         # This variable supports processing on the SoC/server (old method) and show the result on client via remote X window.
         # It also supports processing on the PC/client (new method) and show the result directly on client (much faster).
@@ -151,6 +165,11 @@ class tunable_nmr_system_2018:
             self.work_dir = os.getcwd()
             # only do this after remote debug initialization
             os.chdir( self.data_folder )
+        else:
+            self.ssh, self.scp = init_ntwrk ( self.server_ip, self.ssh_usr, self.ssh_passwd )
+
+    def exit( self ):
+        exit_ntwrk ( self.ssh, self.scp )
 
     def turnOnRemoteDebug( self ):
         # CANNOT RUN FROM HERE, YOU HAVE TO COPY THE CONTENT OF THIS FOLDER TO THE EXECUTABLE WHERE YOU RUN THE CODE AND RUN IT FROM THERE
@@ -172,14 +191,14 @@ class tunable_nmr_system_2018:
     def initNmrSystem( self ):
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/init"
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( self.work_dir + "/c_exec/init" )
 
     def setPreampTuning( self, vbias, vvarac ):
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/preamp_tuning" + " " + str( vbias ) + " " + str( vvarac )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             # set preamp tuning
             os.system( 
@@ -196,7 +215,7 @@ class tunable_nmr_system_2018:
         # self.cseries = cser
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/i2c_mtch_ntwrk" + " " + str( cpar ) + " " + str( cser )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( 
                 self.work_dir + self.exec_folder + "i2c_mtch_ntwrk" + " " +
@@ -213,9 +232,9 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/i2c_gnrl" + " " + str( self.gnrl_cnt0 ) + " " + str( self.gnrl_cnt1 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
             ssh_cmd = self.server_path + "c_exec/spi_pamp_input" + " " + str( self.gnrl_cnt2 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( 
                 self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
@@ -234,9 +253,9 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/i2c_gnrl" + " " + str( self.gnrl_cnt0 ) + " " + str( self.gnrl_cnt1 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
             ssh_cmd = self.server_path + "c_exec/spi_pamp_input" + " " + str( self.gnrl_cnt2 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( 
                 self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
@@ -252,9 +271,9 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/i2c_gnrl" + " " + str( 0 ) + " " + str( 0 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
             ssh_cmd = self.server_path + "c_exec/spi_pamp_input" + " " + str( 0 )
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( 
                     self.work_dir + self.exec_folder + "i2c_gnrl" + " " +
@@ -269,7 +288,7 @@ class tunable_nmr_system_2018:
         # laplace inversion computatation
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "nmr_sig_proc" + " " + filename + " " + outpath
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os.system( 
                 self.work_dir + self.exec_folder + "nmr_sig_proc" + " " +
@@ -306,7 +325,7 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
@@ -370,7 +389,7 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + +command )
             os.system( os_command )  # execute command & ignore its console
@@ -389,7 +408,7 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
@@ -405,22 +424,25 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
 
-    def wobble_sync( self, sta_freq, sto_freq, spac_freq ):
+    def wobble_sync( self, sta_freq, sto_freq, spac_freq, fftpts, fftcmd, fftvalsub ):
         # execute cpmg sequence
         command = ( "wobble_sync" + " " +
                    str( sta_freq ) + " " +
                    str( sto_freq ) + " " +
-                   str( spac_freq )
+                   str( spac_freq ) + " " +
+                   str( fftpts ) + " " +
+                   str( fftcmd ) + " " +
+                   str( fftvalsub )
                    )
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
@@ -436,22 +458,25 @@ class tunable_nmr_system_2018:
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
 
-    def pamp_char_sync( self, sta_freq, sto_freq, spac_freq ):
+    def pamp_char_sync( self, sta_freq, sto_freq, spac_freq, fftpts, fftcmd, fftvalsub ):
         # execute cpmg sequence
         command = ( "pamp_char_sync" + " " +
                    str( sta_freq ) + " " +
                    str( sto_freq ) + " " +
-                   str( spac_freq )
+                   str( spac_freq ) + " " +
+                   str( fftpts ) + " " +
+                   str( fftcmd ) + " " +
+                   str( fftvalsub )
                    )
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
-            exec_rmt_ssh_cmd_in_datadir( self, ssh_cmd )
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
         else:
             os_command = ( self.work_dir + self.exec_folder + command )
             os.system( os_command )  # execute command & ignore its console
