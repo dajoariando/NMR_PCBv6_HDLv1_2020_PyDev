@@ -44,7 +44,7 @@ def init ( client_data_folder ):
     return nmrObj
 
 
-def runExpt( nmrObj, extSet, cparVal, cserVal, sta_freq, sto_freq, spac_freq, samp_freq , fftpts, fftcmd, ftvalsub, S11mV_ref, useRef , en_fig ):
+def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, ftvalsub, S11mV_ref, useRef , en_fig ):
     # useRef: use the pregenerated S11mV_ref as a reference to compute
     # reflection. If this option is 0, then the compute_wobble will instead
     # generated S11 in mV format instead of dB format
@@ -60,8 +60,8 @@ def runExpt( nmrObj, extSet, cparVal, cserVal, sta_freq, sto_freq, spac_freq, sa
     timeObj = time_meas( True )
     timeObj.setTimeSta()
     # do measurement
-    nmrObj.wobble_sync( sta_freq, sto_freq, spac_freq , fftpts, fftcmd, ftvalsub )
-    # nmrObj.wobble_async( sta_freq, sto_freq, spac_freq, samp_freq )
+    nmrObj.wobble_sync( freqSta, freqSto, freqSpa , fftpts, fftcmd, ftvalsub )
+    # nmrObj.wobble_async( freqSta, freqSto, freqSpa, freqSamp )
     timeObj.setTimeSto()
     timeObj.reportTimeRel( "wobble_sync" )
 
@@ -90,7 +90,7 @@ def runExpt( nmrObj, extSet, cparVal, cserVal, sta_freq, sto_freq, spac_freq, sa
     timeObj.setTimeSto()
     timeObj.reportTimeRel( "data processing" )
 
-    return S11dB, minS11_freq
+    return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
 
 
 def exit( nmrObj ):
@@ -98,13 +98,13 @@ def exit( nmrObj ):
     nmrObj.exit()
 
 '''
+# measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-# measurement properties
-sta_freq = 1.8
-sto_freq = 2.2
-spac_freq = 0.001
-samp_freq = 25  # not used when using wobble_sync. Will be used when using wobble_async
+freqSta = 1.8
+freqSto = 2.2
+freqSpa = 0.001
+freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 1024
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
@@ -114,10 +114,10 @@ useRef = True  # use reference to eliminate background
 nmrObj = init ( client_data_folder )
 
 print( 'Generate reference.' )
-S11mV_ref, minS11Freq_ref = runExpt( nmrObj, False, 0, 0, sta_freq, sto_freq, spac_freq, samp_freq , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
+S11mV_ref, _, _, _, _, minS11Freq_ref , _, _ = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
 while True:
-    runExpt( nmrObj, extSet, 320, 177, sta_freq, sto_freq, spac_freq, samp_freq , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
+    analyze( nmrObj, extSet, 320, 177, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
 
 exit( nmrObj )
 '''

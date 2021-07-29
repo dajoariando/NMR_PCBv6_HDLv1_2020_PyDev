@@ -38,6 +38,7 @@ from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from hw_opt.mtch_ntwrk import *
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+import nmr_wobble
 
 import numpy as np
 from datetime import datetime
@@ -45,31 +46,32 @@ import shutil
 import matplotlib.pyplot as plt
 from faulthandler import disable
 
-# variables
+# measurement properties
 client_data_folder = "D:\\TEMP"
-en_remote_dbg = 0
+en_fig = 1
+freqSta = 1.8
+freqSto = 2.2
+freqSpa = 0.001
+freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
+fftpts = 256
+fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
+fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
+extSet = False  # use external executable to set the matching network Cpar and Cser
+useRef = True  # use reference to eliminate background
+
 fig_num = 1
-en_fig = 1  # enable figure for every measurement
 keepRawData = 1  # set this to keep the S11 raw data in text file
 tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
-meas_time = 0  # measure time
 
 # load configuration
 from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
-# remote computing configuration. See the NMR class to see details of use
-en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
-
 # acquisition settings (frequency to be shown in the table
-freqSta = 1.8
-freqSto = 2.2
-freqSpa = 0.005
-# freqSamp = 25
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 2.00
-S11FreqSto = 2.01
+S11FreqSta = 2.01
+S11FreqSto = 2.0
 
 # sweep precision
 cparPrec = 2  # change cpar by this value.
@@ -100,7 +102,7 @@ S11_min = -10  # the minimum allowable S11 value to be reported as adequate to s
 exptnum = 0  # this number is automatically increased when runExpt() is called
 
 # nmr object declaration
-nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
+nmrObj = nmr_wobble.init ( client_data_folder )
 
 # create name for new folder
 now = datetime.now()
@@ -127,17 +129,6 @@ minReflxTable[:, 1] = 5000  # set column 2 to an undefined voltage value
 minReflxTable[:, 2] = -1  # set column 3 to undefined setting of the cpar
 minReflxTable[:, 3] = -1  # set column 4 to undefined setting of the cser
 
-# system setup
-nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
-
-# disable all paths and power
-nmrObj.deassertAll()
-
-# enable necessary powers
-nmrObj.assertControlSignal( nmrObj.PSU_5V_TX_N_EN_msk |
-                           nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk |
-                           nmrObj.PSU_5V_ANA_N_EN_msk )
-
 
 # function to update table
 def updateTable( Table, newVal, setting1, setting2 ):
@@ -158,48 +149,13 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
 
     exptnum = exptnum + 1
 
-    if meas_time:
-        start_time = time.time()
-
-    # enable power and signal path
-    nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk )
-    nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
-                               nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
-
-    # change matching network values (twice because sometimes it doesnt' work once due to transient
-    nmrObj.setMatchingNetwork( cparVal, cserVal )
-    nmrObj.setMatchingNetwork( cparVal, cserVal )
-
-    # do measurement
-    nmrObj.wobble_sync( freqSta, freqSto, freqSpa )
-
-    # disable all to save power
-    nmrObj.deassertAll()
-
-    if meas_time:
-        elapsed_time = time.time() - start_time
-        start_time = time.time()  # reset the start time
-        print( "### time elapsed for running wobble exec: %.3f" % ( elapsed_time ) )
-
-    # compute the generated data
-    if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
-    meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
-
-    if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, nmrObj.server_data_folder, "rm -rf " + meas_folder[0] )  # delete the file in the server
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, nmrObj.data_folder, meas_folder[0], S11_min, S11mV_ref, useRef, en_fig, fig_num )
-    print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
-
-    if meas_time:
-        elapsed_time = time.time() - start_time
-        print( "### time elapsed for compute_wobble: %.3f" % ( elapsed_time ) )
+    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = nmr_wobble.analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
 
     # update the table
     minReflxTable = updateTable( minReflxTable, S11dB, cparVal, cserVal )
 
     # move the measurement folder to the main folder
+    meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
     swfolder_ind = swfolder + '/' + str( 'Cp_[{:d}]__Cs_[{:d}]'.format( cparVal, cserVal ) )
     if en_fig:
         shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/wobble.png', swfolder + '/' + str( 'plt{:03d}_Cp_[{:d}]__Cs_[{:d}].png'.format( exptnum, cparVal, cserVal ) ) )  # move the figure

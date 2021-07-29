@@ -42,26 +42,24 @@ def init( client_data_folder ):
                 nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
     nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX2_H_msk | nmrObj.RX_FH_msk )
 
-    nmrObj.setPreampTuning( conf.vbias, conf.vvarac )
+    # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )
 
     nmrObj.setMatchingNetwork( 0, 0 )
 
     return nmrObj
 
 
-def analyze( nmrObj , tuning_freq, sta_freq, sto_freq , spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig ):
+def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig ):
 
     fig_num = 1
 
     while True:
 
-        Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
+        # set the preamp tuning
         nmrObj.setPreampTuning( Vbias, Vvarac )
-        Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
-        nmrObj.setMatchingNetwork( Cpar, Cser )
 
-        # nmrObj.pamp_char_async ( sta_freq, sto_freq, spac_freq, samp_freq )
-        nmrObj.pamp_char_sync ( sta_freq, sto_freq, spac_freq, fftpts, fftcmd, fftvalsub )
+        # nmrObj.pamp_char_async ( freqSta, freqSto, freqSpa, freqSamp )
+        nmrObj.pamp_char_sync ( freqSta, freqSto, freqSpa, fftpts, fftcmd, fftvalsub )
 
         if  nmrObj.en_remote_computing:  # copy remote files to local directory
             cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
@@ -75,14 +73,14 @@ def analyze( nmrObj , tuning_freq, sta_freq, sto_freq , spac_freq, samp_freq, ff
 
         # maxS21, maxS21_freq, _ = compute_gain_async( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
         # maxS21, maxS21_freq, _ = compute_gain_sync( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
-        maxS21, maxS21_freq, _ = compute_gain_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
-        print( 'maxS21_fft={0:0.2f} maxS21_freq={1:0.2f}'.format( 
-             maxS21, maxS21_freq ) )
-
-        print( " " )
+        maxS21, maxS21_freq, S21mV = compute_gain_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
+        print( "maxS21_fft=%0.2fdBmV maxS21_freq=%0.2fMHz Vbias=%0.2fV Vvarac=%0.2fV" % ( 
+             maxS21, maxS21_freq, Vbias, Vvarac ) )
 
         if ( not continuous ):
             break;
+
+    return maxS21, maxS21_freq, S21mV
 
 
 def exit( nmrObj ):
@@ -90,20 +88,25 @@ def exit( nmrObj ):
     nmrObj.exit()
 
 '''
+# comment the lines below when using nmr_pamp_char as a function in outside script
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-tuning_freq = 1.7
-sta_freq = 1.5
-sto_freq = 2.2
-spac_freq = 0.01
-samp_freq = 25
-fftpts = 512
+tuning_freq = 1.97
+freqSta = 1.5
+freqSto = 2.2
+freqSpa = 0.001
+freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
+fftpts = 1024
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 continuous = True
 
 nmrObj = init( client_data_folder )
-analyze ( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig )
+
+# find configuration
+Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
+
+analyze ( nmrObj, Vbias, Vvarac, freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
 '''

@@ -36,8 +36,8 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
     # variables
     server_data_folder = "/root/NMR_DATA"
     # client_data_folder = "D:\\TEMP"
-    S11_table = "genS11Table.txt"  # filename for S11 tables
-    S21_table = "genS21Table.txt"
+    S11_table = "genS11Table_SYS2.txt"  # filename for S11 tables
+    S21_table = "genS21Table_SYS2.txt"
     en_fig = 1
     en_remote_dbg = 0
     en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
@@ -103,15 +103,15 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
     nmrObj.setMatchingNetwork( 0, 0 )
     nmrObj.setPreampTuning( 0, 0 )
 
-'''
+
 # uncomment this line to debug the nmr noise code locally here
 samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
-tuning_freq = 1.6  # hardware tuning frequency selector, using lookup table
+tuning_freq = 1.97  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 10  # downconversion filter bw
 continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\TEMP"
 nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, client_data_folder )
-'''
+

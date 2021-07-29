@@ -78,8 +78,8 @@ def analyze( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftp
         # maxS21, maxS21_freq, _ = compute_gain_async( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
         # maxS21, maxS21_freq, _ = compute_gain_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
         maxS21, maxS21_freq, _ = compute_gain_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
-        print( 'maxS21={0:0.2f} maxS21_freq={1:0.2f}'.format( 
-             maxS21, maxS21_freq ) )
+        # print( 'maxS21={0:0.2f} maxS21_freq={1:0.2f}'.format( maxS21, maxS21_freq ) )
+        print( 'maxS21=%0.2f maxS21_freq=%0.2f Vbias=%0.2fV Vvarac=%0.2fV Cpar=%d Cser=%d' % ( maxS21, maxS21_freq, Vbias, Vvarac, Cpar, Cser ) )
 
         timeObj.setTimeSto()
         timeObj.reportTimeRel( "processing time" )
@@ -97,13 +97,13 @@ client_data_folder = "D:\\TEMP"
 en_fig = 1
 continuous = 1
 # measurement properties
-tuning_freq = 1.8  # tune the matching network and preamp to this frequency
-sta_freq = 1.6  # low bound frequency to be shown in the figure
-sto_freq = 1.8  # up bound frequency to be shown in the figure
+tuning_freq = 1.9  # tune the matching network and preamp to this frequency
+sta_freq = 1.8  # low bound frequency to be shown in the figure
+sto_freq = 2.2  # up bound frequency to be shown in the figure
 spac_freq = 0.001  # frequency resolution
 samp_freq = 25  # only useful when the async method is used
 fftpts = 512
-fftcmd = 383  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
+fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 nmrObj = init( client_data_folder )
 analyze ( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig )
