@@ -49,11 +49,11 @@ from faulthandler import disable
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-freqSta = 1.5
-freqSto = 2.5
+freqSta = 1.0
+freqSto = 3.0
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
-fftpts = 256
+fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
@@ -63,15 +63,12 @@ fig_num = 1
 keepRawData = 1  # set this to keep the S11 raw data in text file
 tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
 
-# load configuration
-from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
-
 # acquisition settings (frequency to be shown in the table
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 1.6
-S11FreqSto = 2.3
+S11FreqSta = 1.83
+S11FreqSto = 1.84
 
 # sweep precision
 cparPrec = 2  # change cpar by this value.
@@ -88,8 +85,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = conf.cpar  # the parallel capacitance
-        cser_init = conf.cser  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 196  # the parallel capacitance
+        cser_init = 175  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin
@@ -150,10 +147,10 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
 
     exptnum = exptnum + 1
 
-    S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = nmr_wobble.analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
+    S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = nmr_wobble.analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
 
     # update the table
-    minReflxTable = updateTable( minReflxTable, S11dB, cparVal, cserVal )
+    minReflxTable = updateTable( minReflxTable, 20 * np.log10( abs( S11 ) ), cparVal, cserVal )
 
     # move the measurement folder to the main folder
     meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
@@ -167,23 +164,23 @@ def runExpt( cparVal, cserVal, S11mV_ref, useRef ):
         RawDataFile.write( 'freq(MHz)\t min-voltage(mV)\n' )
         RawDataFile.close()
         with open( swfolder + '/S11_Cp_[{:d}]__Cs_[{:d}].txt'.format( cparVal, cserVal ), 'a' ) as f:
-            for ( a, b ) in zip ( freqSw, S11dB ):
+            for ( a, b ) in zip ( freqSw, abs( S11 ) ):
                 f.write( '{:-8.3f},{:-8.3f}\n' .format( a, b ) )
 
         shutil.rmtree ( nmrObj.data_folder + '/' + meas_folder[0] )  # remove the data folder
     else:
         shutil.rmtree( nmrObj.data_folder + '/' + meas_folder[0] )  # remove the data folder
 
-    return S11dB, minS11_freq
+    return S11, minS11_freq
 
 
 def findMinS11_atCparVal( cpar, cser_iFirst , cser_Prec, s11mV_ref ):
     global minReflxTable
 
     print( "\tStart findMinS11_atCparVal()" )
-    S11dB, minS11Freq = runExpt( cpar, cser_iFirst , s11mV_ref , 'True' )
+    S11cx, minS11Freq = runExpt( cpar, cser_iFirst , s11mV_ref , 'True' )
 
-    MinS11mV = np.min( S11dB )  # find the minimum S11 value
+    MinS11mV = np.min( abs( S11cx ) )  # find the minimum S11 value
     cser_ret = cser_iFirst  # the cser return value, update when less S11 value is found
 
     print( "\tDecrement cser." )
@@ -193,8 +190,8 @@ def findMinS11_atCparVal( cpar, cser_iFirst , cser_Prec, s11mV_ref ):
         cser_i = decr_cFarad_by_at_least( cser_Prec, cser_i, CsTbl )  # decrement cser_i by at least cser_Prec
         if cser_i <= 0:
             break
-        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
-        MinS11mVCurr = np.min( S11dBCurr )
+        S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( abs( S11cxCurr ) )
         if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
             minS11Freq = minS11FreqCurr
             MinS11mV = MinS11mVCurr
@@ -212,8 +209,8 @@ def findMinS11_atCparVal( cpar, cser_iFirst , cser_Prec, s11mV_ref ):
         cser_i = incr_cFarad_by_at_least( cser_Prec, cser_i, CsTbl )  # decrement cser_i by at least cser_Prec
         if cser_i > 2 ** len( CsTbl ) - 1:  # stop if the cser is more than max index of the table
             break
-        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
-        MinS11mVCurr = np.min( S11dBCurr )
+        S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( abs( S11cxCurr ) )
         if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
             minS11Freq = minS11FreqCurr
             MinS11mV = MinS11mVCurr
@@ -230,9 +227,9 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
     global minReflxTable
 
     print( "\tStart findMinS11_atCparVal()" )
-    S11dB, minS11Freq = runExpt( cpar, cser_iFirst , s11mV_ref , 'True' )
+    S11cx, minS11Freq = runExpt( cpar, cser_iFirst , s11mV_ref , 'True' )
 
-    MinS11mV = np.min( S11dB )  # find the minimum S11 value
+    MinS11mV = np.min( abs( S11cx ) )  # find the minimum S11 value
     cser_ret = cser_iFirst  # the cser return value, update when less S11 value is found
 
     print( "\tDecrement cser." )
@@ -243,8 +240,8 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
         cser_i = cser_i - cser_Prec
         if cser_i <= 0:
             break
-        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
-        MinS11mVCurr = np.min( S11dBCurr )
+        S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( abs( S11cxCurr ) )
         if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
             rigFact_i = rigFact  # reset the rigFact_i when a better S11 is found
             minS11Freq = minS11FreqCurr
@@ -266,8 +263,8 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
         cser_i = cser_i + cser_Prec
         if cser_i > 2 ** len( CsTbl ) - 1:  # stop if the cser is more than max index of the table
             break
-        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
-        MinS11mVCurr = np.min( S11dBCurr )
+        S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( abs( S11cxCurr ) )
         if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
             rigFact_i = rigFact  # reset the rigFact_i when a better S11 is found
             minS11Freq = minS11FreqCurr
@@ -318,7 +315,7 @@ while ( True ):  # search lower frequency
             print( 'incrementing cpar stops due to final cpar value {:d} > {:d}'.format( cpar, 2 ** len( CpTbl ) - 1 ) )
             break
         # S11minfreqLeft, cser = findMinS11_atCparVal( cpar, cser, cserPrec, S11mV_ref )
-        S11minfreqLeft, cser = findMinS11_atCparVal( cpar, cser, cserPrec, rigFact, S11mV_ref )
+        S11minfreqLeft, cser = findMinS11_atCparVal_rigorous( cpar, cser, cserPrec, rigFact, S11mV_ref )
     else:
         print( 'incrementing cpar stops due to minimum S11 in lowest frequency of interest is found.' )
         break

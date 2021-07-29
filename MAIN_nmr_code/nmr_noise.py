@@ -103,15 +103,15 @@ def nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz,
     nmrObj.setMatchingNetwork( 0, 0 )
     nmrObj.setPreampTuning( 0, 0 )
 
-
+'''
 # uncomment this line to debug the nmr noise code locally here
 samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
-tuning_freq = 1.97  # hardware tuning frequency selector, using lookup table
+tuning_freq = 1.7  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 10  # downconversion filter bw
 continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\TEMP"
 nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, client_data_folder )
-
+'''

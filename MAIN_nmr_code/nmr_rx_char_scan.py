@@ -34,15 +34,15 @@ nmrObj = nmr_rx_char.init( swfolder )
 
 # measurement properties
 # tuning_freq = 1.8  # tune the matching network and preamp to this frequency
-sta_freq = 1.5  # low bound frequency to be shown in the figure
-sto_freq = 2.2  # up bound frequency to be shown in the figure
+sta_freq = 1.7  # low bound frequency to be shown in the figure
+sto_freq = 2.3  # up bound frequency to be shown in the figure
 spac_freq = 0.001  # frequency resolution
 samp_freq = 25  # only useful when the async method is used
 fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number. For the C function tx_acq_sync, fftcmd is always fftpts/4*3 in order to recover the signal at 1/4 of the ADC freq.
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 
-freqList = np.arange ( 1.9, 2.0, 0.01 )
+freqList = np.arange ( 1.8, 2.2, 0.002 )
 for tuning_freq in freqList:
     nmr_rx_char.analyze( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig )
     meas_folder = parse_simple_info( swfolder, 'current_folder.txt' )
