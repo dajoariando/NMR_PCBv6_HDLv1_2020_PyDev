@@ -57,7 +57,7 @@ def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSa
         nmrObj.setMatchingNetwork( cparVal, cserVal )
         # nmrObj.setMatchingNetwork( cparVal, cserVal )
 
-    timeObj = time_meas( True )
+    timeObj = time_meas( False )
     timeObj.setTimeSta()
     # do measurement
     nmrObj.wobble_sync( freqSta, freqSto, freqSpa , fftpts, fftcmd, ftvalsub )

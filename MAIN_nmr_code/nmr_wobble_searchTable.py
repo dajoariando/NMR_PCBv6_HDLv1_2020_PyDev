@@ -49,8 +49,8 @@ from faulthandler import disable
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-freqSta = 1.8
-freqSto = 2.2
+freqSta = 1.5
+freqSto = 2.5
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 256
@@ -70,12 +70,13 @@ from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 2.01
-S11FreqSto = 2.0
+S11FreqSta = 1.6
+S11FreqSto = 2.3
 
 # sweep precision
 cparPrec = 2  # change cpar by this value.
-cserPrec = 3  # change cser by this value.
+cserPrec = 2  # change cser by this value.
+rigFact = 5  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -223,12 +224,70 @@ def findMinS11_atCparVal( cpar, cser_iFirst , cser_Prec, s11mV_ref ):
     return minS11Freq, cser_ret
 
 
+def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV_ref ):
+    # rigFact: the factor for rigorous search. This means searching value up and down for rigFact amount of time to get the result
+
+    global minReflxTable
+
+    print( "\tStart findMinS11_atCparVal()" )
+    S11dB, minS11Freq = runExpt( cpar, cser_iFirst , s11mV_ref , 'True' )
+
+    MinS11mV = np.min( S11dB )  # find the minimum S11 value
+    cser_ret = cser_iFirst  # the cser return value, update when less S11 value is found
+
+    print( "\tDecrement cser." )
+    searchIncr = True  # set search increment to be true. It can be disabled when we find lower S11 by decrementing cser_i when searching
+    cser_i = cser_iFirst
+    rigFact_i = rigFact  # reset the rigorous factor counter
+    while( True ):  # find minimum S11 with decreasing cser_i
+        cser_i = cser_i - cser_Prec
+        if cser_i <= 0:
+            break
+        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( S11dBCurr )
+        if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
+            rigFact_i = rigFact  # reset the rigFact_i when a better S11 is found
+            minS11Freq = minS11FreqCurr
+            MinS11mV = MinS11mVCurr
+            cser_ret = cser_i
+            # searchIncr = False # no need to disable searchIncr in rigouros search
+        else:
+            rigFact_i = rigFact_i - 1
+            if ( rigFact_i == 0 ):
+                if ( not searchIncr ):
+                    return minS11Freq, cser_ret
+                else:
+                    break
+
+    print( "\tIncrement cser." )
+    cser_i = cser_iFirst
+    rigFact_i = rigFact  # reset the rigorous factor counter
+    while( searchIncr ):  # find minimum S11 with increasing cser_i
+        cser_i = cser_i + cser_Prec
+        if cser_i > 2 ** len( CsTbl ) - 1:  # stop if the cser is more than max index of the table
+            break
+        S11dBCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
+        MinS11mVCurr = np.min( S11dBCurr )
+        if MinS11mVCurr < MinS11mV:  # find if current S11 is better than the previous one
+            rigFact_i = rigFact  # reset the rigFact_i when a better S11 is found
+            minS11Freq = minS11FreqCurr
+            MinS11mV = MinS11mVCurr
+            cser_ret = cser_i
+        else:
+            rigFact_i = rigFact_i - 1
+            if ( rigFact_i == 0 ):
+                break
+
+    return minS11Freq, cser_ret
+
+
 # find reference
 print( 'Generate reference.' )
 S11mV_ref, minS11Freq_ref = runExpt( 0, 0, 0, 0 )  # background is computed with no capacitor connected -> max reflection
 
 # find initial seed, and update cser_init if better cser value is found for the corresponding cpar_init
-S11minFreq, cser_init = findMinS11_atCparVal( cpar_init, cser_init , cserPrec, S11mV_ref )
+# S11minFreq, cser_init = findMinS11_atCparVal( cpar_init, cser_init , cserPrec, S11mV_ref )
+S11minFreq, cser_init = findMinS11_atCparVal_rigorous( cpar_init, cser_init , cserPrec, rigFact, S11mV_ref )
 
 # search higher frequency from seed
 cpar = cpar_init
@@ -241,7 +300,8 @@ while( True ):
         if cpar <= 0:  # stop if cpar is 0 or below
             print( 'decrementing cpar stops due to final cpar value <= 0.' )
             break
-        S11minfreqRight, cser = findMinS11_atCparVal( cpar, cser , cserPrec, S11mV_ref )
+        # S11minfreqRight, cser = findMinS11_atCparVal( cpar, cser , cserPrec, S11mV_ref )
+        S11minfreqRight, cser = findMinS11_atCparVal_rigorous( cpar, cser , cserPrec, rigFact, S11mV_ref )
     else:
         print( 'decrementing cpar stops due to minimum S11 in highest frequency of interest is found.' )
         break
@@ -257,7 +317,8 @@ while ( True ):  # search lower frequency
         if cpar > 2 ** len( CpTbl ) - 1:  # stop if the cpar is more than max index of the table
             print( 'incrementing cpar stops due to final cpar value {:d} > {:d}'.format( cpar, 2 ** len( CpTbl ) - 1 ) )
             break
-        S11minfreqLeft, cser = findMinS11_atCparVal( cpar, cser, cserPrec, S11mV_ref )
+        # S11minfreqLeft, cser = findMinS11_atCparVal( cpar, cser, cserPrec, S11mV_ref )
+        S11minfreqLeft, cser = findMinS11_atCparVal( cpar, cser, cserPrec, rigFact, S11mV_ref )
     else:
         print( 'incrementing cpar stops due to minimum S11 in lowest frequency of interest is found.' )
         break
@@ -293,6 +354,9 @@ Table.close()
 with open( swfolder + '/genS11Table.txt', 'a' ) as Table:
     for ( a, b , c, d ) in zip ( minReflxTable[:, 0], minReflxTable[:, 1], minReflxTable[:, 2], minReflxTable[:, 3] ):
         Table.write( '{:-7.4f},{:-7.4f},{:-7.0f},{:-7.0f}\n' .format( a, b, c, d ) )
+
+# clean up
+nmrObj.exit()
 
 # plot the table figure and save file
 plt.figure( 2 )

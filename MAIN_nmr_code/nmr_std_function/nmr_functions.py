@@ -100,7 +100,7 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
     except:
         S11_fmin = 0
         S11_fmax = 0
-        print( 'S11 requirement is not satisfied...' )
+        # print( 'S11 requirement is not satisfied...' )
 
     S11_bw = S11_fmax - S11_fmin
 
@@ -149,14 +149,14 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
         if useRef:
             cx = fig.add_subplot ( 222 )
             cx.plot( freqSw, np.real( Z11 ), 'b', marker='.', linewidth=1, markersize=6 )
-            cx.set_ylim( -100, 100 )
+            cx.set_ylim( -3, 3 )
             cx.set_ylabel ( 'Re(Z11/Zs)' )
             cx.set_title( "Normalized Impedance (Z11/Zs)" )
             cx.grid()
 
             dx = fig.add_subplot ( 224 )
             dx.plot( freqSw, np.imag( Z11 ), 'r', marker='.', linewidth=1, markersize=6 )
-            dx.set_ylim( -50, 50 )
+            dx.set_ylim( -3, 3 )
             dx.set_ylabel ( 'Im(Z11/Zs)' )
             # dx.set_title( "Imaginary Impedance" )
             dx.grid()
