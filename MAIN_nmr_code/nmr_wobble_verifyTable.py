@@ -3,6 +3,8 @@
     author: David Joseph Ariando
     this program takes data inside S11 table and plot it with the frequency in order to quickly verify if a table is working properly with the installed coil
 
+
+    THIS PROGRAM IS VERY SLOW DUE TO THE SLOW nmr_spt_fft and its corresponding C program that needs to be optimized
 '''
 
 import nmr_wobble
