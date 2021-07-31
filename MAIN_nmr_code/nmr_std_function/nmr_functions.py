@@ -685,10 +685,10 @@ def compute_gain_fft_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_
 
     S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
 
-    maxS21 = max( S21dB )
+    maxS21dB = max( S21dB )
     maxS21_freq = freqSw[np.argmax( S21dB )]
     maxS21_ph = S21_ph[np.argmax( S21dB )]
-    S21_in_bw_range = ( S21dB >= ( maxS21 - 3 ) )
+    S21_in_bw_range = ( S21dB >= ( maxS21dB - 3 ) )
     S21_in_bw_idx = np.where( S21_in_bw_range == True )
     S21_lo_bound = freqSw[np.min( S21_in_bw_idx )]
     S21_hi_bound = freqSw[np.max( S21_in_bw_idx )]
@@ -703,7 +703,7 @@ def compute_gain_fft_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_
         line1, = ax.plot( freqSw, S21dB, 'r-' )
         ax.set_ylim( -30, 80 )
         ax.set_ylabel( 'S21 [dBmV]' )
-        ax.set_title( "S21: %0.1f dBmV @%0.3f MHz, BW=%0.0f kHz, ph=%0.0f$\degree$" % ( maxS21, maxS21_freq, ( S21_hi_bound - S21_lo_bound ) * 1e3 , maxS21_ph ) )
+        ax.set_title( "S21: %0.1f dBmV @%0.3f MHz, BW=%0.0f kHz, ph=%0.0f$\degree$" % ( maxS21dB, maxS21_freq, ( S21_hi_bound - S21_lo_bound ) * 1e3 , maxS21_ph ) )
         ax.grid()
 
         bx = fig.add_subplot( 212 )
@@ -722,7 +722,7 @@ def compute_gain_fft_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_
         for ( a, b, c ) in zip( freqSw, S21dB, S21_ph ):
             f.write( '{:-8.3f},{:-8.3f},{:-7.1f}\n' .format( a, b, c ) )
 
-    return maxS21, maxS21_freq, S21
+    return maxS21dB, maxS21_freq, S21
 
 
 def compute_gain_async( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):

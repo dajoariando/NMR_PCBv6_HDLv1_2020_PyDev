@@ -123,11 +123,11 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.7.188'  # '129.22.143.88'
+        self.server_ip = '192.168.7.109'  # '129.22.143.88'
         self.client_ip = '192.168.7.195'  # '129.22.143.39'
-        self.server_path = '/root/NMR_PCBv6_Code_Development/MAIN_nmr_code/'
+        self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'X:\\NMR_PCBv6_Code_Development\\MAIN_nmr_code\\'
+        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
         # data folder
@@ -136,8 +136,8 @@ class tunable_nmr_system_2018:
         self.exec_folder = "/c_exec/"
 
         # configuration table to be loaded
-        self.S11_table = "genS11Table.txt"  # filename for S11 tables
-        self.S21_table = "genS21Table.txt"
+        self.S11_table = "genS11Table_SYS2.txt"  # filename for S11 tables
+        self.S21_table = "genS21Table_SYS2.txt"
 
         if en_remote_computing:
             self.data_folder = self.client_data_folder

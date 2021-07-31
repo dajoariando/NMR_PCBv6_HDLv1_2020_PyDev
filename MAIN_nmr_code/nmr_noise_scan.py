@@ -20,7 +20,7 @@ datename = now.strftime( "%Y_%m_%d_%H_%M_%S" )
 swfolder = client_data_folder + '\\' + datename + '_noise_scan'
 mkdir( swfolder )
 
-freqList = np.arange ( 1.7, 2.2, 0.002 )
+freqList = np.arange ( 1.7, 2.2, 0.01 )
 
 for tuning_freq in freqList:
     nmr_noise( samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, swfolder )

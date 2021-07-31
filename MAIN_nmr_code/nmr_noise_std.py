@@ -46,8 +46,8 @@ nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_c
 # general measurement settings
 samp_freq = 25  # sampling frequency
 samples = 500000  # number of points
-min_freq = 1.5  # 0.200
-max_freq = 2.0  # 12.5
+min_freq = 1.8  # 0.200
+max_freq = 2.2  # 12.5
 
 # get current time
 now = datetime.now()

@@ -224,6 +224,8 @@ def findMinS11_atCparVal( cpar, cser_iFirst , cser_Prec, s11mV_ref ):
 def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV_ref ):
     # rigFact: the factor for rigorous search. This means searching value up and down for rigFact amount of time to get the result
 
+    cserBadDigit = ( 1 << 6 )  # variable for the bad digit
+
     global minReflxTable
 
     print( "\tStart findMinS11_atCparVal()" )
@@ -238,6 +240,8 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
     rigFact_i = rigFact  # reset the rigorous factor counter
     while( True ):  # find minimum S11 with decreasing cser_i
         cser_i = cser_i - cser_Prec
+        if ( cser_i & cserBadDigit ):
+            cser_i = cser_i & ( ~cserBadDigit ) | ( cserBadDigit - 1 )
         if cser_i <= 0:
             break
         S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i , s11mV_ref, 'True' )
@@ -261,6 +265,8 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
     rigFact_i = rigFact  # reset the rigorous factor counter
     while( searchIncr ):  # find minimum S11 with increasing cser_i
         cser_i = cser_i + cser_Prec
+        if ( cser_i & cserBadDigit ):
+            cser_i = ( cser_i & ( ~( ( cserBadDigit ) - 1 ) ) ) + cserBadDigit
         if cser_i > 2 ** len( CsTbl ) - 1:  # stop if the cser is more than max index of the table
             break
         S11cxCurr, minS11FreqCurr = runExpt( cpar, cser_i, s11mV_ref, 'True' )
@@ -353,6 +359,7 @@ with open( swfolder + '/genS11Table.txt', 'a' ) as Table:
         Table.write( '{:-7.4f},{:-7.4f},{:-7.0f},{:-7.0f}\n' .format( a, b, c, d ) )
 
 # clean up
+nmrObj.deassertAll()
 nmrObj.exit()
 
 # plot the table figure and save file

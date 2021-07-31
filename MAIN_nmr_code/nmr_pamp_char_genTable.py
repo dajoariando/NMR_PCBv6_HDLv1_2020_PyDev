@@ -24,13 +24,13 @@ client_data_folder = "D:\\TEMP"
 en_fig = True
 continuous = False
 freqSta = 1.5
-freqSto = 2.2
+freqSto = 2.3
 freqSpa = 0.001
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # fft parameters
-fftpts = 1024
+fftpts = 256
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 
@@ -49,9 +49,9 @@ else:
     swfolder = nmrObj.data_folder + '/' + datename + '_genS21Table'
 os.mkdir( swfolder )
 
-vbiasSta = -2.6  # this value must be lower than vbiasSto
-vbiasSto = -2
-vbiasSpa = 10
+vbiasSta = -4  # this value must be lower than vbiasSto
+vbiasSto = 1
+vbiasSpa = 0.1
 vbiasSw = np.arange( vbiasSta, vbiasSto, vbiasSpa )
 
 vvaracSta = 2.5  # this value must be lower than vvaracSto
