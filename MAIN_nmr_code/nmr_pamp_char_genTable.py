@@ -82,7 +82,7 @@ for i in range( len( vvaracSw ) ):
 
         print( "" );
 
-        maxGainTable = updateTable( maxGainTable, S21mV, vvaracSw[i], vbiasSw[j] )
+        maxGainTable = updateTable( maxGainTable, S21mV, vbiasSw[j], vvaracSw[i] )
 
         meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
         swfolder_ind = swfolder + '/' + str( 'vv_[{:03.3f}]__vb_[{:03.3f}]'.format( vvaracSw[i], vbiasSw[j] ) )
@@ -106,7 +106,7 @@ Table.write( 'settings:\n' )
 Table.write( '\tvvarac: start={:03.3f} stop={:03.3f} spacing={:02.3f}\n'.format( vvaracSta, vvaracSto, vvaracSpa ) )
 Table.write( '\tvbias: start={:03.3f} stop={:03.3f} spacing={:02.3f}\n'.format( vbiasSta, vbiasSto, vbiasSpa ) )
 Table.write( '\n' );
-Table.write( 'freq(MHz)\t peak-voltage(mV)\t vvarac(V)\t vbias(V)\n' )
+Table.write( 'freq(MHz)\t peak-voltage(mV)\t vbias(V)\t vvarac(V)\n' )
 Table.close()
 with open( swfolder + '/genS21Table.txt', 'a' ) as Table:
     for ( a, b , c, d ) in zip ( maxGainTable[:, 0], maxGainTable[:, 1], maxGainTable[:, 2], maxGainTable[:, 3] ):
