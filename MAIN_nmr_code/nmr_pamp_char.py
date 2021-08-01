@@ -87,14 +87,14 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 # comment the lines below when using nmr_pamp_char as a function in outside script
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-tuning_freq = 1.97
+tuning_freq = 1.7
 freqSta = 1.5
-freqSto = 2.2
+freqSto = 3.0
 freqSpa = 0.001
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 1024
@@ -109,4 +109,3 @@ Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq,
 
 analyze ( nmrObj, Vbias, Vvarac, freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
-'''

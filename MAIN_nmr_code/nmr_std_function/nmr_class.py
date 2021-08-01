@@ -136,8 +136,8 @@ class tunable_nmr_system_2018:
         self.exec_folder = "/c_exec/"
 
         # configuration table to be loaded
-        self.S11_table = "genS11Table_SYS2.txt"  # filename for S11 tables
-        self.S21_table = "genS21Table_SYS2.txt"
+        self.S11_table = "genS11Table.txt"  # filename for S11 tables
+        self.S21_table = "genS21Table.txt"
 
         if en_remote_computing:
             self.data_folder = self.client_data_folder

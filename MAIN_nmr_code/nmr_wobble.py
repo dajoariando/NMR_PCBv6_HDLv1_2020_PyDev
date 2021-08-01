@@ -8,7 +8,7 @@ import os
 import time
 
 from nmr_std_function.nmr_functions import compute_iterate, compute_wobble_sync, compute_wobble_async, compute_wobble_fft_sync
-from nmr_std_function.data_parser import parse_simple_info
+from nmr_std_function.data_parser import parse_simple_info, find_Cpar_Cser_from_table
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 from nmr_std_function.time_func import time_meas
@@ -97,15 +97,15 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-freqSta = 1.8
-freqSto = 2.2
+freqSta = 1.5
+freqSto = 3.0
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
-fftpts = 1024
+fftpts = 256
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
@@ -116,9 +116,14 @@ nmrObj = init ( client_data_folder )
 print( 'Generate reference.' )
 S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
+tuning_freq = 1.7
+Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
+# Cpar = 152
+# Cser = 167
+
 while True:
-    analyze( nmrObj, extSet, 152, 167, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
-    break;
+    analyze( nmrObj, extSet, Cpar, Cser, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
+    # break;
 
 exit( nmrObj )
-'''
+

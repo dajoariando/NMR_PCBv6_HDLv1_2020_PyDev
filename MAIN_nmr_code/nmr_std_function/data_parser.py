@@ -106,14 +106,14 @@ def find_Cpar_Cser_from_table ( folder, excFreq, S11_table ):
     S11Freq = np.array( S11Freq )
     S11FreqIdx = np.where( np.min( abs( S11Freq - excFreq ) ) == abs( S11Freq - excFreq ) )[0][0]
 
-    Cpar = CparList[S11FreqIdx]
-    Cser = CserList[S11FreqIdx]
+    Cpar = int( CparList[S11FreqIdx] )
+    Cser = int( CserList[S11FreqIdx] )
 
     return Cpar, Cser
 
 
 def find_Vbias_Vvarac_from_table ( folder, excFreq, S21_table ):
-    ( S21Freq, Vpeak, VvaracList, VbiasList ) = parse_csv_float4col( folder + "tables" , S21_table, 5 )  # read file
+    ( S21Freq, Vpeak, VbiasList, VvaracList ) = parse_csv_float4col( folder + "tables" , S21_table, 12 )  # read file
 
     # find index where the difference between excitation frequency and table frequency is minimum
     S21Freq = np.array( S21Freq )

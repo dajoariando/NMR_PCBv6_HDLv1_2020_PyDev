@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 # measurement properties
 client_data_folder = "D:\\TEMP"
 en_fig = 1
-freqSta = 1.5
-freqSto = 2.3
+freqSta = 1.2
+freqSto = 3.0
 freqSpa = 0.001
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 1024
@@ -37,12 +37,12 @@ keepRawData = 1  # set this to keep the S11 raw data in text file
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S21FreqSta = 1.8
-S21FreqSto = 2.0
+S21FreqSta = 1.3
+S21FreqSto = 2.9
 
 # sweep precision
-vbiasPrec = 0.1  # change vbias by this value.
-vvaracPrec = 0.1  # change vvarac by this value.
+vbiasPrec = 0.05  # change vbias by this value.
+vvaracPrec = 0.05  # change vvarac by this value.
 rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best tuning
 
 # initial point options. either provide the L and R values, or provide with initial vvarac and vbias values
@@ -225,7 +225,7 @@ Table.write( '\tvbias seed = %0.3f\n' % vbias_init )
 Table.write( '\tvvarac seed = %0.3f\n' % vvarac_init )
 
 Table.write( '\n' );
-Table.write( 'freq(MHz)\t S21(mV)\t vbias(V)\t vvarac(V)\n' )
+Table.write( 'freq(MHz)\t S21(dBmV)\t vbias(V)\t vvarac(V)\n' )
 Table.close()
 with open( swfolder + '/genS21Table.txt', 'a' ) as Table:
     for ( a, b , c, d ) in zip ( maxS21Table[:, 0], maxS21Table[:, 1], maxS21Table[:, 2], maxS21Table[:, 3] ):
