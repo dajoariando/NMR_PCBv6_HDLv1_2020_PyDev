@@ -92,18 +92,17 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 # uncomment this line to debug the nmr noise code locally here
 samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
 min_freq = 1.5  # in MHz
-max_freq = 3.0  # in MHz
-tuning_freq = 2.7  # hardware tuning frequency selector, using lookup table
+max_freq = 2.0  # in MHz
+tuning_freq = 1.8  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 30  # downconversion filter bw
-continuous = False  # continuous running at one frequency configuration
+continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\TEMP"
 en_fig = 1
 nmrObj = init( client_data_folder )
 analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous , en_fig )
-exit(nmrObj)
-'''
+exit( nmrObj )
