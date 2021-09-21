@@ -28,7 +28,7 @@ from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 # select the coil configuration
-# from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
 
 
 def init( client_data_folder ):
@@ -55,11 +55,16 @@ def init( client_data_folder ):
 
 def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, en_fig ):
 
+    # load parameters from table
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
     Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
     nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
-    # nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
-
+    nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
+    
+    # load parameters from config file
+    # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
+    # nmrObj.setMatchingNetwork( conf.cpar, conf.cser )  # 4.25 MHz AFE
+    
     nmrObj.assertControlSignal( 
         nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.RX_SEL1_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.PAMP_IN_SEL2_msk )
     # nmrObj.deassertControlSignal( nmrObj.RX_FH_msk | nmrObj.RX2_L_msk | nmrObj.RX_FH_msk )
@@ -98,10 +103,11 @@ samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
-tuning_freq = 1.7  # hardware tuning frequency selector, using lookup table
+tuning_freq = conf.Df_MHz  # hardware tuning forced by config file
+# tuning_freq = 4.2  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 30  # downconversion filter bw
 continuous = True  # continuous running at one frequency configuration
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = True
 nmrObj = init( client_data_folder )
 analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous , en_fig )

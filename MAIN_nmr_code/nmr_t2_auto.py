@@ -101,18 +101,21 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
             nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_Hz )
 
 
+# load configuration
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
+
 # cpmg settings
-cpmg_freq = 1.6
-pulse1_us = 15  # 75 for Cheng's coil. pulse pi/2 length.
-pulse2_us = 1.6 * pulse1_us  # pulse pi length
-echo_spacing_us = 500  # 200
-scan_spacing_us = 100000
-samples_per_echo = 1024  # 3072
-echoes_per_scan = 128  # 20
-init_adc_delay_compensation = 34  # acquisition shift microseconds.
+cpmg_freq = conf.Df_MHz
+pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
+pulse2_us = 5.5  # pulse pi length
+echo_spacing_us = 200  # 200
+scan_spacing_us = 200000
+samples_per_echo = 512  # 3072
+echoes_per_scan = 1024  # 20
+init_adc_delay_compensation = 6  # acquisition shift microseconds.
 number_of_iteration = 10  # number of averaging
 ph_cycl_en = 1
 dconv_lpf_ord = 2  # downconversion order
 dconv_lpf_cutoff_Hz = 30e3  # downconversion lpf cutoff
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )

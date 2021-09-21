@@ -47,15 +47,15 @@ import matplotlib.pyplot as plt
 from faulthandler import disable
 
 # measurement properties
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
-freqSta = 1.2
-freqSto = 3.0
+freqSta = 3.8
+freqSto = 4.7
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
-fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
+fftvalsub = 9537  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
 useRef = True  # use reference to eliminate background
 
@@ -67,13 +67,13 @@ tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matchi
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 1.3
-S11FreqSto = 2.9
+S11FreqSta = 4.0
+S11FreqSto = 4.5
 
 # sweep precision
-cparPrec = 2  # change cpar by this value.
-cserPrec = 1  # change cser by this value.
-rigFact = 10  # keep searching up/down for rigFact amount of time before deciding the best S11
+cparPrec = 10  # change cpar by this value.
+cserPrec = 2  # change cser by this value.
+rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -85,8 +85,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 282  # the parallel capacitance
-        cser_init = 199  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 2460  # the parallel capacitance
+        cser_init = 442  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin

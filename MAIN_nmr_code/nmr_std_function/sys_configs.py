@@ -49,3 +49,11 @@ WMP_double_coil = board_config(
     50  # meas_bw_kHz
  )
 
+UF_black_holder_brown_coil = board_config(
+    4.2 + (-46+38) * 1e-3,  # Df_MHz
+    -2.1,  # vbias
+    -0.4,  # vvarac
+    2410,  # cpar
+    462,  # cser
+    30  # meas_bw_kHz
+)

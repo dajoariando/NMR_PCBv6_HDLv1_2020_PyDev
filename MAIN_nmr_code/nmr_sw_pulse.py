@@ -21,7 +21,7 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 
 # variables
 server_data_folder = "/root/NMR_DATA"
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 
 en_scan_fig = 0
 en_fig = 1
@@ -38,10 +38,10 @@ else:
     data_folder = server_data_folder
 
 # instantiate nmr object
-nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
+nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # load configuration
-from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
@@ -59,15 +59,15 @@ nmrObj.assertControlSignal(
 nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
 
 # cpmg settings
-cpmg_freq = conf.Df_MHz - 35e-3
+cpmg_freq = conf.Df_MHz
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 450
-scan_spacing_us = 100000
+echo_spacing_us = 200
+scan_spacing_us = 200000
 samples_per_echo = 512  # number of points
-echoes_per_scan = 256  # number of echos
+echoes_per_scan = 1024  # number of echos
 init_adc_delay_compensation = 6  # acquisition shift microseconds
-number_of_iteration = 34  # number of averaging
+number_of_iteration = 10  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -75,11 +75,13 @@ tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powere
 en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
+dconv_lpf_ord = 2  # downconversion order
+dconv_lpf_cutoff_Hz = 50e3  # downconversion lpf cutoff
 
 # sweep settings
-pulse_us_sta = 2.0  # in microsecond
-pulse_us_sto = 30.0  # in microsecond
-pulse_us_ste = 29  # number of steps
+pulse_us_sta = 1.0  # in microsecond
+pulse_us_sto = 5.0  # in microsecond
+pulse_us_ste = 21  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -88,7 +90,7 @@ for i in range( 0, pulse_us_ste ):
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
     pulse1_us = pulse_us_sw[i]  # pulse pi/2 length
-    pulse2_us = 1.6 * pulse_us_sw[i]  # pulse pi length
+    pulse2_us = 5  # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
                         ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )
@@ -97,14 +99,14 @@ for i in range( 0, pulse_us_ste ):
 
     # compute the generated data
     if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
-    meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
+        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+    meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
 
     if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
+        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder  )  # delete the file in the server
     ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
-        nmrObj, data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig )
+        nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig, dconv_lpf_ord, dconv_lpf_cutoff_Hz )
     a_integ_table[i] = a_integ
     if en_fig:
         plt.ion()

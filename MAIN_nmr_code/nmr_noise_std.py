@@ -25,11 +25,11 @@ import numpy as np
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 # select the coil configuration
-from nmr_std_function.sys_configs import WMP_old_coil as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
 
 # variables
 server_data_folder = "/root/NMR_DATA"
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
 en_remote_dbg = 0
 en_remote_computing = 1  # 1 when using remote PC to process the data, and 0 when using the remote SoC to process the data
@@ -41,13 +41,13 @@ else:
     data_folder = server_data_folder
 
 # nmr object declaration
-nmrObj = tunable_nmr_system_2018( server_data_folder, en_remote_dbg, en_remote_computing )
+nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # general measurement settings
 samp_freq = 25  # sampling frequency
 samples = 500000  # number of points
-min_freq = 1.8  # 0.200
-max_freq = 2.2  # 12.5
+min_freq = 4  # 0.200
+max_freq = 4.5  # 12.5
 
 # get current time
 now = datetime.now()
@@ -69,12 +69,12 @@ def perform_noise_test ( plotname , fignum ):
 
     # process the data
     if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj, server_data_folder, client_data_folder, "current_folder.txt" )
+        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
     meas_folder = parse_simple_info( data_folder, 'current_folder.txt' )
 
     if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj, server_data_folder, client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj, "rm -rf " + meas_folder[0] )  # delete the file in the server
+        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0] , nmrObj.server_data_folder )  # delete the file in the server
     # nstd, nmean = compute_stats( min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )  # real scan
     nstd, nmean = compute_in_bw_noise( conf.meas_bw_kHz, conf.Df_MHz, min_freq, max_freq, data_folder, meas_folder[0], plotname, en_fig )
     f.write( "std: %08.3f\tmean: %08.3f \t-> %s\n" % ( nstd, nmean, info ) )
