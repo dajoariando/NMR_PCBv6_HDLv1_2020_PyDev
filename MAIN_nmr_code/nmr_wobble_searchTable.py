@@ -49,7 +49,7 @@ from faulthandler import disable
 # measurement properties
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
-freqSta = 3.8
+freqSta = 3.0
 freqSto = 4.7
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
@@ -60,7 +60,7 @@ extSet = False  # use external executable to set the matching network Cpar and C
 useRef = True  # use reference to eliminate background
 
 fig_num = 1
-keepRawData = 1  # set this to keep the S11 raw data in text file
+keepRawData = 0  # set this to keep the S11 raw data in text file
 tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
 
 # acquisition settings (frequency to be shown in the table

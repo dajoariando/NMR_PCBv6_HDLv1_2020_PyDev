@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
 freqSta = 3.8
-freqSto = 4.7
+freqSto = 4.8
 freqSpa = 0.001
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 512
@@ -47,7 +47,7 @@ rigFact = 3  # keep searching up/down for rigFact amount of time before deciding
 
 # initial point options. either provide the L and R values, or provide with initial vvarac and vbias values
 vbias_init = -2.1  # the bias voltage
-vvarac_init = -0.4  # the varactor voltage
+vvarac_init = 2  # the varactor voltage
 
 # global variable
 exptnum = 0  # this number is automatically increased when runExpt() is called

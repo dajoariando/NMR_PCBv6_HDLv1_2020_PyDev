@@ -33,7 +33,7 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder ):
 
     # configurations
-    en_fig = 0  # enable figure
+    en_fig = 1 # enable figure
     direct_read = 0  # perform direct read from SDRAM. use with caution above!
     process_data = 1  # process data within the SoC
     en_remote_dbg = False
@@ -63,11 +63,12 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , cpmg_freq, nmrObj.S11_table )
     nmrObj.setMatchingNetwork( Cpar, Cser )
     nmrObj.setMatchingNetwork( Cpar, Cser )
-
+    
+    # setting for WMP
     nmrObj.assertControlSignal( 
             nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-    # nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
-    nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
+    nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk ) # setting for UF
+    # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk ) # setting for WMP
 
     if ( direct_read ):
         datain = nmrObj.cpmgSequenceDirectRead( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
@@ -102,20 +103,20 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
 
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
-pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
-pulse2_us = 5.5  # pulse pi length
+pulse1_us = 12 # 2.5  # pulse pi/2 length. 8 for PCB in the box
+pulse2_us = 16 # 5.5  # pulse pi length. 16 for PCB in the box
 echo_spacing_us = 200  # 200
-scan_spacing_us = 200000
-samples_per_echo = 512  # 3072
+scan_spacing_us = 500000
+samples_per_echo = 1024  # 3072
 echoes_per_scan = 1024  # 20
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 10  # number of averaging
+number_of_iteration = 1600  # number of averaging
 ph_cycl_en = 1
 dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_Hz = 30e3  # downconversion lpf cutoff
+dconv_lpf_cutoff_Hz = 200e3  # downconversion lpf cutoff
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )

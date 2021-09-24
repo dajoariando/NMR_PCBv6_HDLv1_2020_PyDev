@@ -30,7 +30,7 @@ from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 # variables
-server_data_folder = "/root/NMR_DATA"
+server_data_folder = "/home/ubuntu/NMR_DATA"
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1  # enable figure
 en_remote_dbg = 0  # enable remote debugging. Enable debug server first!
@@ -69,7 +69,7 @@ samples_per_echo = 1024  # 3072
 echoes_per_scan = 1024  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 100  # number of averaging
+number_of_iteration = 10  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0

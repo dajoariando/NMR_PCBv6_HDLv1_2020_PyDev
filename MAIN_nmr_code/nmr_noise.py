@@ -59,7 +59,7 @@ def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_b
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
     Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
     nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
-    nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
+    # nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
     
     # load parameters from config file
     # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
@@ -97,14 +97,14 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 # uncomment this line to debug the nmr noise code locally here
 samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
 min_freq = 1.5  # in MHz
 max_freq = 2.0  # in MHz
-tuning_freq = conf.Df_MHz  # hardware tuning forced by config file
-# tuning_freq = 4.2  # hardware tuning frequency selector, using lookup table
+# tuning_freq = conf.Df_MHz  # hardware tuning forced by config file
+tuning_freq = 4.2  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 30  # downconversion filter bw
 continuous = True  # continuous running at one frequency configuration
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
@@ -112,4 +112,4 @@ en_fig = True
 nmrObj = init( client_data_folder )
 analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous , en_fig )
 exit( nmrObj )
-'''
+

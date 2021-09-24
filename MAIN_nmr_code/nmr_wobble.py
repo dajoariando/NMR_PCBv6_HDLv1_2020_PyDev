@@ -37,7 +37,7 @@ def init ( client_data_folder ):
 
     # enable power and signal path
     nmrObj.assertControlSignal( 
-            nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FH_msk | nmrObj.RX_FL_msk )
+            nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk )
 
     # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
 
@@ -82,7 +82,7 @@ def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSa
     timeObj.setTimeSta()
     S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
     # S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
-    # S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    # S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
 
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( 
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
@@ -97,15 +97,15 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+
 # measurement properties
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
-freqSta = 1.2
-freqSto = 2.5
-freqSpa = 0.001
+freqSta = 4.0
+freqSto = 4.5
+freqSpa = 0.005
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
-fftpts = 256
+fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
@@ -116,7 +116,7 @@ nmrObj = init ( client_data_folder )
 print( 'Generate reference.' )
 S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
-tuning_freq = 2.0
+tuning_freq = 4.0
 Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
 # Cpar = 152
 # Cser = 167
@@ -126,4 +126,4 @@ while True:
     # break;
 
 exit( nmrObj )
-'''
+

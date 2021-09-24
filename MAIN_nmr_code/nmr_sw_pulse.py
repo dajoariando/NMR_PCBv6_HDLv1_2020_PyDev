@@ -41,7 +41,7 @@ else:
 nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
@@ -55,8 +55,8 @@ nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
 
 nmrObj.assertControlSignal( 
         nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-# nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
-nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk ) # setting for UF
+# nmrObj.deassertControlSignal( nmrObj.RX_FL_msk ) # setting for WMP
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
@@ -76,12 +76,12 @@ en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
 dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_Hz = 50e3  # downconversion lpf cutoff
+dconv_lpf_cutoff_Hz = 100e3  # downconversion lpf cutoff
 
 # sweep settings
 pulse_us_sta = 1.0  # in microsecond
-pulse_us_sto = 5.0  # in microsecond
-pulse_us_ste = 21  # number of steps
+pulse_us_sto = 25.0  # in microsecond
+pulse_us_ste = 24*2+1  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -89,8 +89,8 @@ for i in range( 0, pulse_us_ste ):
     print( '----------------------------------' )
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
-    pulse1_us = pulse_us_sw[i]  # pulse pi/2 length
-    pulse2_us = 5  # pulse pi length
+    pulse1_us = pulse_us_sw[i] # pulse pi/2 length
+    pulse2_us = 16 # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
                         ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )

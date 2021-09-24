@@ -13,12 +13,12 @@ from shutil import move, copy
 
 samp_freq = 25  # sampling frequency
 samples = 100000  # number of points
-min_freq = 1.3  # in MHz
-max_freq = 2.2  # in MHz
+min_freq = 3.8  # in MHz
+max_freq = 4.7  # in MHz
 # tuning_freq = 1.6  # hardware tuning frequency selector, using lookup table
-meas_bw_kHz = 30  # downconversion filter bw
+meas_bw_kHz = 100  # downconversion filter bw
 continuous = False  # continuous running at one frequency configuration
-client_data_folder = "D:\\TEMP"
+client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = True
 
 # create name for new folder
@@ -29,7 +29,7 @@ mkdir( swfolder )
 
 nmrObj = nmr_noise.init( swfolder )
 
-freqList = np.arange ( 1.7, 2.1, 0.01 )
+freqList = np.arange ( 4.0, 4.5, 0.01 )
 for tuning_freq in freqList:
     nmr_noise.analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous , en_fig )
     meas_folder = parse_simple_info( swfolder, 'current_folder.txt' )
