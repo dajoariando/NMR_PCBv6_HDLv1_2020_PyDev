@@ -107,16 +107,16 @@ from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as con
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
-pulse1_us = 12 # 2.5  # pulse pi/2 length. 8 for PCB in the box
-pulse2_us = 16 # 5.5  # pulse pi length. 16 for PCB in the box
-echo_spacing_us = 200  # 200
-scan_spacing_us = 500000
-samples_per_echo = 1024  # 3072
-echoes_per_scan = 1024  # 20
-init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 1600  # number of averaging
+pulse1_us = conf.pulse1_us # 2.5  # pulse pi/2 length. 8 for PCB in the box
+pulse2_us = conf.pulse2_us # 5.5  # pulse pi length. 16 for PCB in the box
+echo_spacing_us = conf.echo_spacing_us  # 200
+scan_spacing_us = conf.scan_spacing_us
+samples_per_echo = conf.samples_per_echo  # 3072
+echoes_per_scan = conf.echoes_per_scan  # 20
+init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
+number_of_iteration = 16  # number of averaging
 ph_cycl_en = 1
-dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_Hz = 200e3  # downconversion lpf cutoff
+dconv_lpf_ord = conf.dconv_lpf_ord  # downconversion order
+dconv_lpf_cutoff_Hz = conf.meas_bw_kHz  # downconversion lpf cutoff
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )

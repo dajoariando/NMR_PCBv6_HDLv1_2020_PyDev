@@ -97,7 +97,7 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-
+'''
 # measurement properties
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 en_fig = 1
@@ -126,4 +126,4 @@ while True:
     # break;
 
 exit( nmrObj )
-
+'''

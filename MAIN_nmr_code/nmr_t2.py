@@ -47,7 +47,7 @@ else:
     data_folder = server_data_folder
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 
 if ( meas_time ):
     start_time = time.time()
