@@ -17,23 +17,24 @@ Cheng 07/2020 Option to change matching network and preamp values automatically
 
 #!/usr/bin/python
 
+import os
 import time
 
 import pydevd
 from scipy import signal
-import os
 
 import matplotlib.pyplot as plt
 from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col, find_Cpar_Cser_from_table, find_Vbias_Vvarac_from_table
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 
 
 def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder ):
 
     # configurations
-    en_fig = 1 # enable figure
+    en_fig = 1  # enable figure
     direct_read = 0  # perform direct read from SDRAM. use with caution above!
     process_data = 1  # process data within the SoC
     en_remote_dbg = False
@@ -63,11 +64,11 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , cpmg_freq, nmrObj.S11_table )
     nmrObj.setMatchingNetwork( Cpar, Cser )
     nmrObj.setMatchingNetwork( Cpar, Cser )
-    
+
     # setting for WMP
     nmrObj.assertControlSignal( 
             nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-    nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk ) # setting for UF
+    nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )  # setting for UF
     # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk ) # setting for WMP
 
     if ( direct_read ):
@@ -101,22 +102,22 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
         ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( nmrObj,
             nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_Hz )
 
-
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
+
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
-pulse1_us = conf.pulse1_us # 2.5  # pulse pi/2 length. 8 for PCB in the box
-pulse2_us = conf.pulse2_us # 5.5  # pulse pi length. 16 for PCB in the box
+pulse1_us = conf.pulse1_us  # 2.5  # pulse pi/2 length. 8 for PCB in the box
+pulse2_us = conf.pulse2_us  # 5.5  # pulse pi length. 16 for PCB in the box
 echo_spacing_us = conf.echo_spacing_us  # 200
 scan_spacing_us = conf.scan_spacing_us
 samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 16  # number of averaging
+number_of_iteration = 2  # number of averaging
 ph_cycl_en = 1
 dconv_lpf_ord = conf.dconv_lpf_ord  # downconversion order
 dconv_lpf_cutoff_Hz = conf.meas_bw_kHz  # downconversion lpf cutoff
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+# client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
 nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )

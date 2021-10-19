@@ -1,15 +1,15 @@
-import math
 import csv
-import numpy as np
+import math
 import os
 
-from nmr_std_function import data_parser
-from nmr_std_function.signal_proc import down_conv, nmr_fft, butter_lowpass_filter
-from nmr_std_function.data_parser import convert_to_prospa_data_t1
-
-from scipy.optimize import curve_fit
 import matplotlib
+from scipy.optimize import curve_fit
+
 import matplotlib.pyplot as plt
+from nmr_std_function import data_parser
+from nmr_std_function.data_parser import convert_to_prospa_data_t1
+from nmr_std_function.signal_proc import down_conv, nmr_fft, butter_lowpass_filter
+import numpy as np
 
 
 def compute_spfft( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
@@ -64,13 +64,13 @@ def compute_spfft( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num ):
 
         # compute amplitude at the frequency of interest
         S11 = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
-        S11_ph = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+        S11_ph = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg = True )
 
     elif fftSaveOnePts:
         S11_ReIm = np.array( data_parser.read_data( data_folder + "spfft.txt" ) ) / fftPts
         S11_cmplx = S11_ReIm[0] + np.multiply( 1j, S11_ReIm[1] )
         S11 = abs( S11_cmplx )
-        S11_ph = np.angle( S11_cmplx, deg=True )
+        S11_ph = np.angle( S11_cmplx, deg = True )
 
     return S11_cmplx
 
@@ -106,7 +106,7 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
 
         S11dB = np.zeros( len( freqSw ) )
         S11mV_ph = np.zeros( len( freqSw ) )
-        S11mV_cpx = np.zeros( len( freqSw ), dtype=complex )
+        S11mV_cpx = np.zeros( len( freqSw ), dtype = complex )
         for m in range( 0, len( freqSw ) ):
             freqSamp = freqSw[m] * 4  # defined by the C programming, (*4) is a fix number
             spect_bw = freqSw[m] / fftPts * 2  # this is the frequency spacing between adjacent FFT point. Spect_bw is set so that only one point in searching will be found and it will be the closest frequency of interest
@@ -147,11 +147,11 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
     if useRef:  # if reference is present
         S11 = S11mV_cpx / S11mV_ref
         S11dB = 20 * np.log10( abs( S11 ) )  # convert to dB scale
-        S11ph = np.angle( S11, deg=True )
+        S11ph = np.angle( S11, deg = True )
     else:  # if reference is not present
         S11 = S11mV_cpx
         S11dB = 20 * np.log10( abs( S11mV_cpx ) / max( abs( S11mV_cpx ) ) )  # convert to dB scale
-        S11ph = np.angle( S11mV_cpx, deg=True )
+        S11ph = np.angle( S11mV_cpx, deg = True )
 
     S11_min10dB = ( S11dB <= s11_min )
 
@@ -175,17 +175,17 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
 
     if en_fig:
         plt.ion()
-        fig = plt.figure( fig_num, figsize=[12, 7] )
+        fig = plt.figure( fig_num, figsize = [12, 7] )
         fig.clf()
         ax = fig.add_subplot( 221 )
-        line1, = ax.plot( freqSw, S11dB, 'b-', marker='.', linewidth=1, markersize=6 )
+        line1, = ax.plot( freqSw, S11dB, 'b-', marker = '.', linewidth = 1, markersize = 6 )
         ax.set_ylim( -35, 10 )
         ax.set_ylabel( 'S11dB [dB]' )
         ax.set_title( "Reflection Measurement (S11dB) Parameter" )
         ax.grid()
 
         bx = fig.add_subplot( 223 )
-        bx.plot( freqSw, S11ph, 'r-' , marker='.', linewidth=1, markersize=6 )
+        bx.plot( freqSw, S11ph, 'r-' , marker = '.', linewidth = 1, markersize = 6 )
         bx.set_xlabel( 'Frequency [MHz]' )
         bx.set_ylabel( 'Phase (deg)' )
         # bx.set_title( 'incorrect phase due to non-correlated transmit and sampling' )
@@ -193,14 +193,14 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
 
         if useRef:
             cx = fig.add_subplot ( 222 )
-            cx.plot( freqSw, np.real( Z11 ), 'b', marker='.', linewidth=1, markersize=6 )
+            cx.plot( freqSw, np.real( Z11 ), 'b', marker = '.', linewidth = 1, markersize = 6 )
             cx.set_ylim( -200, 200 )
             cx.set_ylabel ( 'Re(Z11/Zs)' )
             cx.set_title( "Normalized Impedance (Z11/Zs)" )
             cx.grid()
 
             dx = fig.add_subplot ( 224 )
-            dx.plot( freqSw, np.imag( Z11 ), 'r', marker='.', linewidth=1, markersize=6 )
+            dx.plot( freqSw, np.imag( Z11 ), 'r', marker = '.', linewidth = 1, markersize = 6 )
             dx.set_ylim( -200, 200 )
             dx.set_ylabel ( 'Im(Z11/Zs)' )
             # dx.set_title( "Imaginary Impedance" )
@@ -290,7 +290,7 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
         # S11mV[m] = np.mean( abs( specty[ref_idx] ) )
         # S11_ph[m] = np.mean( np.angle( specty[ref_idx], deg=True ) )
         S11mV[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
-        S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+        S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg = True )
 
     if useRef:  # if reference is present
         S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref )
@@ -339,17 +339,17 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
     if en_fig:
         plt.ion()
-        fig = plt.figure( fig_num, figsize=[12, 7] )
+        fig = plt.figure( fig_num, figsize = [12, 7] )
         fig.clf()
         ax = fig.add_subplot( 221 )
-        line1, = ax.plot( freqSw, S11dB, 'b-', marker='.', linewidth=1, markersize=6 )
+        line1, = ax.plot( freqSw, S11dB, 'b-', marker = '.', linewidth = 1, markersize = 6 )
         ax.set_ylim( -35, 10 )
         ax.set_ylabel( 'S11 [dB]' )
         ax.set_title( "Reflection Measurement (S11) Parameter" )
         ax.grid()
 
         bx = fig.add_subplot( 223 )
-        bx.plot( freqSw, S11_ph, 'r-' , marker='.', linewidth=1, markersize=6 )
+        bx.plot( freqSw, S11_ph, 'r-' , marker = '.', linewidth = 1, markersize = 6 )
         bx.set_xlabel( 'Frequency [MHz]' )
         bx.set_ylabel( 'Phase (deg)' )
         # bx.set_title( 'incorrect phase due to non-correlated transmit and sampling' )
@@ -357,14 +357,14 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
         if useRef:
             cx = fig.add_subplot ( 222 )
-            cx.plot( freqSw, np.real( Z11 ), 'b', marker='.', linewidth=1, markersize=6 )
+            cx.plot( freqSw, np.real( Z11 ), 'b', marker = '.', linewidth = 1, markersize = 6 )
             cx.set_ylim( -2, 2 )
             cx.set_ylabel ( 'Re(Z11/Zs)' )
             cx.set_title( "Normalized Impedance (Z11/Zs)" )
             cx.grid()
 
             dx = fig.add_subplot ( 224 )
-            dx.plot( freqSw, np.imag( Z11 ), 'r', marker='.', linewidth=1, markersize=6 )
+            dx.plot( freqSw, np.imag( Z11 ), 'r', marker = '.', linewidth = 1, markersize = 6 )
             dx.set_ylim( -2, 2 )
             dx.set_ylabel ( 'Im(Z11/Zs)' )
             # dx.set_title( "Imaginary Impedance" )
@@ -575,7 +575,7 @@ def compute_gain_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_num 
 
         # compute amplitude at the frequency of interest
         S21[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
-        S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+        S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg = True )
 
     S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
 
@@ -674,14 +674,14 @@ def compute_gain_fft_sync( nmrObj, data_parent_folder, meas_folder, en_fig, fig_
 
             # compute amplitude at the frequency of interest
             S21[m] = abs( specty[np.where( ref_idx == True )[0][0] + 1] )  # +1 factor is to correct the shifted index by one when generating fft x-axis
-            S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg=True )
+            S21_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg = True )
 
     elif fftSaveOnePts:
         S21_re = np.array( data_parser.read_data( data_folder + "S21_fftReal.txt" ) ) / fftPts
         S21_im = np.array( data_parser.read_data( data_folder + "S21_fftImag.txt" ) ) / fftPts
         S21_cmplx = S21_re + np.multiply( 1j, S21_im )
         S21 = abs( S21_cmplx )
-        S21_ph = np.angle( S21_cmplx, deg=True )
+        S21_ph = np.angle( S21_cmplx, deg = True )
 
     S21dB = 20 * np.log10( S21 )  # convert to dBmV scale
 
@@ -858,7 +858,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     proc_indv_data = 0
     # put 1 if the data file uses binary representation, otherwise it is in
     # ascii format
-    binary_OR_ascii = 1
+    binary_OR_ascii = 0
     ignore_echoes = 0  # ignore initial echoes #
 
     # simulate decimation in software (DO NOT use this for normal operation,
@@ -929,9 +929,9 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         dconv = dconv * nmrObj.dconv_gain
 
         # combined IQ
-        data_filt = np.zeros( ( NoE, SpE ), dtype=complex )
+        data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
         for i in range( 0, NoE ):
-            data_filt[i,:] = \
+            data_filt[i, :] = \
                 dconv[i * ( 2 * SpE ):( i + 1 ) * ( 2 * SpE ):2] + 1j * \
                 dconv[i * ( 2 * SpE ) + 1:( i + 1 ) * ( 2 * SpE ):2]
 
@@ -941,23 +941,23 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
             plt.clf()
             for i in range( 0, NoE ):
                 plt.plot( ( ( i - 1 ) * tE * 1e-6 + echo_space ) * 1e3,
-                         np.real( data_filt[i,:] ), linewidth=0.4, color='b' )
+                         np.real( data_filt[i, :] ), linewidth = 0.4, color = 'b' )
                 plt.plot( ( ( i - 1 ) * tE * 1e-6 + echo_space ) * 1e3,
-                         np.imag( data_filt[i,:] ), linewidth=0.4, color='r' )
+                         np.imag( data_filt[i, :] ), linewidth = 0.4, color = 'r' )
             plt.title( "Averaged raw data (downconverted)" )
             plt.xlabel( 'time(ms)' )
             plt.ylabel( 'probe voltage (uV)' )
             plt.savefig( data_folder + 'fig_avg_raw_data.png' )
 
         # raw average data
-        echo_rawavg = np.mean( data_filt, axis=0 )
+        echo_rawavg = np.mean( data_filt, axis = 0 )
 
         if compute_figure:  # plot echo rawavg
             plt.figure( 6 )
             plt.clf()
-            plt.plot( tacq, np.real( echo_rawavg ), label='real' )
-            plt.plot( tacq, np.imag( echo_rawavg ), label='imag' )
-            plt.plot( tacq, np.abs( echo_rawavg ), label='abs' )
+            plt.plot( tacq, np.real( echo_rawavg ), label = 'real' )
+            plt.plot( tacq, np.imag( echo_rawavg ), label = 'imag' )
+            plt.plot( tacq, np.abs( echo_rawavg ), label = 'abs' )
             plt.xlim( 0, max( tacq ) )
             plt.title( "Echo Average before rotation (down-converted)" )
             plt.xlabel( 'time(uS)' )
@@ -970,11 +970,11 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         if ( sim_dec ):
             SpE = int( SpE / sim_dec_fact )
             Sf = Sf / sim_dec_fact
-            data_filt_dec = np.zeros( ( NoE, SpE ), dtype=complex )
+            data_filt_dec = np.zeros( ( NoE, SpE ), dtype = complex )
             for i in range( 0, SpE ):
                 data_filt_dec[:, i] = np.mean( 
-                    data_filt[:, i * sim_dec_fact:( i + 1 ) * sim_dec_fact], axis=1 )
-            data_filt = np.zeros( ( NoE, SpE ), dtype=complex )
+                    data_filt[:, i * sim_dec_fact:( i + 1 ) * sim_dec_fact], axis = 1 )
+            data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
             data_filt = data_filt_dec
             tacq = ( 1 / Sf ) * 1e6 * np.linspace( 1, SpE, SpE )  # in uS
 
@@ -1030,21 +1030,21 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
             for i in range( 1, NoE + 1 ):
                 # plt.plot(((i - 1) * tE * 1e-6 + echo_space) * 1e3, data[(i - 1) * SpE:i * SpE], linewidth=0.4)
                 plt.plot( ( ( i - 1 ) * tE * 1e-6 + echo_space ) * 1e3,
-                         dataraw[( i - 1 ) * SpE:i * SpE], linewidth=0.4 )
+                         dataraw[( i - 1 ) * SpE:i * SpE], linewidth = 0.4 )
             plt.title( "Averaged raw data" )
             plt.xlabel( 'time(ms)' )
             plt.ylabel( 'probe voltage (uV)' )
             plt.savefig( data_folder + 'fig_avg_raw_data.png' )
 
         # raw average data
-        echo_rawavg = np.zeros( SpE, dtype=float )
+        echo_rawavg = np.zeros( SpE, dtype = float )
         for i in range( 0, NoE ):
             echo_rawavg += ( data[i * SpE:( i + 1 ) * SpE] / NoE )
 
         if compute_figure:  # plot echo rawavg
             plt.figure( 6 )
             plt.clf()
-            plt.plot( tacq, echo_rawavg, label='echo rawavg' )
+            plt.plot( tacq, echo_rawavg, label = 'echo rawavg' )
             plt.xlim( 0, max( tacq ) )
             plt.title( "Echo Average (raw)" )
             plt.xlabel( 'time(uS)' )
@@ -1053,21 +1053,21 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
             plt.savefig( data_folder + 'fig_echo_avg.png' )
 
         # filter the data
-        data_filt = np.zeros( ( NoE, SpE ), dtype=complex )
+        data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
         for i in range( 0, NoE ):
-            data_filt[i,:] = down_conv( 
-                data[i * SpE:( i + 1 ) * SpE], i, tE, Df, Sf, dconv_lpf_ord, dconv_lpf_cutoff_kHz*1e3 )
+            data_filt[i, :] = down_conv( 
+                data[i * SpE:( i + 1 ) * SpE], i, tE, Df, Sf, dconv_lpf_ord, dconv_lpf_cutoff_kHz * 1e3 )
 
         # simulate additional decimation (not needed for normal operqtion). For
         # debugging purpose
         if ( sim_dec ):
             SpE = int( SpE / sim_dec_fact )
             Sf = Sf / sim_dec_fact
-            data_filt_dec = np.zeros( ( NoE, SpE ), dtype=complex )
+            data_filt_dec = np.zeros( ( NoE, SpE ), dtype = complex )
             for i in range( 0, SpE ):
                 data_filt_dec[:, i] = np.sum( 
-                    data_filt[:, i * sim_dec_fact:( i + 1 ) * sim_dec_fact], axis=1 )
-            data_filt = np.zeros( ( NoE, SpE ), dtype=complex )
+                    data_filt[:, i * sim_dec_fact:( i + 1 ) * sim_dec_fact], axis = 1 )
+            data_filt = np.zeros( ( NoE, SpE ), dtype = complex )
             data_filt = data_filt_dec
             tacq = ( 1 / Sf ) * 1e6 * np.linspace( 1, SpE, SpE )  # in uS
 
@@ -1091,13 +1091,13 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         for i in range( 0, NoE ):
             plt.plot( ( i * tE * 1e-6 + echo_space ) * 1e3,
-                     np.real( data_filt[i,:] ), 'b', linewidth=0.4 )
+                     np.real( data_filt[i, :] ), 'b', linewidth = 0.4 )
             plt.plot( ( i * tE * 1e-6 + echo_space ) * 1e3,
-                     np.imag( data_filt[i,:] ), 'r', linewidth=0.4 )
+                     np.imag( data_filt[i, :] ), 'r', linewidth = 0.4 )
 
         for i in range ( 0, NoE ):
-            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.real( data_filt[i,:] ) )
-            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.imag( data_filt[i,:] ) )
+            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.real( data_filt[i, :] ) )
+            data_parser.write_text_append_row( data_folder, "fig_filt_data.txt", np.imag( data_filt[i, :] ) )
 
         plt.legend()
         plt.title( 'Filtered data' )
@@ -1106,16 +1106,16 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.savefig( data_folder + 'fig_filt_data.png' )
 
     # find echo average, echo magnitude
-    echo_avg = np.zeros( SpE, dtype=complex )
+    echo_avg = np.zeros( SpE, dtype = complex )
     for i in range( 0, NoE ):
-        echo_avg += ( data_filt[i,:] / NoE )
+        echo_avg += ( data_filt[i, :] / NoE )
 
     if compute_figure:  # plot echo shape
         plt.figure( 3 )
         plt.clf()
-        plt.plot( tacq, np.abs( echo_avg ), label='abs' )
-        plt.plot( tacq, np.real( echo_avg ), label='real part' )
-        plt.plot( tacq, np.imag( echo_avg ), label='imag part' )
+        plt.plot( tacq, np.abs( echo_avg ), label = 'abs' )
+        plt.plot( tacq, np.real( echo_avg ), label = 'real part' )
+        plt.plot( tacq, np.imag( echo_avg ), label = 'imag part' )
         plt.xlim( 0, max( tacq ) )
         plt.title( "Echo Shape" )
         plt.xlabel( 'time(uS)' )
@@ -1134,14 +1134,14 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         zf = 100  # zero filling factor to get smooth curve
         ws = 2 * np.pi / ( tacq[1] - tacq[0] )  # in MHz
         wvect = np.linspace( -ws / 2, ws / 2, len( tacq ) * zf )
-        echo_zf = np.zeros( zf * len( echo_avg ), dtype=complex )
+        echo_zf = np.zeros( zf * len( echo_avg ), dtype = complex )
         echo_zf[int( ( zf / 2 ) * len( echo_avg ) - len( echo_avg ) / 2 ): int( ( zf / 2 ) * len( echo_avg ) + len( echo_avg ) / 2 )] = echo_avg
         spect = zf * ( np.fft.fftshift( np.fft.fft( np.fft.ifftshift( echo_zf ) ) ) )
         spect = spect / len( spect )  # normalize the spectrum
         plt.plot( wvect / ( 2 * np.pi ), np.real( spect ),
-                 label='real' )
+                 label = 'real' )
         plt.plot( wvect / ( 2 * np.pi ), np.imag( spect ),
-                 label='imag' )
+                 label = 'imag' )
         plt.xlim( 10 / max( tacq ) * -1, 10 / max( tacq ) * 1 )
         plt.title( "FFT of the echo-sum. " + "Peak:real@{:0.2f}kHz,abs@{:0.2f}kHz".format( wvect[np.abs( np.real( spect ) ) == max( 
             np.abs( np.real( spect ) ) )][0] / ( 2 * np.pi ) * 1e3, wvect[np.abs( spect ) == max( np.abs( spect ) )][0] / ( 2 * np.pi ) * 1e3 ) )
@@ -1155,7 +1155,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         data_parser.write_text_append_row( data_folder, "fig_echo_A.txt", wvect / ( 2 * np.pi ) )
 
     # matched filtering
-    a = np.zeros( NoE, dtype=complex )
+    a = np.zeros( NoE, dtype = complex )
     for i in range( 0, NoE ):
         if en_ext_param:
             a[i] = np.mean( np.multiply( data_filt[i, mtch_fltr_sta_idx:SpE], np.conj( 
@@ -1204,8 +1204,8 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         plt.figure( 5 )
         plt.clf()
         plt.cla()
-        plt.plot( t_echospace * 1e3, f, label="fit" )  # plot in milisecond
-        plt.plot( t_echospace * 1e3, np.real( a ) - f, label="residue" )
+        plt.plot( t_echospace * 1e3, f, label = "fit" )  # plot in milisecond
+        plt.plot( t_echospace * 1e3, np.real( a ) - f, label = "residue" )
 
     except:
         print( 'Problem in fitting. Set a0 and T2 output to 0\n' )
@@ -1219,9 +1219,9 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
         # plot data
         plt.figure( 5 )
         # plot in milisecond
-        plt.plot( t_echospace * 1e3, np.real( a ), label="real" )
+        plt.plot( t_echospace * 1e3, np.real( a ), label = "real" )
         # plot in milisecond
-        plt.plot( t_echospace * 1e3, np.imag( a ), label="imag" )
+        plt.plot( t_echospace * 1e3, np.imag( a ), label = "imag" )
 
         # plt.set(gca, 'FontSize', 12)
         plt.legend()
@@ -1371,7 +1371,7 @@ def compute_stats( minfreq, maxfreq, data_parent_folder, meas_folder, plotname, 
         # plot histogram
         n_bins = 200
         ax = fig.add_subplot( 313 )
-        n, bins, patches = ax.hist( one_scan, bins=n_bins )
+        n, bins, patches = ax.hist( one_scan, bins = n_bins )
         ax.set_title( "Histogram" )
 
         plt.tight_layout()
@@ -1494,8 +1494,8 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
 
         filtnorm = sum( specty[fft_range] ) / sum( filtspecty[fft_range] )
 
-        line1, = ax.plot( spectx[fft_range], specty[fft_range], 'b-', label='data', linewidth=0.5 )
-        line2, = ax.plot( filtspectx[fft_range], filtspecty[fft_range] * filtnorm, 'r.', markersize=0.8, label='synth. noise' )  # amplitude is normalized with the max value of specty
+        line1, = ax.plot( spectx[fft_range], specty[fft_range], 'b-', label = 'data', linewidth = 0.5 )
+        line2, = ax.plot( filtspectx[fft_range], filtspecty[fft_range] * filtnorm, 'r.', markersize = 0.8, label = 'synth. noise' )  # amplitude is normalized with the max value of specty
         # line3, = ax.plot(filtorispecx[fft_range], filtorispecty[fft_range]*(filtnorm/2), 'y.', markersize=2.0, label='synth. noise unfiltered') # amplitude is normalized with the max value of specty
 
         # ax.set_ylim(-50, 0)
@@ -1511,7 +1511,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         x_time = np.linspace( 1, len( one_scan_raw ), len( one_scan_raw ) )
         x_time = np.multiply( x_time, ( 1 / adcFreq ) )  # in us
         x_time = np.multiply( x_time, 1e-3 )  # in ms
-        line1, = ax.plot( x_time, one_scan, 'b-' , linewidth=0.5 )
+        line1, = ax.plot( x_time, one_scan, 'b-' , linewidth = 0.5 )
         ax.set_xlabel( 'Time(ms)' )
         ax.set_ylabel( 'Amplitude (a.u.)' )
         ax.set_title( "Amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )
@@ -1521,7 +1521,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         # plot histogram
         n_bins = 200
         ax = fig.add_subplot( 313 )
-        n, bins, patches = ax.hist( one_scan, bins=n_bins )
+        n, bins, patches = ax.hist( one_scan, bins = n_bins )
         ax.set_title( "Histogram" )
         plt.ylim( [0, 2000] )
 

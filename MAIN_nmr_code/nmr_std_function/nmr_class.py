@@ -6,22 +6,24 @@ Created on Nov 06, 2018
 
 #!/usr/bin/python
 
-import os
-import pydevd
-import numpy as np
-import matplotlib.pyplot as plt
-from nmr_std_function.data_parser import parse_simple_info
-from nmr_std_function.nmr_functions import compute_iterate
-from nmr_std_function.data_parser import parse_csv_float2col
-from scipy import signal
 from datetime import datetime
+import os
 import shutil
+
+import pydevd
+from scipy import signal
+
+import matplotlib.pyplot as plt
+from nmr_std_function.data_parser import parse_csv_float2col
+from nmr_std_function.data_parser import parse_simple_info
 from nmr_std_function.data_parser import write_text_append
 from nmr_std_function.hw_driver import fpga_de1soc
-# from email.errors import ObsoleteHeaderDefect
+from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import exec_rmt_ssh_cmd_in_datadir, init_ntwrk, exit_ntwrk
+import numpy as np
 
 
+# from email.errors import ObsoleteHeaderDefect
 class tunable_nmr_system_2018:
 
     def __init__( self, client_data_folder, en_remote_dbg, en_remote_computing ):
@@ -123,11 +125,11 @@ class tunable_nmr_system_2018:
         self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
 
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.4'  # '129.22.143.88'
+        self.server_ip = '192.168.137.3'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
         self.server_path = '/home/ubuntu/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'Y:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
+        self.client_path = 'T:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
         # data folder
@@ -151,8 +153,8 @@ class tunable_nmr_system_2018:
             setup_client_server_paths( PATH_TRANSLATION )
             print( "---server:%s---client:%s---" %
                   ( self.server_ip, self.client_ip ) )
-            pydevd.settrace( self.client_ip, stdoutToServer=True,
-                            stderrToServer=True )
+            pydevd.settrace( self.client_ip, stdoutToServer = True,
+                            stderrToServer = True )
 
         # This variable supports processing on the SoC/server (old method) and show the result on client via remote X window.
         # It also supports processing on the PC/client (new method) and show the result directly on client (much faster).
@@ -185,8 +187,8 @@ class tunable_nmr_system_2018:
         setup_client_server_paths( PATH_TRANSLATION )
         print( "---server:%s---client:%s---" %
               ( self.server_ip, self.client_ip ) )
-        pydevd.settrace( self.client_ip, stdoutToServer=True,
-                        stderrToServer=True )
+        pydevd.settrace( self.client_ip, stdoutToServer = True,
+                        stderrToServer = True )
 
     def initNmrSystem( self ):
         if self.en_remote_computing:
@@ -322,6 +324,45 @@ class tunable_nmr_system_2018:
                    str( dconv_fact ) + " " +
                    str( echo_skip )
                    )
+
+        if self.en_remote_computing:
+            ssh_cmd = self.server_path + "c_exec/" + command
+            exec_rmt_ssh_cmd_in_datadir( self.ssh, ssh_cmd, self.server_data_folder )
+        else:
+            os_command = ( self.work_dir + self.exec_folder + command )
+            os.system( os_command )  # execute command & ignore its console
+
+    def cpmgSequenceMultifreq( self, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, multiscan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv , dconv_fact, echo_skip, cpmg_freq_list, c_series_list, c_shunt_list, vbias_list, vvarac_list ):
+        # execute cpmg sequence
+        if ( en_dconv ):
+            exec_name = "cpmg_iterate_multifreq_dconv"
+            print( "THIS cpmg_iterate_multifreq_dconv FUNCTION HASN'T BEEN IMPLEMENTED" )
+        else:
+            exec_name = "cpmg_iterate_multifreq_raw"
+
+        command = ( exec_name + " " +
+                   str( pulse1_us ) + " " +
+                   str( pulse2_us ) + " " +
+                   str( pulse1_dtcl ) + " " +
+                   str( pulse2_dtcl ) + " " +
+                   str( echo_spacing_us ) + " " +
+                   str( scan_spacing_us ) + " " +
+                   str( multiscan_spacing_us ) + " " +
+                   str( samples_per_echo ) + " " +
+                   str( echoes_per_scan ) + " " +
+                   str( init_adc_delay_compensation ) + " " +
+                   str( number_of_iteration ) + " " +
+                   str( ph_cycl_en ) + " " +
+                   str( pulse180_t1_int ) + " " +
+                   str( delay180_t1_int ) + " " +
+                   str( tx_sd_msk ) + " " +
+                   str( dconv_fact ) + " " +
+                   str( echo_skip ) + " " +
+                   str( len( cpmg_freq_list ) )
+                   )
+
+        for i in range ( 0, len( cpmg_freq_list ) ):
+            command = command + " %0.3f %d %d %0.2f %0.2f" % ( cpmg_freq_list[i], c_series_list[i], c_shunt_list[i], vbias_list[i], vvarac_list[i] )
 
         if self.en_remote_computing:
             ssh_cmd = self.server_path + "c_exec/" + command
@@ -637,7 +678,7 @@ class tunable_nmr_system_2018:
             a_peaks = np.zeros(len(i_peaks))
             for i in range(0, len(i_peaks)):
                 a_peaks[i] = data[i_peaks[i]]
-    
+
             # find tvect in which the largest peak is found
             t1_opt = tvect[i_peaks[np.where(max(a_peaks))[0][0]]]  # in second
             '''

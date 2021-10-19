@@ -31,7 +31,8 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 
 # variables
 server_data_folder = "/home/ubuntu/NMR_DATA"
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+# client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
 en_fig = 1  # enable figure
 en_remote_dbg = 0  # enable remote debugging. Enable debug server first!
 direct_read = 0  # perform direct read from SDRAM. use with caution above!
@@ -69,7 +70,7 @@ samples_per_echo = 1024  # 3072
 echoes_per_scan = 1024  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 10  # number of averaging
+number_of_iteration = 4  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -78,7 +79,7 @@ en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
 dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_Hz = 200e3  # downconversion lpf cutoff
+dconv_lpf_cutoff_kHz = 100  # downconversion lpf cutoff
 
 '''
 # coil param and measured voltage across the coil
@@ -97,8 +98,6 @@ P90, Pwatt = calcP90( Vpp, rs, L, cpmg_freq * 1e6,
 print( "P90 len estimate: %3.3f us, power estimate: %3.3f Watts" %
       ( P90 * 1e6, Pwatt ) )
 '''
-
-
 
 # instantiate nmr object
 nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
@@ -158,7 +157,7 @@ if ( process_data ):
     if  en_remote_computing:  # copy remote folder to local directory
         cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
         exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
-    ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_Hz )
+    ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_kHz )
 
 if ( meas_time ):
     elapsed_time = time.time() - start_time
