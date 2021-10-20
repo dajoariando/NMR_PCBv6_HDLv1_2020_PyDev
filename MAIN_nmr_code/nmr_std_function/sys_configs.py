@@ -1,8 +1,8 @@
 # this requires python 3.7+, and it doesn't work in older python
 
-from dataclasses import dataclass
 from builtins import int
 from ctypes.wintypes import INT
+from dataclasses import dataclass
 
 
 @dataclass
@@ -21,7 +21,6 @@ class board_config:
     samples_per_echo: int
     echoes_per_scan: int
     init_adc_delay_compensation: float
-    
 
 
 WMP_old_coil_1p65 = board_config( 
@@ -31,14 +30,14 @@ WMP_old_coil_1p65 = board_config(
     380,  # cpar
     179,  # cser
     50,  # meas_bw_kHz
-    2, # filter order
-    12, # pulse 90 length
-    16, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
  )
 
 WMP_old_coil_1p7 = board_config( 
@@ -48,14 +47,14 @@ WMP_old_coil_1p7 = board_config(
     350,  # cpar
     185,  # cser
     50,  # meas_bw_kHz
-    2, # filter order
-    12, # pulse 90 length
-    16, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
  )
 
 WMP_new_coil = board_config( 
@@ -65,14 +64,14 @@ WMP_new_coil = board_config(
     100,  # cpar
     139,  # cser
     50,  # meas_bw_kHz
-    2, # filter order
-    12, # pulse 90 length
-    16, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
  )
 
 WMP_double_coil = board_config( 
@@ -82,47 +81,65 @@ WMP_double_coil = board_config(
     160,  # cpar
     150,  # cser
     50,  # meas_bw_kHz
-    2, # filter order
-    12, # pulse 90 length
-    16, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
  )
 
-UF_black_holder_brown_coil_PCB02 = board_config(
-    4.2 + (-46+38+9) * 1e-3,  # Df_MHz
+UF_black_holder_brown_coil_PCB02 = board_config( 
+    4.2 + ( -46 + 38 + 9 ) * 1e-3,  # Df_MHz
     -2.1,  # vbias
     -0.4,  # vvarac
     2410,  # cpar
     462,  # cser
     30,  # meas_bw_kHz
-    2, # filter order
-    2.5, # pulse 90 length
-    5.0, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
-)
+    2,  # filter order
+    2.5,  # pulse 90 length
+    5.0,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
+ )
 
-UF_black_holder_brown_coil_PCB04 = board_config(
-    4.2 + (-46+38+9) * 1e-3,  # Df_MHz
+UF_black_holder_brown_coil_PCB04 = board_config( 
+    4.2 + ( -46 + 38 + 9 ) * 1e-3,  # Df_MHz
     -2.25,  # vbias
     2.1,  # vvarac
     2410,  # cpar
     462,  # cser
     200,  # meas_bw_kHz
-    2, # filter order
-    12, # pulse 90 length
-    16, # pulse 180 length
-    200, # echo_spacing_us: float
-    500000, # scan_spacing_us: float
-    1024, # samples_per_echo: int
-    1024, # echoes_per_scan: int
-    6 # init_adc_delay_compensation: float
-    
-)
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
+
+ )
+
+UF_black_holder_brown_coil_PCB04__DELETEME = board_config( 
+    4.2 + ( -46 + 38 + 9 ) * 1e-3,  # Df_MHz
+    -2.25,  # vbias
+    2.1,  # vvarac
+    2410,  # cpar
+    462,  # cser
+    200,  # meas_bw_kHz
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1000,  # samples_per_echo: int
+    60,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
+
+ )

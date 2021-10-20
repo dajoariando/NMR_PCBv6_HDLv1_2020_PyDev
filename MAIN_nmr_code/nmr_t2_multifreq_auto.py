@@ -29,6 +29,7 @@ from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
+from nmr_std_function.time_func import time_meas
 import numpy as np
 
 
@@ -49,6 +50,9 @@ def nmr_t2_multifreq_auto ( cpmg_freq_list, pulse1_us, pulse2_us, echo_spacing_u
     en_dconv = 0  # enable downconversion in the fpga
     dconv_fact = 4  # downconversion factor. minimum of 4.
     echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
+
+    # additional configurations
+    timeObj = time_meas( True )
 
     # error checker
     if ( not ( len( cpmg_freq_list ) % 2 ) ):
@@ -90,10 +94,13 @@ def nmr_t2_multifreq_auto ( cpmg_freq_list, pulse1_us, pulse2_us, echo_spacing_u
     nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )  # setting for UF
     # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk ) # setting for WMP
 
+    timeObj.setTimeSta()
     # nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv, dconv_fact, echo_skip )
     # nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us,                       samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv, dconv_fact, echo_skip )
     nmrObj.cpmgSequenceMultifreq( pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, multiscan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, pulse180_t1_int, delay180_t1_int, tx_sd_msk, en_dconv, dconv_fact, echo_skip, cpmg_freq_list, c_series_list, c_shunt_list, vbias_list, vvarac_list )
     datain = []  # set datain to 0 because the data will be read from file instead
+    timeObj.setTimeSto()
+    timeObj.reportTimeRel( "cpmgSequenceMultifreq" )
 
     nmrObj.deassertControlSignal( 
             nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
@@ -124,16 +131,16 @@ def nmr_t2_multifreq_auto ( cpmg_freq_list, pulse1_us, pulse2_us, echo_spacing_u
 pulse1_us = conf.pulse1_us  # 2.5  # pulse pi/2 length. 8 for PCB in the box
 pulse2_us = conf.pulse2_us  # 5.5  # pulse pi length. 16 for PCB in the box
 echo_spacing_us = conf.echo_spacing_us  # 200
-scan_spacing_us = 0
+scan_spacing_us = 500000
 multiscan_spacing_us = conf.scan_spacing_us
 samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 2  # number of averaging
+number_of_iteration = 16  # number of averaging
 ph_cycl_en = 1
 dconv_lpf_ord = conf.dconv_lpf_ord  # downconversion order
 dconv_lpf_cutoff_Hz = conf.meas_bw_kHz  # downconversion lpf cutoff
 # client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 client_data_folder = "D:\\NMR_DATA"
-cpmg_freq_list = [conf.Df_MHz + 0.1, conf.Df_MHz, conf.Df_MHz - 0.1];
+cpmg_freq_list = [conf.Df_MHz + 0.5, conf.Df_MHz, conf.Df_MHz - 0.5];
 nmr_t2_multifreq_auto ( cpmg_freq_list, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, multiscan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder )
