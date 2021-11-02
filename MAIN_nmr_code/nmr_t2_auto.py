@@ -28,7 +28,6 @@ from nmr_std_function.data_parser import parse_simple_info, parse_csv_float2col,
 from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 
 
 def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing_us, samples_per_echo, echoes_per_scan, init_adc_delay_compensation, number_of_iteration, ph_cycl_en, dconv_lpf_ord, dconv_lpf_cutoff_Hz, client_data_folder ):
@@ -88,6 +87,8 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
     nmrObj.setPreampTuning( 0, 0 )
     nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
                                  nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
+    
+    
 
     if ( process_data ):
 
@@ -101,9 +102,12 @@ def nmr_t2_auto ( cpmg_freq, pulse1_us, pulse2_us, echo_spacing_us, scan_spacing
             exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
         ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( nmrObj,
             nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_Hz )
+        
+    nmrObj.deassertAll()
+    nmrObj.exit()
 
 # load configuration
-
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB02 as conf
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz

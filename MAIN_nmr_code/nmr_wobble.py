@@ -16,6 +16,10 @@ from nmr_std_function.time_func import time_meas
 # load configuration
 # from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
+wobble_mode = 0 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
+# if SYNC FFT, select a single number to be taken as fftcmd, that represents an amplitude in one frequency.
+# if SYNC NON-FFT, select nmrObj.SAV_ALL_FFT as fftcmd. CURRENTLY MODE-2 DOESN'T WORK for some reason on PCB 02.
+# if ASYNC NON-FFT, select nmrObj.NO_SAV_FFT as fftcmd.
 
 def init ( client_data_folder ):
 
@@ -36,8 +40,8 @@ def init ( client_data_folder ):
                                    nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
 
     # enable power and signal path
-    nmrObj.assertControlSignal( 
-            nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk )
+    nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk )
+    # nmrObj.assertControlSignal( nmrObj.RX1_2L_msk | nmrObj.RX1_2H_msk | nmrObj.RX_SEL2_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk )
 
     # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
 
@@ -60,8 +64,10 @@ def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSa
     timeObj = time_meas( False )
     timeObj.setTimeSta()
     # do measurement
-    nmrObj.wobble_sync( freqSta, freqSto, freqSpa , fftpts, fftcmd, ftvalsub )
-    # nmrObj.wobble_async( freqSta, freqSto, freqSpa, freqSamp )
+    if (wobble_mode == 0 or wobble_mode == 1):
+        nmrObj.wobble_sync( freqSta, freqSto, freqSpa , fftpts, fftcmd, ftvalsub )
+    elif (wobble_mode == 2):
+        nmrObj.wobble_async( freqSta, freqSto, freqSpa, freqSamp )
     timeObj.setTimeSto()
     timeObj.reportTimeRel( "wobble_sync" )
 
@@ -80,9 +86,12 @@ def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSa
     timeObj.reportTimeRel( "transfer_data" )
 
     timeObj.setTimeSta()
-    S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
-    # S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
-    # S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    if (wobble_mode == 0):
+        S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    elif (wobble_mode == 1):
+        S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0 = compute_wobble_sync( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
+    elif (wobble_mode == 2):
+        S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq = compute_wobble_async( nmrObj, nmrObj.data_folder, meas_folder[0], -10, S11mV_ref, useRef, en_fig, fig_num )
 
     print( '\t\tfmin={:0.3f} fmax={:0.3f} bw={:0.3f} minS11={:0.2f} minS11_freq={:0.3f} cparVal={:d} cserVal={:d}'.format( 
         S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, cparVal, cserVal ) )
@@ -100,23 +109,22 @@ def exit( nmrObj ):
 '''
 # measurement properties
 client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+nmrObj = init ( client_data_folder )
 en_fig = 1
-freqSta = 4.0
-freqSto = 4.5
-freqSpa = 0.005
-freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
+freqSta = 3.5
+freqSto = 5.0
+freqSpa = 0.01
+freqSamp = 20  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
-fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
+fftcmd = fftpts / 4 * 3 # default value: fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
 useRef = True  # use reference to eliminate background
 
-nmrObj = init ( client_data_folder )
-
 print( 'Generate reference.' )
 S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
-tuning_freq = 4.0
+tuning_freq = 4.5
 Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
 # Cpar = 152
 # Cser = 167

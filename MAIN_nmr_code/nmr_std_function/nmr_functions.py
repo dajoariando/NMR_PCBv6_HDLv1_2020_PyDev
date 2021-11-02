@@ -179,7 +179,7 @@ def compute_wobble_fft_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S
         fig.clf()
         ax = fig.add_subplot( 221 )
         line1, = ax.plot( freqSw, S11dB, 'b-', marker = '.', linewidth = 1, markersize = 6 )
-        ax.set_ylim( -35, 10 )
+        ax.set_ylim( -60, 10 )
         ax.set_ylabel( 'S11dB [dB]' )
         ax.set_title( "Reflection Measurement (S11dB) Parameter" )
         ax.grid()
@@ -234,7 +234,7 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
     # settings
     # put 1 if the data file uses binary representation, otherwise it is in
     # ascii format. Find the setting in the C programming file
-    binary_OR_ascii = 1  # manual setting: put the same setting from the C programming
+    binary_OR_ascii = 0  # manual setting: put the same setting from the C programming
 
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
@@ -256,7 +256,7 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
         # for m in freqSw:
         file_path = ( data_folder + file_name_prefix +
-                     '{:4.3f}'.format( freqSw[m] ) )
+                     '{:4.3f}'.format( freqSw[m] )+'_ReIm' )
 
         if binary_OR_ascii:
             # one_scan = data_parser.read_hex_int16(file_path)  # use binary
@@ -293,10 +293,11 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
         S11_ph[m] = np.angle( specty[np.where( ref_idx == True )[0][0] + 1], deg = True )
 
     if useRef:  # if reference is present
-        S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref )
-                              )  # convert to dB scale
+        S11 = np.divide( S11mV, S11mV_ref )
+        S11dB = 20 * np.log10( S11 )  # convert to dB scale
     else:  # if reference is not present
-        S11dB = 20 * np.log10( S11mV / max( S11mV ) )  # convert to dB scale
+        S11 = S11mV / max( S11mV )
+        S11dB = 20 * np.log10( S11 )  # convert to dB scale
 
     S11_min10dB = ( S11dB <= s11_min )
 
@@ -382,7 +383,7 @@ def compute_wobble_sync( nmrObj, data_parent_folder, meas_folder, s11_min, S11mV
 
     # print(S11_fmin, S11_fmax, S11_bw)
     if useRef:
-        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
+        return S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
     else:
         return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq, freq0, Z11_imag0
 
@@ -399,6 +400,8 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
     # put 1 if the data file uses binary representation, otherwise it is in
     # ascii format. Find the setting in the C programming file
     binary_OR_ascii = 1  # manual setting: put the same setting from the C programming
+    
+    en_indv_fig = 0 # enable individual figure for the measurement
 
     data_folder = ( data_parent_folder + '/' + meas_folder + '/' )
 
@@ -434,8 +437,33 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
 
         # find voltage at the input of ADC in mV
         one_scan = one_scan * nmrObj.uvoltPerDigit / 1e3
+        
+        if en_indv_fig:
+            plt.ion()
+            fig = plt.figure( 10 )
+            fig.clf()
+            plt.plot( one_scan, 'r-' )
+            # ax.set_ylabel( 'S11 [dB]' )
+            # ax.set_title( "Reflection Measurement (S11) Parameter" )
+            plt.grid()
+    
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+    
 
         spectx, specty = nmr_fft( one_scan, freqSamp, 0 )
+        
+        if en_indv_fig:
+            plt.ion()
+            fig = plt.figure( 11 )
+            # fig.clf()
+            plt.plot( spectx,abs(specty) )
+            # ax.set_ylabel( 'S11 [dB]' )
+            # ax.set_title( "Reflection Measurement (S11) Parameter" )
+            plt.grid()
+    
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
         # FIND INDEX WHERE THE MAXIMUM SIGNAL IS PRESENT
         # PRECISE METHOD: find reflection at the desired frequency: creating precision problem where usually the signal shift a little bit from its desired frequency
@@ -449,10 +477,11 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
         S11_ph[m] = np.mean( np.angle( specty[ref_idx] ) ) * ( 360 / ( 2 * np.pi ) )
 
     if useRef:  # if reference is present
-        S11dB = 20 * np.log10( np.divide( S11mV, S11mV_ref )
-                              )  # convert to dB scale
+        S11 = np.divide( S11mV, S11mV_ref )
+        S11dB = 20 * np.log10( S11 )  # convert to dB scale
     else:  # if reference is not present
-        S11dB = 20 * np.log10( S11mV / max( S11mV ) )  # convert to dB scale
+        S11 = S11mV / max( S11mV )
+        S11dB = 20 * np.log10( S11 )  # convert to dB scale
 
     S11_min10dB = ( S11dB <= s11_min )
 
@@ -475,7 +504,7 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
         fig.clf()
         ax = fig.add_subplot( 211 )
         line1, = ax.plot( freqSw, S11dB, 'r-' )
-        ax.set_ylim( -35, 10 )
+        ax.set_ylim( -60, 10 )
         ax.set_ylabel( 'S11 [dB]' )
         ax.set_title( "Reflection Measurement (S11) Parameter" )
         ax.grid()
@@ -500,7 +529,7 @@ def compute_wobble_async( nmrObj, data_parent_folder, meas_folder, s11_min, S11m
 
     # print(S11_fmin, S11_fmax, S11_bw)
     if useRef:
-        return S11dB, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
+        return S11, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
     else:
         return S11mV, S11_fmin, S11_fmax, S11_bw, minS11, minS11_freq
 
@@ -947,7 +976,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
             plt.title( "Averaged raw data (downconverted)" )
             plt.xlabel( 'time(ms)' )
             plt.ylabel( 'probe voltage (uV)' )
-            plt.savefig( data_folder + 'fig_avg_raw_data.png' )
+            plt.savefig( data_folder + '.png' )
 
         # raw average data
         echo_rawavg = np.mean( data_filt, axis = 0 )
@@ -1034,7 +1063,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
             plt.title( "Averaged raw data" )
             plt.xlabel( 'time(ms)' )
             plt.ylabel( 'probe voltage (uV)' )
-            plt.savefig( data_folder + 'fig_avg_raw_data.png' )
+            plt.savefig( data_folder + '.png' )
 
         # raw average data
         echo_rawavg = np.zeros( SpE, dtype = float )
@@ -1225,7 +1254,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         # plt.set(gca, 'FontSize', 12)
         plt.legend()
-        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:03.1f} n_im:{:03.1f} n_res:{:03.1f} T2:{:0.2f}msec'.format( 
+        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:0.3f} n_im:{:0.3f} n_res:{:0.3f} T2:{:0.2f}msec'.format( 
             snr, snr_res, a0, ( noise * math.sqrt( total_scan ) ), ( res * math.sqrt( total_scan ) ), T2 * 1e3 ) )
         plt.xlabel( 'Time (mS)' )
         plt.ylabel( 'probe voltage (uV)' )

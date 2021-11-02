@@ -21,7 +21,7 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 
 # variables
 server_data_folder = "/root/NMR_DATA"
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
 
 en_scan_fig = 0
 en_fig = 1
@@ -41,7 +41,7 @@ else:
 nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
+from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB02 as conf
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
@@ -62,12 +62,12 @@ nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk ) # setting f
 cpmg_freq = conf.Df_MHz
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 200
-scan_spacing_us = 200000
-samples_per_echo = 512  # number of points
-echoes_per_scan = 1024  # number of echos
-init_adc_delay_compensation = 6  # acquisition shift microseconds
-number_of_iteration = 10  # number of averaging
+echo_spacing_us = conf.echo_spacing_us  # 200
+scan_spacing_us = conf.scan_spacing_us
+samples_per_echo = conf.samples_per_echo  # 3072
+echoes_per_scan = conf.echoes_per_scan  # 20
+init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
+number_of_iteration = 16  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -75,13 +75,14 @@ tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powere
 en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
-dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_Hz = 100e3  # downconversion lpf cutoff
+dconv_lpf_ord = conf.dconv_lpf_ord  # downconversion order
+dconv_lpf_cutoff_kHz = conf.meas_bw_kHz  # downconversion lpf cutoff
+
 
 # sweep settings
-pulse_us_sta = 1.0  # in microsecond
-pulse_us_sto = 25.0  # in microsecond
-pulse_us_ste = 24*2+1  # number of steps
+pulse_us_sta = 5.5  # in microsecond
+pulse_us_sto = 6.5  # in microsecond
+pulse_us_ste = (6-5)*10+1  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -89,8 +90,8 @@ for i in range( 0, pulse_us_ste ):
     print( '----------------------------------' )
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
-    pulse1_us = pulse_us_sw[i] # pulse pi/2 length
-    pulse2_us = 16 # pulse pi length
+    pulse1_us = 2.8 # pulse pi/2 length
+    pulse2_us = pulse_us_sw[i] # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
                         ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )
@@ -106,7 +107,7 @@ for i in range( 0, pulse_us_ste ):
         cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
         exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder  )  # delete the file in the server
     ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
-        nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig, dconv_lpf_ord, dconv_lpf_cutoff_Hz )
+        nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig, dconv_lpf_ord, dconv_lpf_cutoff_kHz )
     a_integ_table[i] = a_integ
     if en_fig:
         plt.ion()

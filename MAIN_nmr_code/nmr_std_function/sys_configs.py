@@ -92,15 +92,15 @@ WMP_double_coil = board_config(
  )
 
 UF_black_holder_brown_coil_PCB02 = board_config( 
-    4.2 + ( -46 + 38 + 9 ) * 1e-3,  # Df_MHz
+    4.2 + ( 30 ) * 1e-3,  # Df_MHz
     -2.1,  # vbias
     -0.4,  # vvarac
-    2410,  # cpar
-    462,  # cser
-    30,  # meas_bw_kHz
+    2140,  # cpar
+    498,  # cser
+    50,  # meas_bw_kHz
     2,  # filter order
-    2.5,  # pulse 90 length
-    5.0,  # pulse 180 length
+    2.8,  # pulse 90 length
+    5.9,  # pulse 180 length
     200,  # echo_spacing_us: float
     500000,  # scan_spacing_us: float
     1024,  # samples_per_echo: int

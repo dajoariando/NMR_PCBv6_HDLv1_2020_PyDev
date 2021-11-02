@@ -94,7 +94,7 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-
+'''
 client_data_folder = "D:\\TEMP"
 en_fig = True
 continuous = True
@@ -110,3 +110,4 @@ fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to re
 nmrObj = init( client_data_folder )
 analyze ( nmrObj, tuning_freq, sta_freq, sto_freq, spac_freq, samp_freq, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
+'''

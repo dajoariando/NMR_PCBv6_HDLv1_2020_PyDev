@@ -47,15 +47,16 @@ import matplotlib.pyplot as plt
 from faulthandler import disable
 
 # measurement properties
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
+nmrObj = nmr_wobble.init ( client_data_folder ) # nmr object declaration
 en_fig = 1
-freqSta = 3.8
-freqSto = 4.7
+freqSta = 4.1
+freqSto = 4.4
 freqSpa = 0.001
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
-fftvalsub = 9537  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
+fftvalsub = 9546  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
 useRef = True  # use reference to eliminate background
 
@@ -67,13 +68,13 @@ tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matchi
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 4.0
-S11FreqSto = 4.5
+S11FreqSta = 4.2
+S11FreqSto = 4.3
 
 # sweep precision
 cparPrec = 10  # change cpar by this value.
 cserPrec = 2  # change cser by this value.
-rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best S11
+rigFact = 5  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -85,8 +86,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 2460  # the parallel capacitance
-        cser_init = 442  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 2190  # the parallel capacitance
+        cser_init = 484  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin
@@ -98,9 +99,6 @@ S11_min = -10  # the minimum allowable S11 value to be reported as adequate to s
 
 # global variable
 exptnum = 0  # this number is automatically increased when runExpt() is called
-
-# nmr object declaration
-nmrObj = nmr_wobble.init ( client_data_folder )
 
 # create name for new folder
 now = datetime.now()
@@ -233,7 +231,6 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
     cser_ret = cser_iFirst  # the cser return value, update when less S11 value is found
 
     print( "\tDecrement cser." )
-    searchIncr = True  # set search increment to be true. It can be disabled when we find lower S11 by decrementing cser_i when searching
     cser_i = cser_iFirst
     rigFact_i = rigFact  # reset the rigorous factor counter
     while( True ):  # find minimum S11 with decreasing cser_i
@@ -247,19 +244,15 @@ def findMinS11_atCparVal_rigorous( cpar, cser_iFirst , cser_Prec, rigFact, s11mV
             minS11Freq = minS11FreqCurr
             MinS11mV = MinS11mVCurr
             cser_ret = cser_i
-            # searchIncr = False # no need to disable searchIncr in rigouros search
         else:
             rigFact_i = rigFact_i - 1
             if ( rigFact_i == 0 ):
-                if ( not searchIncr ):
-                    return minS11Freq, cser_ret
-                else:
-                    break
+                break
 
     print( "\tIncrement cser." )
     cser_i = cser_iFirst
     rigFact_i = rigFact  # reset the rigorous factor counter
-    while( searchIncr ):  # find minimum S11 with increasing cser_i
+    while( True ):
         cser_i = cser_i + cser_Prec
         if cser_i > 2 ** len( CsTbl ) - 1:  # stop if the cser is more than max index of the table
             break
