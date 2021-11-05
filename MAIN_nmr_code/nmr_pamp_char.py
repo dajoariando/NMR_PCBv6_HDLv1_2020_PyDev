@@ -15,9 +15,12 @@ from nmr_std_function.nmr_class import tunable_nmr_system_2018
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 from nmr_std_function.time_func import time_meas
 
-# load the config
-from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
+
+mode = 2 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
+# if SYNC FFT, select a single number to be taken as fftcmd, that represents an amplitude in one frequency.
+# if SYNC NON-FFT, select nmrObj.SAV_ALL_FFT as fftcmd. CURRENTLY MODE-2 DOESN'T WORK for some reason on PCB 02.
+# if ASYNC NON-FFT, select nmrObj.NO_SAV_FFT as fftcmd.
 
 def init( client_data_folder ):
 
@@ -57,9 +60,11 @@ def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpt
 
         # set the preamp tuning
         nmrObj.setPreampTuning( Vbias, Vvarac )
-
-        # nmrObj.pamp_char_async ( freqSta, freqSto, freqSpa, freqSamp )
-        nmrObj.pamp_char_sync ( freqSta, freqSto, freqSpa, fftpts, fftcmd, fftvalsub )
+        
+        if (mode == 0 or mode == 1):
+            nmrObj.pamp_char_sync ( freqSta, freqSto, freqSpa, fftpts, fftcmd, fftvalsub )
+        elif (mode == 2):
+            nmrObj.pamp_char_async ( freqSta, freqSto, freqSpa, freqSamp )
 
         if  nmrObj.en_remote_computing:  # copy remote files to local directory
             cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
@@ -71,9 +76,14 @@ def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpt
             cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
             exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
 
-        # maxS21, maxS21_freq, _ = compute_gain_async( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
-        # maxS21, maxS21_freq, _ = compute_gain_sync( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
-        maxS21, maxS21_freq, S21mV = compute_gain_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
+
+        if (mode == 0):
+            maxS21, maxS21_freq, S21mV = compute_gain_fft_sync( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
+        elif (mode == 1): # UNTESTED
+            maxS21, maxS21_freq, _ = compute_gain_sync( nmrObj, data_folder, meas_folder[0], en_fig, fig_num )
+        elif (mode == 2):
+            maxS21, maxS21_freq, S21mV = compute_gain_async( nmrObj, nmrObj.data_folder, meas_folder[0], en_fig, fig_num )
+        
         print( "maxS21_fft=%0.2fdBmV maxS21_freq=%0.2fMHz Vbias=%0.2fV Vvarac=%0.2fV" % ( 
              maxS21, maxS21_freq, Vbias, Vvarac ) )
 
@@ -90,6 +100,10 @@ def exit( nmrObj ):
 '''
 # comment the lines below when using nmr_pamp_char as a function in outside script
 # measurement properties
+
+# load the config
+from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
+
 client_data_folder = "D:\\TEMP"
 en_fig = 1
 tuning_freq = 1.7

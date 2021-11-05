@@ -127,13 +127,13 @@ class tunable_nmr_system_2018:
         # ip addresses settings for the system
         self.server_ip = '192.168.137.3'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
-        self.server_path = '/home/ubuntu/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
+        self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
         # client path with samba
         self.client_path = 'Y:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
         # data folder
-        self.server_data_folder = "/home/ubuntu/NMR_DATA"
+        self.server_data_folder = "/root/NMR_DATA"
         self.client_data_folder = client_data_folder
         self.exec_folder = "/c_exec/"
 

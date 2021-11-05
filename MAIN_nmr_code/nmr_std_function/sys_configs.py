@@ -97,7 +97,7 @@ UF_black_holder_brown_coil_PCB02 = board_config(
     -0.4,  # vvarac
     2140,  # cpar
     498,  # cser
-    50,  # meas_bw_kHz
+    200,  # meas_bw_kHz
     2,  # filter order
     2.8,  # pulse 90 length
     5.9,  # pulse 180 length

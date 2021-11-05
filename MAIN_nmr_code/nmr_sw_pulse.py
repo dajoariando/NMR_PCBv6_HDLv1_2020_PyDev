@@ -67,7 +67,7 @@ scan_spacing_us = conf.scan_spacing_us
 samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 16  # number of averaging
+number_of_iteration = 64  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -80,9 +80,9 @@ dconv_lpf_cutoff_kHz = conf.meas_bw_kHz  # downconversion lpf cutoff
 
 
 # sweep settings
-pulse_us_sta = 5.5  # in microsecond
-pulse_us_sto = 6.5  # in microsecond
-pulse_us_ste = (6-5)*10+1  # number of steps
+pulse_us_sta = 2  # in microsecond
+pulse_us_sto = 3  # in microsecond
+pulse_us_ste = (3-2)*10+1  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -90,8 +90,8 @@ for i in range( 0, pulse_us_ste ):
     print( '----------------------------------' )
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
-    pulse1_us = 2.8 # pulse pi/2 length
-    pulse2_us = pulse_us_sw[i] # pulse pi length
+    pulse1_us = pulse_us_sw[i] # pulse pi/2 length
+    pulse2_us = 5.5 # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
                         ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )

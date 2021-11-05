@@ -106,9 +106,9 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+''' THIS PART MUST BE COMMENTED WHEN FUNCTION IS BEING USED OUTSIDE
 # measurement properties
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
 nmrObj = init ( client_data_folder )
 en_fig = 1
 freqSta = 3.5

@@ -50,9 +50,9 @@ from faulthandler import disable
 client_data_folder = "D:\\NMR_DATA"
 nmrObj = nmr_wobble.init ( client_data_folder ) # nmr object declaration
 en_fig = 1
-freqSta = 4.1
-freqSto = 4.4
-freqSpa = 0.001
+freqSta = 3.5
+freqSto = 4.5
+freqSpa = 0.005
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
@@ -69,12 +69,12 @@ freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half i
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
 S11FreqSta = 4.2
-S11FreqSto = 4.3
+S11FreqSto = 4.25
 
 # sweep precision
-cparPrec = 10  # change cpar by this value.
-cserPrec = 2  # change cser by this value.
-rigFact = 5  # keep searching up/down for rigFact amount of time before deciding the best S11
+cparPrec = 1  # change cpar by this value.
+cserPrec = 1  # change cser by this value.
+rigFact = 100  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available
@@ -86,8 +86,8 @@ if lrSeed:  # if lrSeed is used, set these parameters below
     c_init = 0.0  # coil parasitic capacitance
 else:
     if ccSeed:  # if ccSeed is used, set these parameters below
-        cpar_init = 2190  # the parallel capacitance
-        cser_init = 484  # the series capacitance. This value is not necessary what's reported on the final table
+        cpar_init = 2180  # the parallel capacitance
+        cser_init = 514  # the series capacitance. This value is not necessary what's reported on the final table
 
 # search settings
 # searchMode = findAbsMin

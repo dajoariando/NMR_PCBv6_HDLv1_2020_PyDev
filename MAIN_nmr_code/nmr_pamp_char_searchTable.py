@@ -18,12 +18,14 @@ import shutil
 import matplotlib.pyplot as plt
 # from faulthandler import disable
 
+mode = 2 # IT HAS TO BE THE SAME AS IN nmr_pamp_char
+
 # measurement properties
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "D:\\NMR_DATA"
 en_fig = 1
-freqSta = 3.8
-freqSto = 4.8
-freqSpa = 0.001
+freqSta = 4.0
+freqSto = 4.4
+freqSpa = 0.01
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
@@ -37,17 +39,17 @@ keepRawData = 0  # set this to keep the S11 raw data in text file
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S21FreqSta = 4
-S21FreqSto = 4.5
+S21FreqSta = 4.15
+S21FreqSto = 4.25
 
 # sweep precision
-vbiasPrec = 0.05  # change vbias by this value.
-vvaracPrec = 0.05  # change vvarac by this value.
-rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best tuning
+vbiasPrec = 0.1  # change vbias by this value.
+vvaracPrec = 0.1  # change vvarac by this value.
+rigFact = 1  # keep searching up/down for rigFact amount of time before deciding the best tuning
 
 # initial point options. either provide the L and R values, or provide with initial vvarac and vbias values
-vbias_init = -2.1  # the bias voltage
-vvarac_init = 2  # the varactor voltage
+vbias_init = -2.6  # the bias voltage
+vvarac_init = -1.0  # the varactor voltage
 
 # global variable
 exptnum = 0  # this number is automatically increased when runExpt() is called
@@ -100,8 +102,12 @@ def runExpt( vbias, vvarac ):
     meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
     swfolder_ind = swfolder + '/' + str( 'vbias_%0.3f__vvarac_%0.3f' % ( vbias, vvarac ) )
     if en_fig:
-        shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gainFFT.png', swfolder + '/' + str( 'plt%3d__vbias_%0.3f__vvarac_%0.3f.png' % ( exptnum, vbias, vvarac ) ) )  # move the figure
+        if (mode == 0 or mode == 1):
+            shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gainFFT.png', swfolder + '/' + str( 'plt%3d__vbias_%0.3f__vvarac_%0.3f.png' % ( exptnum, vbias, vvarac ) ) )  # move the figure
+        elif (mode == 2):
+            shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gain.png', swfolder + '/' + str( 'plt%3d__vbias_%0.3f__vvarac_%0.3f.png' % ( exptnum, vbias, vvarac ) ) )  # move the figure
 
+        
     if keepRawData:
         # write gain values to a file
         RawDataFile = open( swfolder + '/S21___vbias_%0.3f__vvarac_%0.3f.txt' % ( vbias, vvarac ), 'w' )

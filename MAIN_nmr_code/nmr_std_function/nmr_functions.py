@@ -1254,7 +1254,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
 
         # plt.set(gca, 'FontSize', 12)
         plt.legend()
-        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:0.3f} n_im:{:0.3f} n_res:{:0.3f} T2:{:0.2f}msec'.format( 
+        plt.title( 'Matched filtered data. SNRim:{:03.2f} SNRres:{:03.2f}.\na:{:0.3f} n_im:{:0.4f} n_res:{:0.4f} T2:{:0.2f}msec'.format( 
             snr, snr_res, a0, ( noise * math.sqrt( total_scan ) ), ( res * math.sqrt( total_scan ) ), T2 * 1e3 ) )
         plt.xlabel( 'Time (mS)' )
         plt.ylabel( 'probe voltage (uV)' )
