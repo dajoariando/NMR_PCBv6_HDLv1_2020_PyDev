@@ -102,7 +102,7 @@ UF_black_holder_brown_coil_PCB02 = board_config(
     2.8,  # pulse 90 length
     5.9,  # pulse 180 length
     200,  # echo_spacing_us: float
-    500000,  # scan_spacing_us: float
+    200000,  # scan_spacing_us: float
     1024,  # samples_per_echo: int
     1024,  # echoes_per_scan: int
     6  # init_adc_delay_compensation: float

@@ -16,7 +16,7 @@ from nmr_std_function.time_func import time_meas
 # load configuration
 # from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
-wobble_mode = 0 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
+wobble_mode = 2 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
 # if SYNC FFT, select a single number to be taken as fftcmd, that represents an amplitude in one frequency.
 # if SYNC NON-FFT, select nmrObj.SAV_ALL_FFT as fftcmd. CURRENTLY MODE-2 DOESN'T WORK for some reason on PCB 02.
 # if ASYNC NON-FFT, select nmrObj.NO_SAV_FFT as fftcmd.
@@ -81,7 +81,7 @@ def analyze( nmrObj, extSet, cparVal, cserVal, freqSta, freqSto, freqSpa, freqSa
     meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
     if  nmrObj.en_remote_computing:  # copy remote folder to local directory
         cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, nmrObj.server_data_folder, "rm -rf " + meas_folder[0] )  # delete the file in the server
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
     timeObj.setTimeSto()
     timeObj.reportTimeRel( "transfer_data" )
 
@@ -118,7 +118,7 @@ freqSamp = 20  # not used when using wobble_sync. Will be used when using wobble
 fftpts = 512
 fftcmd = fftpts / 4 * 3 # default value: fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
-extSet = False  # use external executable to set the matching network Cpar and Cser
+extSet = True  # use external executable to set the matching network Cpar and Cser
 useRef = True  # use reference to eliminate background
 
 print( 'Generate reference.' )

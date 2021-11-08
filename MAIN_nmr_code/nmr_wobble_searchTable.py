@@ -50,8 +50,8 @@ from faulthandler import disable
 client_data_folder = "D:\\NMR_DATA"
 nmrObj = nmr_wobble.init ( client_data_folder ) # nmr object declaration
 en_fig = 1
-freqSta = 3.5
-freqSto = 4.5
+freqSta = 2.0
+freqSto = 5.5
 freqSpa = 0.005
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
@@ -59,7 +59,6 @@ fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any des
 fftvalsub = 9546  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 extSet = False  # use external executable to set the matching network Cpar and Cser
 useRef = True  # use reference to eliminate background
-
 fig_num = 1
 keepRawData = 0  # set this to keep the S11 raw data in text file
 tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matching network capacitance values
@@ -68,13 +67,13 @@ tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matchi
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 4.2
-S11FreqSto = 4.25
+S11FreqSta = 2.1
+S11FreqSto = 5.4
 
 # sweep precision
-cparPrec = 1  # change cpar by this value.
+cparPrec = 2  # change cpar by this value.
 cserPrec = 1  # change cser by this value.
-rigFact = 100  # keep searching up/down for rigFact amount of time before deciding the best S11
+rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available

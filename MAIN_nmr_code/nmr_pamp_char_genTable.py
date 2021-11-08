@@ -20,17 +20,18 @@ from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rm
 import nmr_pamp_char
 
 # measurement properties
-client_data_folder = "D:\\TEMP"
+mode = 2 # IT HAS TO BE THE SAME AS IN nmr_pamp_char
+client_data_folder = "D:\\NMR_DATA"
 en_fig = True
 continuous = False
-freqSta = 1.5
-freqSto = 2.3
-freqSpa = 0.001
+freqSta = 1.8
+freqSto = 5.5
+freqSpa = 0.01
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # fft parameters
-fftpts = 256
+fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
 
@@ -49,14 +50,14 @@ else:
     swfolder = nmrObj.data_folder + '/' + datename + '_genS21Table'
 os.mkdir( swfolder )
 
-vbiasSta = -4  # this value must be lower than vbiasSto
+vbiasSta = -2.6  # this value must be lower than vbiasSto
 vbiasSto = 1
-vbiasSpa = 0.1
+vbiasSpa = 10
 vbiasSw = np.arange( vbiasSta, vbiasSto, vbiasSpa )
 
-vvaracSta = 2.5  # this value must be lower than vvaracSto
+vvaracSta = -4.9  # this value must be lower than vvaracSto
 vvaracSto = 4.9
-vvaracSpa = 0.05
+vvaracSpa = 0.01
 vvaracSw = np.arange( vvaracSta, vvaracSto, vvaracSpa )
 
 
@@ -75,8 +76,13 @@ maxGainTable[:, 1] = -1  # set column 2 to an undefined voltage value
 maxGainTable[:, 2] = -10  # set column 3 to undefined initial setting voltage of the varactor
 maxGainTable[:, 3] = -10  # set column 4 to undefined initial setting voltage of the bias
 
+# global variable
+exptnum = 0
+
 for i in range( len( vvaracSw ) ):
     for j in range( len( vbiasSw ) ):
+        
+        exptnum = exptnum + 1
 
         maxS21, maxS21_freq, S21mV = nmr_pamp_char.analyze ( nmrObj, vbiasSw[j], vvaracSw[i], freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 
@@ -86,8 +92,14 @@ for i in range( len( vvaracSw ) ):
 
         meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
         swfolder_ind = swfolder + '/' + str( 'vv_[{:03.3f}]__vb_[{:03.3f}]'.format( vvaracSw[i], vbiasSw[j] ) )
-        if ( en_fig ):
-            shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gainFFT.png', swfolder + '/' + str( 'plot_vv_[{:03.3f}]__vb_[{:03.3f}].png'.format( vvaracSw[i], vbiasSw[j] ) ) )  # move the figure
+        # if ( en_fig ):
+        #     shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gainFFT.png', swfolder + '/' + str( 'plot_vv_[{:03.3f}]__vb_[{:03.3f}].png'.format( vvaracSw[i], vbiasSw[j] ) ) )  # move the figure
+        if (mode == 0 or mode == 1):
+            shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gainFFT.png', swfolder + '/' + str( 'plt%3d__vbias_%0.3f__vvarac_%0.3f.png' % ( exptnum, vbiasSw[j], vvaracSw[i] ) ) )  # move the figure
+        elif (mode == 2):
+            shutil.move( nmrObj.data_folder + '/' + meas_folder[0] + '/gain.png', swfolder + '/' + str( 'plt%3d__vbias_%0.3f__vvarac_%0.3f.png' % ( exptnum, vbiasSw[j], vvaracSw[i] ) ) )  # move the figure
+
+        
         if keepRawData:
             # write gain values to a file
             with open( swfolder + '/gain_vv_[{:03.3f}]__vb_[{:03.3f}].txt'.format( vvaracSw[i], vbiasSw[j] ), 'w' ) as f:

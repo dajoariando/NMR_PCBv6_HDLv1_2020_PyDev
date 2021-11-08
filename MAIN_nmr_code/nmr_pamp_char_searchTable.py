@@ -23,8 +23,8 @@ mode = 2 # IT HAS TO BE THE SAME AS IN nmr_pamp_char
 # measurement properties
 client_data_folder = "D:\\NMR_DATA"
 en_fig = 1
-freqSta = 4.0
-freqSto = 4.4
+freqSta = 2.4
+freqSto = 5.2
 freqSpa = 0.01
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 512
@@ -39,13 +39,13 @@ keepRawData = 0  # set this to keep the S11 raw data in text file
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S21FreqSta = 4.15
-S21FreqSto = 4.25
+S21FreqSta = 2.5
+S21FreqSto = 5.1
 
 # sweep precision
-vbiasPrec = 0.1  # change vbias by this value.
-vvaracPrec = 0.1  # change vvarac by this value.
-rigFact = 1  # keep searching up/down for rigFact amount of time before deciding the best tuning
+vbiasPrec = 0.05  # change vbias by this value.
+vvaracPrec = 0.05  # change vvarac by this value.
+rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best tuning
 
 # initial point options. either provide the L and R values, or provide with initial vvarac and vbias values
 vbias_init = -2.6  # the bias voltage
@@ -130,7 +130,7 @@ def findMaxS21_atVvarac_rigorous( vvarac, vbias_iFirst , vbias_Prec, rigFact ):
     global maxS21Table
 
     print( "\tStart findMaxS21_atVvarac()" )
-    maxS21Freq, S21mV = runExpt( vbias_iFirst, vvarac )
+    S21mV, maxS21Freq = runExpt( vbias_iFirst, vvarac )
 
     MaxS21mV = np.max( abs( S21mV ) )  # find the minimum S11 value
     vbias_ret = vbias_iFirst  # the vbias return value, update when less S11 value is found
