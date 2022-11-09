@@ -30,7 +30,7 @@ from nmr_std_function.nmr_functions import compute_iterate
 from nmr_std_function.ntwrk_functions import cp_rmt_file, cp_rmt_folder, exec_rmt_ssh_cmd_in_datadir
 
 # variables
-server_data_folder = "/home/ubuntu/NMR_DATA"
+server_data_folder = "/root/NMR_DATA"
 # client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
 client_data_folder = "D:\\NMR_DATA"
 en_fig = 1  # enable figure
@@ -48,7 +48,7 @@ else:
     data_folder = server_data_folder
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
+from nmr_std_function.sys_configs import NQR_benzocaine_peyman_ssided as conf
 
 if ( meas_time ):
     start_time = time.time()
@@ -60,17 +60,17 @@ if ( meas_time ):
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
-pulse1_us = 2.5  # 75 for Cheng's coil. pulse pi/2 length.
-pulse2_us = 5.0  # pulse pi length
+pulse1_us = 38  # 75 for Cheng's coil. pulse pi/2 length.
+pulse2_us = 38  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 200  # 200
-scan_spacing_us = 500000
-samples_per_echo = 1024  # 3072
-echoes_per_scan = 1024  # 20
+echo_spacing_us = 600  # 200
+scan_spacing_us = 2000000
+samples_per_echo = 2000  # 3072
+echoes_per_scan = 400  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 4  # number of averaging
+number_of_iteration = 1  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -116,8 +116,8 @@ nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
 
 nmrObj.assertControlSignal( 
         nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-# nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
-nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
+# nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
 
 if ( meas_time ):
     elapsed_time = time.time() - start_time
@@ -151,12 +151,12 @@ if ( process_data ):
 
     # compute the generated data
     if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+        cp_rmt_file( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
     meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
 
     if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
+        cp_rmt_folder( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
     ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_fig , dconv_lpf_ord, dconv_lpf_cutoff_kHz )
 
 if ( meas_time ):

@@ -18,7 +18,7 @@ max_freq = 4.7  # in MHz
 # tuning_freq = 1.6  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 200  # downconversion filter bw
 continuous = False  # continuous running at one frequency configuration
-client_data_folder = "C:\\Users\\dave\\Documents\\NMR_DATA"
+client_data_folder = "C:\\Users\\NELMS\\Desktop\\David\\NMR_DATA"
 en_fig = True
 
 # create name for new folder

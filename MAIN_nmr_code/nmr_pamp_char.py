@@ -17,7 +17,7 @@ from nmr_std_function.time_func import time_meas
 
 
 
-mode = 2 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
+mode = 0 # MODE 0 = SYNC FFT mode. MODE 1 = SYNC NON-FFT MODE. MODE 2 = ASYNC NON-FFT MODE
 # if SYNC FFT, select a single number to be taken as fftcmd, that represents an amplitude in one frequency.
 # if SYNC NON-FFT, select nmrObj.SAV_ALL_FFT as fftcmd. CURRENTLY MODE-2 DOESN'T WORK for some reason on PCB 02.
 # if ASYNC NON-FFT, select nmrObj.NO_SAV_FFT as fftcmd.
@@ -59,7 +59,7 @@ def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpt
     while True:
 
         # set the preamp tuning
-        nmrObj.setPreampTuning( Vbias, Vvarac )
+        # nmrObj.setPreampTuning( Vbias, Vvarac )
         
         if (mode == 0 or mode == 1):
             nmrObj.pamp_char_sync ( freqSta, freqSto, freqSpa, fftpts, fftcmd, fftvalsub )
@@ -67,14 +67,14 @@ def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpt
             nmrObj.pamp_char_async ( freqSta, freqSto, freqSpa, freqSamp )
 
         if  nmrObj.en_remote_computing:  # copy remote files to local directory
-            cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+            cp_rmt_file( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
 
         meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
         # meas_folder[0] = "nmr_wobb_2018_06_25_12_44_48"
 
         if  nmrObj.en_remote_computing:  # copy remote folder to local directory
-            cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-            exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
+            cp_rmt_folder( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+            exec_rmt_ssh_cmd_in_datadir( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
 
 
         if (mode == 0):
@@ -97,30 +97,32 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-'''
+#'''
 # comment the lines below when using nmr_pamp_char as a function in outside script
 # measurement properties
 
 # load the config
 from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
-client_data_folder = "D:\\TEMP"
+client_data_folder = "D:\\NMR_DATA"
 en_fig = 1
-tuning_freq = 1.7
-freqSta = 1.5
-freqSto = 3.0
-freqSpa = 0.001
+tuning_freq = 2.564
+freqSta = 1.0
+freqSto = 5.0
+freqSpa = 0.01
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
-fftpts = 1024
+fftpts = 512
 fftcmd = fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
 fftvalsub = 9828  # adc data value subtractor before fed into the FFT core to remove DC components. Get the DC value by doing noise measurement
-continuous = False
+continuous = True
 
 nmrObj = init( client_data_folder )
 
 # find configuration
 Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
+Vbias = -2.3
+Vvarac = -0
 
 analyze ( nmrObj, Vbias, Vvarac, freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )
-'''
+#'''

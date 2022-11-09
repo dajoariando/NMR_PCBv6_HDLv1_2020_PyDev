@@ -1512,7 +1512,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         mng = plt.get_current_fig_manager()
         if plot_backend == 'TkAgg':
             # mng.resize(*mng.window.maxsize())
-            mng.resize( 1400, 800 )
+            mng.resize( 1000, 600 )
         elif plot_backend == 'wxAgg':
             mng.frame.Maximize( True )
         elif plot_backend == 'Qt4Agg':
@@ -1533,7 +1533,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         ax.set_title( "Spectrum" )
         ax.grid()
         ax.legend()
-        plt.ylim( [-0.2, 5] )
+        #plt.ylim( [-0.2, 5] )
 
         # plot time domain data
         ax = fig.add_subplot( 312 )
@@ -1545,7 +1545,7 @@ def compute_in_bw_noise( bw_kHz, Df_MHz, minfreq, maxfreq, data_parent_folder, m
         ax.set_ylabel( 'Amplitude (a.u.)' )
         ax.set_title( "Amplitude. std=%0.2f. mean=%0.2f." % ( nstd, nmean ) )
         ax.grid()
-        plt.ylim( [-100, 100] )
+        #plt.ylim( [-100, 100] )
 
         # plot histogram
         n_bins = 200

@@ -55,6 +55,10 @@ def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_b
     # load parameters from table
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
     Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
+    
+    Vbias = -2.3
+    Vvarac = 0
+    
     nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
     # nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
     nmrObj.setMatchingNetwork( 2190, 484 )  # 4.25 MHz AFE
@@ -73,14 +77,14 @@ def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_b
         nmrObj.noise( samp_freq, samples )
 
         if  nmrObj.en_remote_computing:  # copy remote files to local directory
-            cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+            cp_rmt_file( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
 
         # process the data
         meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
 
         if  nmrObj.en_remote_computing:  # copy remote folder to local directory
-            cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-            exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
+            cp_rmt_folder( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+            exec_rmt_ssh_cmd_in_datadir( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
 
         # compute_stats( min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )
         compute_in_bw_noise( meas_bw_kHz, tuning_freq, min_freq, max_freq, nmrObj.data_folder, meas_folder[0], 'noise_plot.png', en_fig )
@@ -101,11 +105,11 @@ from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as con
 
 # uncomment this line to debug the nmr noise code locally here
 samp_freq = 25  # sampling frequency
-samples = 100000  # number of points
-min_freq = 4.0  # in MHz
-max_freq = 4.5  # in MHz
+samples = 10000  # number of points
+min_freq = 2.0  # in MHz
+max_freq = 3.0  # in MHz
 # tuning_freq = conf.Df_MHz  # hardware tuning forced by config file
-tuning_freq = 4.2  # hardware tuning frequency selector, using lookup table
+tuning_freq = 2.5  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 200 # downconversion filter bw
 continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\NMR_DATA"

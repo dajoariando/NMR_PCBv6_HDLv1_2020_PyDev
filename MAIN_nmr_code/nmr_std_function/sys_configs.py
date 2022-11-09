@@ -23,6 +23,23 @@ class board_config:
     init_adc_delay_compensation: float
 
 
+NQR_benzocaine_peyman_ssided = board_config( 
+    2.408,  # Df_MHz
+    -2.3,  # vbias
+    1.05,  # vvarac
+    800,  # cpar
+    295,  # cser
+    50,  # meas_bw_kHz
+    2,  # filter order
+    12,  # pulse 90 length
+    16,  # pulse 180 length
+    200,  # echo_spacing_us: float
+    500000,  # scan_spacing_us: float
+    1024,  # samples_per_echo: int
+    1024,  # echoes_per_scan: int
+    6  # init_adc_delay_compensation: float
+ )
+
 WMP_old_coil_1p65 = board_config( 
     1.65,  # Df_MHz
     -2.1,  # vbias
