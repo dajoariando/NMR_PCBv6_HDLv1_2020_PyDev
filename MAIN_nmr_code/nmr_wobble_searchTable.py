@@ -67,13 +67,13 @@ tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matchi
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 2.20
-S11FreqSto = 2.80
+S11FreqSta = 2.2
+S11FreqSto = 2.8
 
 # sweep precision
-cparPrec = 3  # change cpar by this value.
-cserPrec = 2  # change cser by this value.
-rigFact = 10  # keep searching up/down for rigFact amount of time before deciding the best S11
+cparPrec = 5  # change cpar by this value.
+cserPrec = 3  # change cser by this value.
+rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available

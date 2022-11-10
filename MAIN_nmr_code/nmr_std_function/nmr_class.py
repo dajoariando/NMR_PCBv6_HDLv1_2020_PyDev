@@ -127,9 +127,9 @@ class tunable_nmr_system_2018:
         # ip addresses settings for the system
         self.server_ip = '192.168.137.10'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
-        self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev/MAIN_nmr_code/'
+        self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev_NEW/MAIN_nmr_code/'
         # client path with samba
-        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev\\MAIN_nmr_code\\'
+        self.client_path = 'Z:\\NMR_PCBv6_HDLv1_2020_PyDev_NEW\\MAIN_nmr_code\\'
         self.ssh_usr = 'root'
         self.ssh_passwd = 'dave'
         # data folder
@@ -172,7 +172,8 @@ class tunable_nmr_system_2018:
             self.scp = 0
             
     def exit( self ):
-        exit_ntwrk ( self.ssh, self.scp )
+        pass
+        # exit_ntwrk ( self.ssh, self.scp )
 
     def turnOnRemoteDebug( self ):
         # CANNOT RUN FROM HERE, YOU HAVE TO COPY THE CONTENT OF THIS FOLDER TO THE EXECUTABLE WHERE YOU RUN THE CODE AND RUN IT FROM THERE
