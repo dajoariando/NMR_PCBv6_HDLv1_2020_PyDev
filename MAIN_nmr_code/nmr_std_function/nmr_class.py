@@ -117,15 +117,20 @@ class tunable_nmr_system_2018:
         self.gnrl_cnt = 0
 
         # Numeric conversion of the hardware
-        self.pamp_gain_dB = 60  # preamp gain
-        self.rx_gain_dB = 20  # rx amp gain
-        self.totGain = 10 ** ( ( self.pamp_gain_dB + self.rx_gain_dB ) / 20 )
-        self.uvoltPerDigit = 3.2 * ( 10 ** 6 ) / 16384  # ADC conversion, in microvolt
-        self.fir_gain = 21513  # downconversion FIR filter gain (sum of all coefficients)
-        self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
-
+        self.en_volt_unit = False
+        if self.en_volt_unit: # voltage unit
+            self.pamp_gain_dB = 60  # preamp gain
+            self.rx_gain_dB = 20  # rx amp gain
+            self.totGain = 10 ** ( ( self.pamp_gain_dB + self.rx_gain_dB ) / 20 )
+            self.uvoltPerDigit = 3.2 * ( 10 ** 6 ) / 16384  # ADC conversion, in microvolt
+            self.fir_gain = 21513  # downconversion FIR filter gain (sum of all coefficients)
+            self.dconv_gain = 0.707106781  # downconversion gain factor due to sine(45,135,225,315) multiplication
+        else: # digit unit
+            self.totGain = 1
+            self.uvoltPerDigit = 1
+            
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.10'  # '129.22.143.88'
+        self.server_ip = '192.168.137.145'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
         self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev_NEW/MAIN_nmr_code/'
         # client path with samba
@@ -138,7 +143,7 @@ class tunable_nmr_system_2018:
         self.exec_folder = "/c_exec/"
 
         # configuration table to be loaded
-        self.S11_table = "genS11Table.txt"  # filename for S11 tables
+        self.S11_table = "genS11Table_iNQR_ssided_with_shield.txt"  # filename for S11 tables
         self.S21_table = "genS21Table.txt"
 
         if en_remote_computing:

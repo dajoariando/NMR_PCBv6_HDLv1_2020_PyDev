@@ -110,7 +110,7 @@ def exit( nmrObj ):
     nmrObj.deassertAll()
     nmrObj.exit()
 
-''' THIS PART MUST BE COMMENTED WHEN FUNCTION IS BEING USED OUTSIDE
+#''' THIS PART MUST BE COMMENTED WHEN FUNCTION IS BEING USED OUTSIDE
 # measurement properties
 client_data_folder = "D:\\NMR_DATA"
 nmrObj = init ( client_data_folder )
@@ -129,8 +129,8 @@ print( 'Generate reference.' )
 S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, 0, 0 , en_fig )  # background is computed with no capacitor connected -> max reflection
 
 # get caps value from the S11 pre-built table
-# tuning_freq = 4.5
-# Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
+tuning_freq = 2.408
+Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
 
 # get caps value from table
 #CsFarad = 100e-12 # in F
@@ -140,12 +140,12 @@ S11mV_ref, _, _, _, _, minS11Freq_ref = analyze( nmrObj, False, 0, 0, freqSta, f
 #Cser = conv_cFarad_to_cInt( CsFarad, CsTbl )
 
 # put cap values directly
-Cpar = 800
-Cser = 295
+# Cpar = 800
+# Cser = 295
 
 while True:
     analyze( nmrObj, extSet, Cpar, Cser, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )
     # break;
 
 exit( nmrObj )
-'''
+#'''

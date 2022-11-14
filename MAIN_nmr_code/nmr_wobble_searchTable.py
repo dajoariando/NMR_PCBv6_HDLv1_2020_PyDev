@@ -50,8 +50,8 @@ from faulthandler import disable
 client_data_folder = "D:\\NMR_DATA"
 nmrObj = nmr_wobble.init ( client_data_folder ) # nmr object declaration
 en_fig = 1
-freqSta = 2.0
-freqSto = 3.0
+freqSta = 2.3
+freqSto = 2.6
 freqSpa = 0.001 # MHz
 freqSamp = 25  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
@@ -67,13 +67,13 @@ tblMtchNtwrk = 'hw_opt/PARAM_NMR_AFE_v6.csv'  # table for the capacitance matchi
 freqSw = np.arange( freqSta, freqSto + ( freqSpa / 2 ), freqSpa )  # plus half is to remove error from floating point number operation
 
 # frequency of interest for S11 to be optimized (range should be within frequencies in the acquisition settings
-S11FreqSta = 2.2
-S11FreqSto = 2.8
+S11FreqSta = 2.4
+S11FreqSto = 2.42
 
 # sweep precision
 cparPrec = 5  # change cpar by this value.
 cserPrec = 3  # change cser by this value.
-rigFact = 3  # keep searching up/down for rigFact amount of time before deciding the best S11
+rigFact = 1  # keep searching up/down for rigFact amount of time before deciding the best S11
 
 # initial point options. either provide the L and R values, or provide with initial cpar and cser values
 lrSeed = 0  # put this to 1 if inductance of the coil is available

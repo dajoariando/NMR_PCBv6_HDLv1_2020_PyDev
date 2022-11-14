@@ -60,17 +60,21 @@ if ( meas_time ):
 
 # cpmg settings
 cpmg_freq = conf.Df_MHz
-pulse1_us = 38  # 75 for Cheng's coil. pulse pi/2 length.
-pulse2_us = 38  # pulse pi length
+vbias = conf.vbias
+vvarac = conf.vvarac
+cpar = conf.cpar
+cser = conf.cser
+pulse1_us = conf.pulse1_us  # 75 for Cheng's coil. pulse pi/2 length.
+pulse2_us = conf.pulse2_us  # pulse pi length
 pulse1_dtcl = 0.5  # useless with current code
 pulse2_dtcl = 0.5  # useless with current code
-echo_spacing_us = 600  # 200
-scan_spacing_us = 2000000
-samples_per_echo = 2000  # 3072
-echoes_per_scan = 400  # 20
+echo_spacing_us = conf.echo_spacing_us  # 200
+scan_spacing_us = conf.scan_spacing_us
+samples_per_echo = conf.samples_per_echo  # 3072
+echoes_per_scan = conf.echoes_per_scan  # 20
 # put to 10 for broadband board and 6 for tunable board
-init_adc_delay_compensation = 6  # acquisition shift microseconds.
-number_of_iteration = 1  # number of averaging
+init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
+number_of_iteration = 400  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -78,8 +82,8 @@ tx_sd_msk = 1  # 1 to shutdown tx opamp during reception, or 0 to keep it powere
 en_dconv = 0  # enable downconversion in the fpga
 dconv_fact = 4  # downconversion factor. minimum of 4.
 echo_skip = 1  # echo skip factor. set to 1 for the ADC to capture all echoes
-dconv_lpf_ord = 2  # downconversion order
-dconv_lpf_cutoff_kHz = 100  # downconversion lpf cutoff
+dconv_lpf_ord = conf.dconv_lpf_ord  # downconversion order
+dconv_lpf_cutoff_kHz = conf.meas_bw_kHz  # downconversion lpf cutoff
 
 '''
 # coil param and measured voltage across the coil
@@ -110,14 +114,13 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 # nmrObj.deassertControlSignal(
 #    nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk)
 
-nmrObj.setPreampTuning( conf.vbias, conf.vvarac )
-nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
-nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
+nmrObj.setPreampTuning( vbias, vvarac )
+nmrObj.setMatchingNetwork( cpar, cser )
+nmrObj.setMatchingNetwork( cpar, cser )
 
-nmrObj.assertControlSignal( 
-        nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
-nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
-# nmrObj.deassertControlSignal( nmrObj.RX_FL_msk )
+nmrObj.assertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
+# nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FL_msk )
 
 if ( meas_time ):
     elapsed_time = time.time() - start_time

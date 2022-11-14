@@ -41,7 +41,7 @@ else:
 nmrObj = tunable_nmr_system_2018( client_data_folder, en_remote_dbg, en_remote_computing )
 
 # load configuration
-from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB02 as conf
+from nmr_std_function.sys_configs import NQR_benzocaine_peyman_ssided as conf
 
 # system setup
 nmrObj.initNmrSystem()  # necessary to set the GPIO initial setting
@@ -53,8 +53,7 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 nmrObj.setPreampTuning( conf.vbias, conf.vvarac )
 nmrObj.setMatchingNetwork( conf.cpar, conf.cser )
 
-nmrObj.assertControlSignal( 
-        nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
+nmrObj.assertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk ) # setting for UF
 # nmrObj.deassertControlSignal( nmrObj.RX_FL_msk ) # setting for WMP
 
@@ -67,7 +66,7 @@ scan_spacing_us = conf.scan_spacing_us
 samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 64  # number of averaging
+number_of_iteration = 400  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -80,9 +79,9 @@ dconv_lpf_cutoff_kHz = conf.meas_bw_kHz  # downconversion lpf cutoff
 
 
 # sweep settings
-pulse_us_sta = 2  # in microsecond
-pulse_us_sto = 3  # in microsecond
-pulse_us_ste = (3-2)*10+1  # number of steps
+pulse_us_sta = 80  # in microsecond
+pulse_us_sto = 300  # in microsecond
+pulse_us_ste = 45  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )
@@ -91,7 +90,7 @@ for i in range( 0, pulse_us_ste ):
     print( 'plength = ' + str( pulse_us_sw[i] ) + ' us' )
 
     pulse1_us = pulse_us_sw[i] # pulse pi/2 length
-    pulse2_us = 5.5 # pulse pi length
+    pulse2_us = pulse_us_sw[i] # pulse pi length
     nmrObj.cpmgSequence( cpmg_freq, pulse1_us, pulse2_us, pulse1_dtcl, pulse2_dtcl, echo_spacing_us, scan_spacing_us, samples_per_echo,
                         echoes_per_scan, init_adc_delay_compensation, number_of_iteration,
                         ph_cycl_en, pulse180_t1_int, delay180_t1_int , tx_sd_msk, en_dconv, dconv_fact, echo_skip )
@@ -100,12 +99,12 @@ for i in range( 0, pulse_us_ste ):
 
     # compute the generated data
     if  en_remote_computing:  # copy remote files to local directory
-        cp_rmt_file( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
+        cp_rmt_file( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, "current_folder.txt" )
     meas_folder = parse_simple_info( nmrObj.data_folder, 'current_folder.txt' )
 
     if  en_remote_computing:  # copy remote folder to local directory
-        cp_rmt_folder( nmrObj.scp, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
-        exec_rmt_ssh_cmd_in_datadir( nmrObj.ssh, "rm -rf " + meas_folder[0], nmrObj.server_data_folder  )  # delete the file in the server
+        cp_rmt_folder( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
+        exec_rmt_ssh_cmd_in_datadir( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, "rm -rf " + meas_folder[0], nmrObj.server_data_folder  )  # delete the file in the server
     ( a, a_integ, a0, snr, T2, noise, res, theta, data_filt, echo_avg, Df, t_echospace ) = compute_iterate( 
         nmrObj, nmrObj.data_folder, meas_folder[0], 0, 0, 0, direct_read, datain, en_scan_fig, dconv_lpf_ord, dconv_lpf_cutoff_kHz )
     a_integ_table[i] = a_integ
@@ -124,13 +123,11 @@ for i in range( 0, pulse_us_ste ):
         fig.canvas.flush_events()
 
 # turn off system
-nmrObj.deassertControlSignal( 
-    nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 
 nmrObj.setMatchingNetwork( 0, 0 )
 nmrObj.setPreampTuning( 0, 0 )
-nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
-                             nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
+nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
 
 now = datetime.now()
 datename = now.strftime( "%Y_%m_%d_%H_%M_%S" )
