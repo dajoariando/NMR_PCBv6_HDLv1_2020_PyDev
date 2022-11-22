@@ -115,9 +115,9 @@ def exit( nmrObj ):
 client_data_folder = "D:\\NMR_DATA"
 nmrObj = init ( client_data_folder )
 en_fig = 1
-freqSta = 1
-freqSto = 3
-freqSpa = 0.01
+freqSta = 2.3
+freqSto = 2.6
+freqSpa = 0.001
 freqSamp = 20  # not used when using wobble_sync. Will be used when using wobble_async
 fftpts = 512
 fftcmd = fftpts / 4 * 3 # default value: fftpts / 4 * 3  # put nmrObj.NO_SAV_FFT, nmrObj.SAV_ALL_FFT, or any desired fft point number
@@ -140,8 +140,8 @@ Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrOb
 #Cser = conv_cFarad_to_cInt( CsFarad, CsTbl )
 
 # put cap values directly
-# Cpar = 800
-# Cser = 295
+#Cpar = 800
+#Cser = 295
 
 while True:
     analyze( nmrObj, extSet, Cpar, Cser, freqSta, freqSto, freqSpa, freqSamp , fftpts, fftcmd, fftvalsub, S11mV_ref, useRef , en_fig )

@@ -130,7 +130,7 @@ class tunable_nmr_system_2018:
             self.uvoltPerDigit = 1
             
         # ip addresses settings for the system
-        self.server_ip = '192.168.137.145'  # '129.22.143.88'
+        self.server_ip = '192.168.137.10'  # '129.22.143.88'
         self.client_ip = '192.168.137.1'  # '129.22.143.39'
         self.server_path = '/root/NMR_PCBv6_HDLv1_2020_PyDev_NEW/MAIN_nmr_code/'
         # client path with samba
@@ -143,7 +143,7 @@ class tunable_nmr_system_2018:
         self.exec_folder = "/c_exec/"
 
         # configuration table to be loaded
-        self.S11_table = "genS11Table_iNQR_ssided_with_shield.txt"  # filename for S11 tables
+        self.S11_table = "genS11Table_iNQR_ssided_peyman_shield.txt"  # filename for S11 tables
         self.S21_table = "genS21Table.txt"
 
         if en_remote_computing:

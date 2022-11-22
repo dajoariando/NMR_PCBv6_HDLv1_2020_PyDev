@@ -66,7 +66,7 @@ scan_spacing_us = conf.scan_spacing_us
 samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 400  # number of averaging
+number_of_iteration = 10  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -79,9 +79,9 @@ dconv_lpf_cutoff_kHz = conf.meas_bw_kHz  # downconversion lpf cutoff
 
 
 # sweep settings
-pulse_us_sta = 80  # in microsecond
-pulse_us_sto = 300  # in microsecond
-pulse_us_ste = 45  # number of steps
+pulse_us_sta = 50  # in microsecond
+pulse_us_sto = 100  # in microsecond
+pulse_us_ste = 11  # number of steps
 pulse_us_sw = np.linspace( pulse_us_sta, pulse_us_sto, pulse_us_ste )
 
 a_integ_table = np.zeros( pulse_us_ste )

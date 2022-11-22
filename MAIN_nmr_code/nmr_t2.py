@@ -74,7 +74,7 @@ samples_per_echo = conf.samples_per_echo  # 3072
 echoes_per_scan = conf.echoes_per_scan  # 20
 # put to 10 for broadband board and 6 for tunable board
 init_adc_delay_compensation = conf.init_adc_delay_compensation  # acquisition shift microseconds.
-number_of_iteration = 400  # number of averaging
+number_of_iteration = 64  # number of averaging
 ph_cycl_en = 1
 pulse180_t1_int = 0
 delay180_t1_int = 0
@@ -117,10 +117,12 @@ nmrObj.assertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_
 nmrObj.setPreampTuning( vbias, vvarac )
 nmrObj.setMatchingNetwork( cpar, cser )
 nmrObj.setMatchingNetwork( cpar, cser )
+#nmrObj.setMatchingNetwork( 0, 0 )
+#nmrObj.setMatchingNetwork( 0, 0 )
 
 nmrObj.assertControlSignal( nmrObj.RX1_1L_msk | nmrObj.RX1_1H_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 # nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FH_msk )
-nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX_FL_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk )
 
 if ( meas_time ):
     elapsed_time = time.time() - start_time
@@ -142,13 +144,11 @@ if ( meas_time ):
     print( "cpmgSequence acquisition time: %.3f" % ( elapsed_time ) )
     start_time = time.time()
 
-nmrObj.deassertControlSignal( 
-        nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
+nmrObj.deassertControlSignal( nmrObj.RX1_1H_msk | nmrObj.RX1_1L_msk | nmrObj.RX2_L_msk | nmrObj.RX2_H_msk | nmrObj.RX_SEL1_msk | nmrObj.RX_FL_msk | nmrObj.RX_FH_msk | nmrObj.PAMP_IN_SEL2_msk )
 
 nmrObj.setMatchingNetwork( 0, 0 )
 nmrObj.setPreampTuning( 0, 0 )
-nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |
-                             nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
+nmrObj.deassertControlSignal( nmrObj.PSU_15V_TX_P_EN_msk | nmrObj.PSU_15V_TX_N_EN_msk | nmrObj.PSU_5V_TX_N_EN_msk |nmrObj.PSU_5V_ADC_EN_msk | nmrObj.PSU_5V_ANA_P_EN_msk | nmrObj.PSU_5V_ANA_N_EN_msk )
 
 if ( process_data ):
 

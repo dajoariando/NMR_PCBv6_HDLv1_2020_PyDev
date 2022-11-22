@@ -59,7 +59,7 @@ def analyze( nmrObj , Vbias, Vvarac, freqSta, freqSto , freqSpa, freqSamp, fftpt
     while True:
 
         # set the preamp tuning
-        # nmrObj.setPreampTuning( Vbias, Vvarac )
+        nmrObj.setPreampTuning( Vbias, Vvarac )
         
         if (mode == 0 or mode == 1):
             nmrObj.pamp_char_sync ( freqSta, freqSto, freqSpa, fftpts, fftcmd, fftvalsub )
@@ -106,9 +106,9 @@ from nmr_std_function.sys_configs import WMP_old_coil_1p7 as conf
 
 client_data_folder = "D:\\NMR_DATA"
 en_fig = 1
-tuning_freq = 2.564
-freqSta = 1.0
-freqSto = 5.0
+tuning_freq = 2.408
+freqSta = 2.3
+freqSto = 2.8
 freqSpa = 0.01
 freqSamp = 25  # not being used for synchronized sampling. It's value will be the running freq * 4
 fftpts = 512
@@ -121,7 +121,7 @@ nmrObj = init( client_data_folder )
 # find configuration
 Vbias, Vvarac = find_Vbias_Vvarac_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S21_table )
 Vbias = -2.3
-Vvarac = -0
+Vvarac = 1.05
 
 analyze ( nmrObj, Vbias, Vvarac, freqSta, freqSto, freqSpa, freqSamp, fftpts, fftcmd, fftvalsub, continuous, en_fig )
 exit( nmrObj )

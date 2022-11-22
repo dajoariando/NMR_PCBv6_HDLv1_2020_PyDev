@@ -27,16 +27,16 @@ NQR_benzocaine_peyman_ssided = board_config(
     2.408,  # Df_MHz
     -2.3,  # vbias
     1.05,  # vvarac
-    870,  # cpar
-    301,  # cser
-    40,  # meas_bw_kHz
+    870,  # 800, 870 cpar
+    301,  # 295, 301 cser
+    20,  # meas_bw_kHz
     2,  # filter order
-    165,  # pulse 90 length
-    165,  # pulse 180 length
-    800,  # echo_spacing_us: float
+    65,  # pulse 90 length
+    65,  # pulse 180 length
+    600,  # echo_spacing_us: float
     2000000,  # scan_spacing_us: float
     2000,  # samples_per_echo: int
-    300,  # echoes_per_scan: int
+    200,  # echoes_per_scan: int
     6  # init_adc_delay_compensation: float
  )
 

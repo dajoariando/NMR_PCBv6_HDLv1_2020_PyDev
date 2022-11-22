@@ -50,7 +50,7 @@ def init( client_data_folder ):
     return nmrObj
 
 
-def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous, en_fig ):
+def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, en_filt, meas_bw_kHz, continuous, en_fig ):
 
     # load parameters from table
     Cpar, Cser = find_Cpar_Cser_from_table ( nmrObj.client_path , tuning_freq, nmrObj.S11_table )
@@ -58,11 +58,12 @@ def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_b
     
     # set a fixed vbias and vvarac
     Vbias = -2.3
-    Vvarac = 0
+    Vvarac = 1.05
     
     nmrObj.setPreampTuning( Vbias, Vvarac )  # try -2.7, -1.8 if fail
     nmrObj.setMatchingNetwork( Cpar, Cser )  # 4.25 MHz AFE
     # nmrObj.setMatchingNetwork( 2190, 484 )  # 4.25 MHz AFE
+    #nmrObj.setMatchingNetwork( 0, 0 )  # 4.25 MHz AFE
     
     # load parameters from config file
     # nmrObj.setPreampTuning( conf.vbias, conf.vvarac )  # try -2.7, -1.8 if fail
@@ -86,10 +87,12 @@ def analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_b
         if  nmrObj.en_remote_computing:  # copy remote folder to local directory
             cp_rmt_folder( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, nmrObj.server_data_folder, nmrObj.client_data_folder, meas_folder[0] )
             exec_rmt_ssh_cmd_in_datadir( nmrObj.server_ip, nmrObj.ssh_usr, nmrObj.ssh_passwd, "rm -rf " + meas_folder[0], nmrObj.server_data_folder )  # delete the file in the server
-
-        # compute_stats( min_freq, max_freq, data_folder, meas_folder[0], 'noise_plot.png', en_fig )
-        compute_in_bw_noise( meas_bw_kHz, tuning_freq, min_freq, max_freq, nmrObj.data_folder, meas_folder[0], 'noise_plot.png', en_fig )
-
+        
+        if en_filt:
+            compute_in_bw_noise( meas_bw_kHz, tuning_freq, min_freq, max_freq, nmrObj.data_folder, meas_folder[0], 'noise_plot.png', en_fig )
+        else:
+            compute_stats( min_freq, max_freq, nmrObj.data_folder, meas_folder[0], 'noise_plot.png', en_fig )
+        
         if ( not continuous ):
             break
 
@@ -105,15 +108,16 @@ def exit( nmrObj ):
 # select the coil configuration
 from nmr_std_function.sys_configs import UF_black_holder_brown_coil_PCB04 as conf
 samp_freq = 25  # sampling frequency
-samples = 1000  # number of points
+samples = 10000  # number of points
 min_freq = 2.0  # in MHz
 max_freq = 3.0  # in MHz
 # tuning_freq = conf.Df_MHz  # hardware tuning forced by config file
-tuning_freq = 2.5  # hardware tuning frequency selector, using lookup table
+tuning_freq = 2.408  # hardware tuning frequency selector, using lookup table
 meas_bw_kHz = 20 # downconversion filter bw
+en_filt = False # enable data filter to limit bandwidth
 continuous = True  # continuous running at one frequency configuration
 client_data_folder = "D:\\NMR_DATA"
 en_fig = True
 nmrObj = init( client_data_folder )
-analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, meas_bw_kHz, continuous , en_fig )
+analyze( nmrObj, samp_freq, samples, min_freq, max_freq, tuning_freq, en_filt, meas_bw_kHz, continuous , en_fig )
 exit( nmrObj )

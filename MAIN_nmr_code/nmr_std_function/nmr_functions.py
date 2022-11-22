@@ -888,7 +888,7 @@ def compute_multiple( nmrObj, data_parent_folder, meas_folder, file_name_prefix,
     # put 1 if the data file uses binary representation, otherwise it is in
     # ascii format
     binary_OR_ascii = 0
-    ignore_echoes = 0  # ignore initial echoes #
+    ignore_echoes = 2  # ignore initial echoes #
 
     # simulate decimation in software (DO NOT use this for normal operation,
     # only for debugging purpose)
